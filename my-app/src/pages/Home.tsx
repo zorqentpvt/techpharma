@@ -14,6 +14,7 @@ export default function Home() {
 
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Medicine[]>([]);
+  const [location, setLocation] = useState<string>("");
 
   const handleSearch = async () => {
     if (!search.trim()) return;
@@ -24,6 +25,31 @@ export default function Home() {
   const handleBuy = (med: Medicine) => {
     localStorage.setItem("transaction", JSON.stringify(med));
     navigate("/transaction");
+  };
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      setLocation("Geolocation is not supported by your browser");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
+
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+        );
+        const data = await response.json();
+        setLocation(data.display_name || "Location not found");
+      } catch (error) {
+        console.error(error);
+        setLocation("Unable to retrieve location name");
+      }
+    }, (error) => {
+      console.error(error);
+      setLocation("Unable to retrieve your location");
+    });
   };
 
   return (
@@ -43,8 +69,17 @@ export default function Home() {
             onChange={(e) => setSearch(e.target.value)}
           />
           <Button onClick={handleSearch}>Search 🔍</Button>
+
+          {user.role === "normal" && (
+            <Button onClick={handleDetectLocation}>Detect Location 📍</Button>
+          )}
         </div>
       </header>
+
+      {/* Display location */}
+      {user.role === "normal" && location && (
+        <p className="mb-4 text-gray-700">Your location: {location}</p>
+      )}
 
       {/* Results */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

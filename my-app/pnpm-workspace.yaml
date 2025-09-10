@@ -1,0 +1,2 @@
+overrides:
+  vehicle-appointment-client: link:../../../../../../home/santhoshjamesc/.local/share/pnpm/global/5/node_modules/vehicle-appointment-client

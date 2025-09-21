@@ -2,8 +2,7 @@ package server
 
 import (
 	"net/http"
-	"skryfon_blog/internal/middleware"
-	"time"
+	"techpharma/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +16,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r := gin.New()
 
 	// Built-in middleware
-	r.Use(gin.Logger())   // Console logger with color (writes to gin.DefaultWriter)
+	r.Use(gin.Logger())   // Console logger with color
 	r.Use(gin.Recovery()) // Recovery middleware
 
 	// Custom middleware
@@ -32,11 +31,18 @@ func (s *Server) RegisterRoutes() http.Handler {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
 
+	// API routes
 	api := r.Group("/api")
 	{
-		
+		// Authentication routes
+		auth := api.Group("/auth")
+		{
+			auth.POST("/signin", s.signin)
+			auth.POST("/signup", s.signup)
+		}
 	}
 
+	// 404 handler
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
 	})

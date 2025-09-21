@@ -8,8 +8,9 @@ import (
 	"syscall"
 	"time"
 
+	"techpharma/internal/server"
+
 	"github.com/joho/godotenv"
-	"skryfon_blog/internal/server"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {

@@ -3,7 +3,7 @@ package database
 import (
 	"log"
 
-	"skryfon_blog/internal/model"
+	models "techpharma/internal/model"
 
 	"gorm.io/gorm"
 )
@@ -11,11 +11,8 @@ import (
 // AutoMigrate creates or updates DB tables for all models
 func AutoMigrate(db *gorm.DB) {
 	if err := db.AutoMigrate(
-		&model.User{},
-		&model.Post{},
-		&model.Comment{},
-		&model.Vote{},
-		&model.Report{}, // Add this line
+		&models.User{},
+		// Add this line
 	); err != nil {
 		log.Fatalf("❌ Migration failed: %v", err)
 	}

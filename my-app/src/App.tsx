@@ -5,14 +5,14 @@ import Store from "./pages/Store";           // import Store page
 import Transaction from "./pages/transaction";    // import Transaction page
 import Error from "./components/Error";
 import Notification from "./components/Notification";
+import NetworkNotification from "./components/NetworkNotification";
 
 function App() {
   return (
     <div className="p-4">
       {/* Global Notification */}
       <Notification message="Welcome to the app 🎉" type="success" />
-
-
+      <NetworkNotification />
 
       <Routes>
         <Route path="/" element={<SignIn />} />

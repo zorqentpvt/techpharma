@@ -29,7 +29,6 @@ export default function Store() {
     if (!name || !contents || stock <= 0) return;
 
     if (editingIndex !== null) {
-      // update existing
       const updated = [...medList];
       updated[editingIndex] = {
         ...updated[editingIndex],
@@ -39,7 +38,6 @@ export default function Store() {
       };
       setMedList(updated);
 
-      // sync with global
       const globalIndex = medicines.findIndex(
         m =>
           m.pharmacy === user.username &&
@@ -49,7 +47,6 @@ export default function Store() {
 
       setEditingIndex(null);
     } else {
-      // add new
       const newMed: Medicine = {
         name,
         pharmacy: user.username,
@@ -88,52 +85,56 @@ export default function Store() {
   );
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Manage Medicines11111</h1>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <h1 className="text-3xl font-bold mb-6 text-blue-900">
+        Manage Medicines
+      </h1>
 
       {/* Add / Edit Form */}
-      <div className="mb-6 bg-white p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold mb-4">
-          {editingIndex !== null ? "Edit Medicine" : "Add Medicine"}
+      <div className="mb-8 bg-white p-6 rounded-2xl shadow-lg">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">
+          {editingIndex !== null ? "✏️ Edit Medicine" : "➕ Add Medicine"}
         </h2>
         <div className="flex flex-col md:flex-row gap-4">
           <input
             type="text"
             placeholder="Medicine Name"
-            className="border p-3 rounded flex-1"
+            className="border p-3 rounded-lg flex-1 focus:ring-2 focus:ring-blue-400"
             value={name}
             onChange={e => setName(e.target.value)}
           />
           <input
             type="number"
             placeholder="Stock"
-            className="border p-3 rounded w-32"
+            className="border p-3 rounded-lg w-32 focus:ring-2 focus:ring-blue-400"
             value={stock}
             onChange={e => setStock(Number(e.target.value))}
           />
           <input
             type="text"
             placeholder="Contents"
-            className="border p-3 rounded flex-1"
+            className="border p-3 rounded-lg flex-1 focus:ring-2 focus:ring-blue-400"
             value={contents}
             onChange={e => setContents(e.target.value)}
           />
-          <Button onClick={handleAddOrUpdate}>
-            {editingIndex !== null ? "Update" : "Add"}
+          <Button onClick={handleAddOrUpdate} variant="primary">
+            {editingIndex !== null ? "Update ✅" : "Add "}
           </Button>
         </div>
       </div>
 
       {/* Search */}
-      <div className="mb-6 flex gap-4">
+      <div className="mb-8 flex gap-4">
         <input
           type="text"
-          placeholder="Search medicine..."
-          className="border p-2 rounded flex-1"
+          placeholder="🔍 Search medicine..."
+          className="border p-3 rounded-lg flex-1 focus:ring-2 focus:ring-blue-400"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <Button onClick={() => setSearch("")}>Clear</Button>
+        <Button onClick={() => setSearch("")} variant="secondary">
+          Clear ❌
+        </Button>
       </div>
 
       {/* Medicines List */}
@@ -142,21 +143,25 @@ export default function Store() {
           filteredMed.map((med, idx) => (
             <div
               key={idx}
-              className="p-4 bg-white rounded-xl shadow hover:shadow-lg transition flex flex-col gap-2"
+              className="p-6 bg-white rounded-2xl shadow hover:shadow-xl transition flex flex-col gap-2"
             >
-              <h3 className="font-semibold text-lg">{med.name}</h3>
-              <p>Stock: {med.stock}</p>
-              <p>Contents: {med.contents}</p>
-              <div className="flex gap-2 mt-2">
-                <Button onClick={() => handleEdit(idx)}>Edit</Button>
-                <Button onClick={() => handleDelete(idx)} variant="secondary">
-                  Delete
+              <h3 className="font-semibold text-lg text-blue-800">{med.name}</h3>
+              <p className="text-gray-700"> Stock: {med.stock}</p>
+              <p className="text-gray-600"> Contents: {med.contents}</p>
+              <div className="flex gap-2 mt-4">
+                <Button onClick={() => handleEdit(idx)} variant="primary">
+                  Edit 
+                </Button>
+                <Button onClick={() => handleDelete(idx)} variant="danger">
+                  Delete 
                 </Button>
               </div>
             </div>
           ))
         ) : (
-          <p className="text-gray-500 col-span-full">No medicines found.</p>
+          <p className="text-gray-500 col-span-full text-center">
+            No medicines found.
+          </p>
         )}
       </div>
     </div>

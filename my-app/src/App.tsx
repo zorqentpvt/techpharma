@@ -1,24 +1,35 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
-import Store from "./pages/Store";           // import Store page
-import Transaction from "./pages/transaction";    // import Transaction page
+import Store from "./pages/Store";
+import Transaction from "./pages/transaction";
 import Error from "./components/Error";
-import Notification from "./components/Notification";
-import NetworkNotification from "./components/NetworkNotification";
+import Orders from "./pages/Orders";
+import ConnectionStatus from "./components/ConnectionStatus";
+import Medicines from "./pages/Medicines";
+import Cart from "./pages/Cart";
+import React from "react";
 
 function App() {
   return (
     <div className="p-4">
       {/* Global Notification */}
-      <Notification message="Welcome to the app 🎉" type="success" />
-      <NetworkNotification />
+      <ConnectionStatus backendUrl="/api/health" checkInterval={5000} />
+     
 
       <Routes>
         <Route path="/" element={<SignIn />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/store" element={<Store />} />            {/* Add store route */}
-        <Route path="/transaction" element={<Transaction />} /> {/* Transaction route */}
+
+        {/* Dashboard layout route */}
+        <Route path="/dashboard" element={<Dashboard />}>
+          <Route path="store" element={<Store />} />
+          <Route path="medicine" element={<Medicines />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="cart" element={<Cart />} />
+          <Route path="transaction" element={<Transaction />} />
+        </Route>
+
+        {/* Catch all */}
         <Route path="*" element={<Error message="Page not found" />} />
       </Routes>
     </div>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Notification from "../components/Notification";
 import Button from "../components/Button";
 import { login, signup } from "../api/authapi";
+import React from "react";
 
 export default function SignIn() {
   const [isSignIn, setIsSignIn] = useState(true);

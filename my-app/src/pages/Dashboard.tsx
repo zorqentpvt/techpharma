@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
-
-// Pages
 import Store from "./Store";
 import Appointments from "./Appointments";
 import Home from "./Home";
 import Doctors from "./Doctors";
-import Schedule  from "./schedule";
+import Schedule from "./Schedule";
+import Orders from "./Orders";
+import Medicines from "./Medicines";
+import Cart from "./Cart";
+import React from "react";
 
 // Utility to get user from localStorage
 const getUserFromStorage = () => {
@@ -41,15 +43,17 @@ export default function Dashboard() {
   if (!user) return null;
 
   const tabs = [
-    { key: "home", label: "Home", roles: ["normal", "doctor", "pharmacy"], icon: "" },
-    { key: "doctor", label: "Doctors", roles: ["normal"], icon: "" },
-    { key: "schedule", label: "Schedule", roles: ["doctor"], icon: "" },
-    { key: "consultings", label: "Consultings and Report", roles: ["doctor"], icon: "" },
-    { key: "consult", label: "Consultation", roles: ["normal"], icon: "" },
-    { key: "chatbot", label: "Chatbot", roles: ["normal"], icon: "" },
-    { key: "store", label: "Store", roles: ["pharmacy"], icon: "" },
-    { key: "delivery", label: "Delivery", roles: ["pharmacy"], icon: "" },
-    { key: "appointments", label: "Appointments", roles: ["doctor"], icon: "" },
+    { key: "home", label: "Home", roles: ["normal", "doctor", "pharmacy"] },
+    { key: "Medicine", label: "Medicine", roles: ["normal"] },
+    { key: "doctor", label: "Doctors", roles: ["normal"] },
+    { key: "schedule", label: "Schedule", roles: ["doctor"] },
+    { key: "consultings", label: "Consultings and Report", roles: ["doctor"] },
+    { key: "consult", label: "Consultation", roles: ["normal"] },
+    { key: "chatbot", label: "Chatbot", roles: ["normal"] },
+    { key: "store", label: "Store", roles: ["pharmacy"] },
+    { key: "Order management", label: "Order management", roles: ["pharmacy"] },
+    { key: "appointments", label: "Appointments", roles: ["doctor"] },
+
   ];
 
   const renderContent = () => {
@@ -58,12 +62,22 @@ export default function Dashboard() {
         return <Home />;
       case "doctor":
         return user.role === "normal" ? <Doctors /> : <div>Access Denied</div>;
+      case "Medicine":
+        return user.role === "normal" ? (
+          <Medicines setActiveTab={setActiveTab} />
+        ) : (
+          <div>Access Denied</div>
+        );
       case "store":
         return user.role === "pharmacy" ? <Store /> : <div>Access Denied</div>;
       case "appointments":
         return user.role === "doctor" ? <Appointments /> : <div>Access Denied</div>;
       case "schedule":
         return user.role === "doctor" ? <Schedule /> : <div>Access Denied</div>;
+      case "Order management":
+        return user.role === "pharmacy" ? <Orders /> : <div>Access Denied</div>;
+      case "cart":
+        return <Cart />;
       default:
         return <div>Tab not found</div>;
     }
@@ -82,15 +96,13 @@ export default function Dashboard() {
             .map((tab) => (
               <button
                 key={tab.key}
-                className={`flex items-center gap-3 text-left px-4 py-2 rounded-lg font-medium transition-all
-                  ${
-                    activeTab === tab.key
-                      ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md"
-                      : "text-gray-700 hover:bg-blue-50"
-                  }`}
+                className={`flex items-center gap-3 text-left px-4 py-2 rounded-lg font-medium transition-all ${
+                  activeTab === tab.key
+                    ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md"
+                    : "text-gray-700 hover:bg-blue-50"
+                }`}
                 onClick={() => setActiveTab(tab.key)}
               >
-                <span className="text-lg">{tab.icon}</span>
                 {tab.label}
               </button>
             ))}
@@ -103,7 +115,7 @@ export default function Dashboard() {
             variant="secondary"
             className="w-full px-4 py-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition"
           >
-             Logout
+            Logout
           </Button>
         </div>
       </aside>

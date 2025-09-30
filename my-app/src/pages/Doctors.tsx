@@ -2,7 +2,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDoctors, Doctor } from "../api/medapi";
-import { Search, X } from "lucide-react"; // prettier icons
+import { Search, X } from "lucide-react";
+import PatientAppointment, { AppointmentSlot } from "../components/PatientAppointment";
+import React from "react";
 
 function DoctorCard({ doctor, onAppointment }: { doctor: Doctor; onAppointment: (id: string) => void }) {
   return (
@@ -27,6 +29,7 @@ export default function Doctors() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
 
   useEffect(() => {
     const user = localStorage.getItem("user");
@@ -49,7 +52,7 @@ export default function Doctors() {
   }, [navigate]);
 
   const handleAppointment = (doctorId: string) => {
-    navigate(`/appointment/${doctorId}`);
+    setSelectedDoctorId(doctorId);
   };
 
   const filteredDoctors = useMemo(
@@ -62,11 +65,16 @@ export default function Doctors() {
     [doctors, searchTerm]
   );
 
+  // --- Mock booked slots ---
+  const mockBookedSlots: AppointmentSlot[] = [
+    { date: "2025-10-01", time: "09:00" },
+    { date: "2025-10-02", time: "15:00" },
+    { date: "2025-10-03", time: "10:00" },
+  ];
+
   return (
     <div className="min-h-screen p-8 bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
-      <h1 className="text-4xl font-extrabold mb-8 text-center text-gray-800">
-        🩺 Find Your Doctor
-      </h1>
+      <h1 className="text-4xl font-extrabold mb-8 text-center text-gray-800">🩺 Find Your Doctor</h1>
 
       {/* Search Bar */}
       <div className="flex items-center max-w-xl mx-auto mb-10 relative">
@@ -93,19 +101,41 @@ export default function Doctors() {
       {loading && <p className="text-center text-gray-500">Loading doctors...</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
 
-      {/* Doctors Grid */}
+      {/* Doctors Grid or Appointment */}
       {!loading && !error && (
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredDoctors.length > 0 ? (
-            filteredDoctors.map((doc) => (
-              <DoctorCard key={doc.id} doctor={doc} onAppointment={handleAppointment} />
-            ))
+        <>
+          {selectedDoctorId ? (
+            <div className="max-w-3xl mx-auto">
+              <button
+                onClick={() => setSelectedDoctorId(null)}
+                className="mb-4 text-blue-500 hover:underline"
+              >
+                ← Back to doctors
+              </button>
+
+              <PatientAppointment
+                doctorId={selectedDoctorId}
+                patientId="mock-patient-id"
+                bookedSlots={mockBookedSlots}
+                onSubmit={(data) => {
+                  console.log("Submitted appointment:", data);
+                  alert("Appointment request submitted!");
+                  setSelectedDoctorId(null);
+                }}
+              />
+            </div>
           ) : (
-            <p className="col-span-full text-center text-gray-500 text-lg">
-              No doctors found.
-            </p>
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredDoctors.length > 0 ? (
+                filteredDoctors.map((doc) => (
+                  <DoctorCard key={doc.id} doctor={doc} onAppointment={handleAppointment} />
+                ))
+              ) : (
+                <p className="col-span-full text-center text-gray-500 text-lg">No doctors found.</p>
+              )}
+            </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

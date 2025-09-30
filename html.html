@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Developer Learning Path</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #f0f0f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #ffd43b; /* Python yellow */
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card h2 {
+            color: #4dc0b0; /* Django green */
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .progress-container {
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4dc0b0, #3498db);
+            border-radius: 10px;
+            width: 0;
+            transition: width 1s ease-in-out;
+        }
+        
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+        
+        .resources-list {
+            list-style-type: none;
+        }
+        
+        .resources-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .resources-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .resources-list a {
+            color: #3498db;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s;
+        }
+        
+        .resources-list a:hover {
+            color: #ffd43b;
+        }
+        
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+        }
+        
+        .skill-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .skill-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .skill-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #4dc0b0;
+        }
+        
+        .next-steps {
+            margin-top: 30px;
+        }
+        
+        .steps-list {
+            list-style-type: none;
+            counter-reset: step-counter;
+        }
+        
+        .steps-list li {
+            padding: 15px 15px 15px 50px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .steps-list li:before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background: #4dc0b0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .motivation {
+            font-style: italic;
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border-left: 4px solid #ffd43b;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #4dc0b0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #3aa895;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fab fa-python"></i> Django Developer Learning Path</h1>
+            <p class="tagline">A roadmap to go from beginner to professional Django developer</p>
+        </header>
+        
+        <div class="dashboard">
+            <div class="card">
+                <h2><i class="fas fa-road"></i> Learning Progress</h2>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-labels">
+                        <span>Beginner</span>
+                        <span id="progress-percentage">0%</span>
+                        <span>Pro</span>
+                    </div>
+                </div>
+                <p>Track your progress as you complete each step of the learning path.</p>
+                <div class="controls">
+                    <button id="btn-increase">Add Progress</button>
+                    <button id="btn-reset">Reset Progress</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-book"></i> Recommended Resources</h2>
+                <ul class="resources-list">
+                    <li><a href="#"><i class="fas fa-external-link-alt"></i> Django Official Documentation</a></li>
+                    <li><a href="#"><i class="fas fa-external-link-alt"></i> Django for Beginners - William S. Vincent</a></li>
+                    <li><a href="#"><i class="fas fa-external-link-alt"></i> MDN Django Tutorial</a></li>
+                    <li><a href="#"><i class="fas fa-external-link-alt"></i> Django Girls Tutorial</a></li>
+                    <li><a href="#"><i class="fas fa-external-link-alt"></i> Real Python Django Tutorials</a></li>
+                    <li><a href="#"><i class="fas fa-external-link-alt"></i> Two Scoops of Django</a></li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-code"></i> Essential Skills</h2>
+                <div class="skills-grid">
+                    <div class="skill-item">
+                        <div class="skill-icon"><i class="fab fa-python"></i></div>
+                        <div>Python Core</div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-icon"><i class="fas fa-database"></i></div>
+                        <div>Database Design</div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-icon"><i class="fas fa-code-branch"></i></div>
+                        <div>REST APIs</div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-icon"><i class="fab fa-html5"></i></div>
+                        <div>HTML/CSS</div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-icon"><i class="fab fa-js"></i></div>
+                        <div>JavaScript</div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div>Security</div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-icon"><i class="fas fa-server"></i></div>
+                        <div>Deployment</div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-icon"><i class="fas fa-tasks"></i></div>
+                        <div>Testing</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-tasks"></i> Next Steps</h2>
+                <ol class="steps-list">
+                    <li>Master Python fundamentals (lists, dictionaries, functions, classes)</li>
+                    <li>Learn HTML, CSS, and JavaScript basics</li>
+                    <li>Understand relational databases and SQL</li>
+                    <li>Complete the official Django tutorial</li>
+                    <li>Build a simple CRUD application</li>
+                    <li>Learn about user authentication and authorization</li>
+                    <li>Explore Django REST Framework for API development</li>
+                    <li>Practice testing with pytest and Django testing tools</li>
+                    <li>Deploy a project to a platform like Heroku or PythonAnywhere</li>
+                    <li>Contribute to open source Django projects</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="motivation">
+            <p>"The expert in anything was once a beginner. Consistency and practice are key to mastering Django development."</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressFill = document.getElementById('progress-fill');
+            const progressPercentage = document.getElementById('progress-percentage');
+            const btnIncrease = document.getElementById('btn-increase');
+            const btnReset = document.getElementById('btn-reset');
+            
+            let progress = 0;
+            
+            // Load progress from localStorage if available
+            if (localStorage.getItem('djangoProgress')) {
+                progress = parseInt(localStorage.getItem('djangoProgress'));
+                updateProgress();
+            }
+            
+            btnIncrease.addEventListener('click', function() {
+                if (progress < 100) {
+                    progress += 10;
+                    if (progress > 100) progress = 100;
+                    localStorage.setItem('djangoProgress', progress);
+                    updateProgress();
+                }
+            });
+            
+            btnReset.addEventListener('click', function() {
+                progress = 0;
+                localStorage.setItem('djangoProgress', progress);
+                updateProgress();
+            });
+            
+            function updateProgress() {
+                progressFill.style.width = progress + '%';
+                progressPercentage.textContent = progress + '%';
+            }
+        });
+    </script>
+</body>
+</html>

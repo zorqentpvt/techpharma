@@ -18,7 +18,7 @@ export default function Button({
 
   const variants: Record<string, string> = {
     primary:
-      "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl",
+      "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-600 hover:to-blue-650 shadow-lg hover:shadow-xl",
     secondary:
       "bg-white text-gray-800 border border-gray-300 hover:bg-gray-100 shadow-sm",
   };

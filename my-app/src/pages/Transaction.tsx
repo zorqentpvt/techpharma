@@ -45,7 +45,7 @@ export default function Transaction() {
 
         <div className="mt-6 flex justify-end gap-4">
           <Button onClick={() => navigate("/dashboard")} variant="secondary">Cancel</Button>
-          <Button onClick={handleBuy}>Buy 💊</Button>
+          <Button onClick={handleBuy}>Buy </Button>
         </div>
       </div>
     </div>

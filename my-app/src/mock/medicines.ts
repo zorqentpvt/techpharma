@@ -6,7 +6,7 @@ export interface Medicine {
 }
 
 export const medicines: Medicine[] = [
-    { name: "Paracetamol", pharmacy: "PharmaOne", stock: 50, contents: "Acetaminophen 500mg" },
+    { name: "Paracetamol", pharmacy: "PharmaOne", stock: 0, contents: "Acetaminophen 500mg" },
     { name: "Ibuprofen", pharmacy: "HealthPlus", stock: 30, contents: "Ibuprofen 200mg" },
     { name: "Amoxicillin", pharmacy: "PharmaOne", stock: 20, contents: "Amoxicillin 500mg" },
     { name: "Vitamin C", pharmacy: "MediStore", stock: 100, contents: "Ascorbic Acid 500mg" },

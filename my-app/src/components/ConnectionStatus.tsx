@@ -47,17 +47,17 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   }, [backendUrl, checkInterval]);
 
   return (
-    <div className="p-4 rounded-2xl shadow-md bg-white max-w-sm mx-auto">
-      <h2 className="text-xl font-bold mb-2">Connection Status</h2>
-      <div className="space-y-2">
+    <div className="p-1 rounded-2xl shadow-md bg-white max-w-sm mx-auto">
+      <h2 className="text-indigo-800 font-bold ">Connection Status :</h2>
+      <div className="space-y-1 text-l">
         <p>
-          🌐 Internet:{" "}
-          <span className={isOnline ? "text-green-600" : "text-red-600"}>
+           Internet:{" "}
+          <span className={isOnline ? "text-green-600 tex" : "text-red-600" } >
             {isOnline ? "Online" : "Offline"}
           </span>
         </p>
         <p>
-          🖥️ Backend:{" "}
+           Backend:{" "}
           <span
             className={
               backendStatus === "connected"

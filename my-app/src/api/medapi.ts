@@ -101,7 +101,7 @@ export async function scheduleAppointment(id: string): Promise<void> {
     throw new Error(`Appointment with id "${id}" not found.`);
   }
   appointments[index].status = "scheduled";
-};
+}
 
 // ------------------ Doctors ------------------
 export interface Doctor {
@@ -128,4 +128,105 @@ export async function getDoctors(): Promise<Doctor[]> {
       name: user.username.charAt(0).toUpperCase() + user.username.slice(1),
       specialty: specialties[user.username] || "General",
     }));
+}
+
+// ------------------ Consultations ------------------
+export interface Consultation {
+  id: string;
+  appointmentId: string;
+  doctor: string;
+  patient: string;
+  symptoms: string;
+  diagnosis: string;
+  prescription: string;
+  notes: string;
+}
+
+let consultations: Consultation[] = [];
+
+/**
+ * Get consultation details for a given appointment
+ */
+export async function getConsultation(
+  appointmentId: string
+): Promise<Consultation> {
+  await delay(300);
+  const c = consultations.find(c => c.appointmentId === appointmentId);
+  if (!c) {
+    // If no consultation exists yet, bootstrap it from appointment
+    const appt = appointments.find(a => a.id === appointmentId);
+    if (!appt) throw new Error("Appointment not found");
+    return {
+      id: Date.now().toString(),
+      appointmentId,
+      doctor: appt.doctor,
+      patient: appt.patient,
+      symptoms: "",
+      diagnosis: "",
+      prescription: "",
+      notes: "",
+    };
+  }
+  return c;
+}
+
+/**
+ * Update or create a consultation
+ */
+export async function updateConsultation(
+  appointmentId: string,
+  updated: Partial<Consultation>
+): Promise<void> {
+  await delay(300);
+  const index = consultations.findIndex(c => c.appointmentId === appointmentId);
+  if (index === -1) {
+    // create new consultation
+    consultations.push({
+      id: Date.now().toString(),
+      appointmentId,
+      doctor: updated.doctor || "unknown",
+      patient: updated.patient || "unknown",
+      symptoms: updated.symptoms || "",
+      diagnosis: updated.diagnosis || "",
+      prescription: updated.prescription || "",
+      notes: updated.notes || "",
+    });
+  } else {
+    consultations[index] = { ...consultations[index], ...updated };
+  }
+}
+
+// ------------------ Reports ------------------
+export interface ReportData {
+  id: string;
+  patient: string;
+  diagnosis: string;
+  prescription: string;
+  date: string;
+}
+
+let reports: ReportData[] = [
+  {
+    id: "r1",
+    patient: "John Doe",
+    diagnosis: "Migraine",
+    prescription: "Painkillers",
+    date: "2025-10-01",
+  },
+];
+
+/**
+ * Get all reports
+ */
+export async function getReports(): Promise<ReportData[]> {
+  await delay(300);
+  return [...reports];
+}
+
+/**
+ * Add a new report
+ */
+export async function addReport(report: ReportData): Promise<void> {
+  await delay(300);
+  reports.push({ ...report, id: Date.now().toString() });
 }

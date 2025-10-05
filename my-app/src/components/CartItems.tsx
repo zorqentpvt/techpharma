@@ -3,7 +3,7 @@ import React from "react";
 const CartItems: React.FC = () => {
   return (
     <>
-      <ul>
+      <ul className=" p-6 bg-gray-100 border-2 rounded-2xl">
         {/* Cart item */}
         <li className="sm:flex items-center py-6 border-b border-gray-200 dark:border-gray-700/60">
           <a
@@ -20,7 +20,7 @@ const CartItems: React.FC = () => {
           </a>
           <div className="grow">
             <a href="#0">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-1">
+              <h3 className="text-lg font-semibold text-gray-800  mb-1">
                 The Complete Front-End Development Course!
               </h3>
             </a>
@@ -47,7 +47,7 @@ const CartItems: React.FC = () => {
                       </svg>
                     ))}
                     <svg
-                      className="fill-current text-gray-300 dark:text-gray-600"
+                      className="fill-current text-gray-300 "
                       width={16}
                       height={16}
                       viewBox="0 0 16 16"
@@ -89,7 +89,7 @@ const CartItems: React.FC = () => {
           </a>
           <div className="grow">
             <a href="#0">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-1">
+              <h3 className="text-lg font-semibold text-gray-800  mb-1">
                 Web Development Ultimate Course 2024
               </h3>
             </a>
@@ -114,7 +114,7 @@ const CartItems: React.FC = () => {
                       </svg>
                     ))}
                     <svg
-                      className="fill-current text-gray-300 dark:text-gray-600"
+                      className="fill-current text-gray-300 "
                       width={16}
                       height={16}
                       viewBox="0 0 16 16"
@@ -156,7 +156,7 @@ const CartItems: React.FC = () => {
           </a>
           <div className="grow">
             <a href="#0">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-1">
+              <h3 className="text-lg font-semibold text-gray-800  mb-1">
                 Full-Stack JavaScript Course!
               </h3>
             </a>
@@ -181,7 +181,7 @@ const CartItems: React.FC = () => {
                       </svg>
                     ))}
                     <svg
-                      className="fill-current text-gray-300 dark:text-gray-600"
+                      className="fill-current text-gray-300 "
                       width={16}
                       height={16}
                       viewBox="0 0 16 16"

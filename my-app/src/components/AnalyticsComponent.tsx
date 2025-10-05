@@ -42,7 +42,7 @@ const AnalyticsComponent: React.FC<AnalyticsProps> = ({
       {
         label: "Orders",
         data: orderTrend,
-        borderColor: "#6366f1", // indigo-500
+        borderColor: "#00ccff", // indigo-500
         backgroundColor: "rgba(99, 102, 241, 0.2)",
         tension: 0.3,
         fill: true,
@@ -66,14 +66,14 @@ const AnalyticsComponent: React.FC<AnalyticsProps> = ({
   };
 
   return (
-    <div className="flex flex-col col-span-full xl:col-span-8 bg-white dark:bg-gray-800 shadow-md rounded-xl">
-      <header className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
+    <div className="flex flex-col col-span-full xl:col-span-8 bg-white dark:bg-gray-100 shadow-md rounded-xl">
+      <header className="px-2 py-4 border-b border-gray-200 dark:border-gray-200 flex items-center">
         <h2 className="font-semibold text-gray-800 dark:text-gray-100">
           Analytics Overview
         </h2>
       </header>
 
-      <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="px- py-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Total Orders */}
         <div className="flex items-center justify-between">
           <div>
@@ -103,8 +103,8 @@ const AnalyticsComponent: React.FC<AnalyticsProps> = ({
       </div>
 
       {/* Chart */}
-      <div className="px-5 pb-5">
-        <Line data={data} options={options} height={300} />
+      <div className="px-2 pb-5">
+        <Line data={data} options={options} height={150} />
       </div>
     </div>
   );

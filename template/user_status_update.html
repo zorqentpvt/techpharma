@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Account Status Update</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: {{if eq .Status "active"}}#28a745{{else}}#dc3545{{end}}; color: white; text-align: center; padding: 20px; border-radius: 5px 5px 0 0; }
+        .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; }
+        .status { font-weight: bold; text-transform: uppercase; color: {{if eq .Status "active"}}#28a745{{else}}#dc3545{{end}}; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Account Status Update</h1>
+        </div>
+        <div class="content">
+            <p>Hi {{.UserName}},</p>
+            <p>Your account status has been updated to: <span class="status">{{.Status}}</span></p>
+            {{if eq .Status "suspended"}}
+            <p><strong>Reason:</strong> {{.Reason}}</p>
+            <p>If you believe this is an error or have questions, please contact our support team.</p>
+            {{else if eq .Status "active"}}
+            <p>Your account is now active and you can access all features.</p>
+            {{end}}
+            {{if .UpdatedBy}}
+            <p><em>Updated by: {{.UpdatedBy}} on {{.UpdatedAt}}</em></p>
+            {{end}}
+            <p>Best regards,<br>The {{.AppName}} Team</p>
+        </div>
+    </div>
+</body>
+</html>

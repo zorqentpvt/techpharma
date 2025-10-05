@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -e
+
+echo "🔧 Installing PostgreSQL extensions for development..."
+
+# Install required extensions
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+    -- Enable required extensions
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+    CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+    CREATE EXTENSION IF NOT EXISTS "btree_gin";
+    CREATE EXTENSION IF NOT EXISTS "btree_gist";
+    
+    -- Development specific extensions
+    CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+    CREATE EXTENSION IF NOT EXISTS "citext";
+    
+    -- Create custom functions for better performance
+    CREATE OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS \$\$
+    BEGIN
+        NEW.updated_at = NOW();
+        RETURN NEW;
+    END;
+    \$\$ language 'plpgsql';
+    
+    -- Grant necessary permissions
+    GRANT USAGE ON SCHEMA public TO $POSTGRES_USER;
+    GRANT CREATE ON SCHEMA public TO $POSTGRES_USER;
+    GRANT ALL PRIVILEGES ON SCHEMA public TO $POSTGRES_USER;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $POSTGRES_USER;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $POSTGRES_USER;
+    GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO $POSTGRES_USER;
+    
+    -- Create a test database for development
+    CREATE DATABASE collex_test;
+    GRANT ALL PRIVILEGES ON DATABASE collex_test TO $POSTGRES_USER;
+EOSQL
+
+echo "✅ Development extensions installation completed"

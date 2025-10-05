@@ -1,0 +1,20 @@
+Account Status Update
+
+Hi {{.UserName}},
+
+Your account status has been updated to: {{.Status}}
+
+{{if eq .Status "suspended"}}
+Reason: {{.Reason}}
+
+If you believe this is an error or have questions, please contact our support team.
+{{else if eq .Status "active"}}
+Your account is now active and you can access all features.
+{{end}}
+
+{{if .UpdatedBy}}
+Updated by: {{.UpdatedBy}} on {{.UpdatedAt}}
+{{end}}
+
+Best regards,
+The {{.AppName}} Team

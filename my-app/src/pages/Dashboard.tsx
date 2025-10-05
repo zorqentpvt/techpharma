@@ -47,7 +47,8 @@ export default function Dashboard() {
     { key: "Medicine", label: "Medicine", roles: ["normal"] },
     { key: "doctor", label: "Doctors", roles: ["normal"] },
     { key: "schedule", label: "Schedule", roles: ["doctor"] },
-    { key: "consultings", label: "Consultings and Report", roles: ["doctor"] },
+    { key: "report", label: "Report", roles: ["doctor","normal"] },
+    { key: "consultings", label: "Consultings", roles: ["doctor"] },
     { key: "consult", label: "Consultation", roles: ["normal"] },
     { key: "chatbot", label: "Chatbot", roles: ["normal"] },
     { key: "store", label: "Store", roles: ["pharmacy"] },
@@ -68,6 +69,7 @@ export default function Dashboard() {
         ) : (
           <div>Access Denied</div>
         );
+        
       case "store":
         return user.role === "pharmacy" ? <Store /> : <div>Access Denied</div>;
       case "appointments":
@@ -96,7 +98,7 @@ export default function Dashboard() {
             .map((tab) => (
               <button
                 key={tab.key}
-                className={`flex items-center gap-3 text-left px-4 py-2 rounded-lg font-medium transition-all ${
+                className={`flex items-center gap-3 text-left px-4 py-2 rounded-lg hover:shadow-xl pt-3 font-medium transition-all ${
                   activeTab === tab.key
                     ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md"
                     : "text-gray-700 hover:bg-blue-50"

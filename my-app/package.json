@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/alan-sans": "^5.2.1",
     "@tailwindcss/vite": "^4.1.12",
     "chart.js": "^4.5.0",
     "date-fns": "^4.1.0",

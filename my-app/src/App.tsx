@@ -8,8 +8,10 @@ import Orders from "./pages/Orders";
 import ConnectionStatus from "./components/ConnectionStatus";
 import Medicines from "./pages/Medicines";
 import Cart from "./pages/Cart";
+import SignupForm from "./pages/SignupForm";
 import "./index.css";
 import React from "react";
+import Consultings from "./pages/Consultings";
 
 function App() {
   return (
@@ -24,10 +26,12 @@ function App() {
 
       <Routes>
         <Route path="/" element={<SignIn />} />
+        <Route path="/Signup-form" element={<SignupForm />} />
 
         {/* Dashboard layout route */}
         <Route path="/dashboard" element={<Dashboard />}>
           <Route path="store" element={<Store />} />
+          <Route path="consult" element={<Consultings />} />
           <Route path="medicine" element={<Medicines />} />
           <Route path="orders" element={<Orders />} />
           <Route path="cart" element={<Cart />} />

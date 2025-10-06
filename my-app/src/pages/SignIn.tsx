@@ -37,26 +37,28 @@ export default function SignIn() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); setSuccess(""); setLoading(true);
+    setError("");
+    setSuccess("");
+    setLoading(true);
+  
     if (!username || !email || !password) {
       setError("❌ Please fill all fields");
       setLoading(false);
       return;
     }
+  
     try {
-      const res = await signup({ username, email, password, role });
-      if (res.success) {
-        localStorage.setItem("user", JSON.stringify(res.user));
-        setSuccess("✅ Account created successfully!");
-        setTimeout(() => navigate("/dashboard"), 800);
-      } else {
-        setError(res.message || "❌ Signup failed");
-      }
+      // Pass form data to /signup-form
+      navigate("/Signup-form", {
+        state: { username, email, password, role },
+      });
     } catch (err: any) {
       setError(err.message || "❌ Something went wrong");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
-
+  
   return (
     <div 
       className="min-h-screen flex items-center justify-center bg-cover bg-center  px-8 lg:px-24" 

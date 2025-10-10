@@ -114,14 +114,6 @@ const Cart: React.FC = () => {
                     .
                   </div>
                 </div>
-
-                {/* Analytics Component */}
-                <div className="mt-6 border-2 rounded-2xl">
-                  <AnalyticsComponent
-                    totalOrders={totalOrders}
-                    totalRevenue={mockOrderSummary.productsTotal + mockOrderSummary.taxes}
-                  />
-                </div>
               </div>
             </div>
           </div>

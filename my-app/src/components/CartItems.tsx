@@ -208,12 +208,12 @@ const CartItems: React.FC = () => {
         </li>
       </ul>
 
-      <div className="mt-6">
+      <div className="flex items-center gap-3 text-left px-4 py-2 rounded-lg hover:shadow-xl pt-3 mt-6 w-40 font-medium transition-all
+      bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md">
         <a
-          className="text-sm font-medium text-violet-500 hover:text-violet-600 dark:hover:text-violet-400"
-          href="#0"
-        >
-          &lt;- Back To Shopping
+          className="text-sm font-medium text-blue-50 "          
+          href="#0">
+           Back To Shopping
         </a>
       </div>
     </>

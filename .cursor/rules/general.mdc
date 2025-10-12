@@ -1,0 +1,176 @@
+---
+alwaysApply: true
+description: Collex  collage accounting management tool - Clean Architecture Rules
+---
+
+# Collex Structure & Development Rules
+
+## Project Overview
+
+Collex is a comprehensive collage management system with advanced financial tracking capabilities. Built using Go (backend) and React+TypeScript (frontend) following Clean Architecture principles.
+
+## Technology Stack
+
+- **Backend**: Go 1.23.1, Gin HTTP framework, GORM ORM
+- **Database**: PostgreSQL (production), SQLite (development)
+- **Frontend**: React 19, TypeScript, Vite, TailwindCSS, Radix UI, shadcn/ui
+- **Type Generation**: tygo (Go to TypeScript)
+- **Testing**: Go testing, testify
+- **Development**: Air (hot reload), golangci-lint
+
+## **Project Structure**
+
+### \*\*Backend Structure (` server setup
+
+├── cmd/api/ # Application entry point
+├── internal/ # Private application code
+│ ├── delivery/http/ # HTTP handlers & middleware
+│ │ ├── middleware/ # Auth, rate limiting, etc.
+│ │ └── response/ # HTTP response utilities
+│ ├── domain/ # Core business logic
+│ │ ├── entity/ # Domain entities (GORM models)
+│ │ ├── repository/ # Repository interfaces
+│ │ ├── service/ # Domain services
+│ │ └── errors/ # Domain errors
+│ ├── infrastructure/ # External concerns
+│ │ ├── persistence/ # Database implementations
+│ │ ├── cache/ # Caching layer
+│ │ ├── container/ # Dependency injection
+│ │ └── server/ # HTTP server setup
+│ ├── usecase/ # Application use cases
+│ └── types/ # API request/response types
+├── pkg/ # Public packages
+│ ├── config/ # Configuration management
+│ └── logger/ # Logging utilities
+├── shared/ # Shared types/constants
+├── scripts/ # Build & utility scripts
+└── docs/ # Documentation `
+)
+
+### \*\*Frontend Structure (` # React components
+
+│ │ └── ui/ # shadcn/ui components
+│ ├── types/
+│ │ ├── generated/ # Auto-generated from Go (DO NOT EDIT)
+│ │ └── backup/ # Type generation backups
+│ ├── lib/ # Utility functions
+│ ├── examples/ # Usage examples & demos
+│ ├── css/ # Global styles
+│ └── assets/ # Static assets
+├── src/
+│ ├── components/ # React components
+│ │ └── ui/ # shadcn/ui components
+│ ├── types/
+│ │ ├── generated/ # Auto-generated from Go (DO NOT EDIT)
+│ │ └── backup/ # Type generation backups
+│ ├── lib/ # Utility functions
+│ ├── examples/ # Usage examples & demos
+│ ├── css/ # Global styles
+│ └── assets/ # Static assets
+)
+
+## **Development Rules & Conventions**
+
+### **1. Clean Architecture Principles**
+
+- **Entities** (`internal/domain/entity/`): Core business objects with GORM annotations
+- **Use Cases** (`internal/usecase/`): Application business logic
+- **Repositories** (`internal/domain/repository/`): Data access interfaces
+- **Handlers** (`internal/delivery/http/`): HTTP request/response handling
+- **Infrastructure** (`internal/infrastructure/`): External dependencies
+
+### **2. Entity Development Rules**
+
+- All entities MUST extend appropriate base models (`BaseModel`, `BusinessScopedEntity`, etc.)
+- Use `tygo:emit` comments for TypeScript generation
+- Follow naming conventions: `PascalCase` for types, `camelCase` for JSON tags
+- Include comprehensive GORM annotations for database schema
+- Add helper methods for business logic on entities
+- Use embedded structs for common patterns (`MoneyAmount`)
+
+### **3. Financial Entity Guidelines**
+
+- All financial entities MUST be business-scoped
+- Use `MoneyAmount` struct for all monetary values
+- Include audit trails and approval workflows
+- Support multi-currency operations (default: INR)
+- Add comprehensive status tracking and lifecycle management
+- Include tax compliance fields (GST, TDS, etc.)
+
+### **4. API Development Rules**
+
+- Follow RESTful conventions
+- Use structured response format from `internal/delivery/http/response/`
+- Implement proper error handling with domain errors
+- Add middleware for authentication, rate limiting, logging
+- Include comprehensive input validation
+- Document APIs with proper comments for swagger generation
+
+### **5. Type Generation Workflow**
+
+- **NEVER** manually edit files in `client/src/types/generated/`
+- Run `make generate-types-enhanced` after Go entity changes
+- Use `make watch-types` for development with auto-regeneration
+- Backup types are automatically created before regeneration
+- Test type generation with `make test-types`
+
+### **6. Database & Migration Rules**
+
+- Use GORM migrations for schema changes
+- Follow naming conventions: `snake_case` for database columns
+- Add proper indexes for foreign keys and frequently queried fields
+- Use soft deletes for business-critical entities
+- Include audit fields (created_by, updated_by, etc.)
+
+### **7. Testing Standards**
+
+- Write unit tests for all use cases and handlers
+- Use testify for assertions and mocking
+- Include integration tests for database operations
+- Test coverage should be > 80%
+- Use table-driven tests for multiple scenarios
+- Mock external dependencies properly
+
+### **8. Frontend Development Rules**
+
+- Use TypeScript strictly - no `any` types
+- Import types from `@/types/generated/` for backend models
+- Follow shadcn/ui patterns for components
+- Use TailwindCSS for styling
+- Implement proper error handling and loading states
+- Follow React best practices (hooks, context, etc.)
+
+### **9. Build & Deployment**
+
+- Use `make` commands for all build operations
+- Run `make check` before committing (fmt, vet, lint, test)
+- Use `make ci` for continuous integration pipeline
+- Docker builds available with `make docker-build`
+- Hot reload development with `make dev`
+
+### **10. Code Quality Standards**
+
+- Run `golangci-lint` for Go code quality
+- Format code with `go fmt` before committing
+- Use meaningful variable and function names
+- Add comprehensive comments for exported functions
+- Follow Go naming conventions and idioms
+- Keep functions small and focused (single responsibility)
+
+### **11. Security Guidelines**
+
+- Use proper authentication middleware
+- Implement rate limiting for APIs
+- Validate all inputs thoroughly
+- Use prepared statements (GORM handles this)
+- Implement proper authorization checks
+- Run security scans with `make security`
+
+### **12. Performance Considerations**
+
+- Use database indexes appropriately
+- Implement caching where beneficial
+- Use pagination for large datasets
+- Optimize GORM queries (avoid N+1 problems)
+- Profile performance with `make profile`
+- Monitor memory usage and goroutine leaks

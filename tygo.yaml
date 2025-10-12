@@ -1,0 +1,85 @@
+packages:
+  # Shared constants and types
+  - path: "github.com/skryfon/collex/shared"
+    output_path: "client/src/types/generated/shared.ts"
+    type_mappings:
+      time.Time: "string"
+      uuid.UUID: "string"
+      json.RawMessage: "Record<string, unknown>"
+      gorm.DeletedAt: "string | null"
+      "*string": "string | null"
+      "*bool": "boolean | null"
+      "*int": "number | null"
+      "*uint": "number | null"
+    style_options:
+      enum_style: "union"
+    frontmatter: |
+      /* eslint-disable */
+      // This file is auto-generated. Do not edit manually.
+
+  # Domain entities/models
+  - path: "github.com/skryfon/collex/internal/domain/entity"
+    output_path: "client/src/types/generated/entities.ts"
+    type_mappings:
+      time.Time: "string"
+      uuid.UUID: "string"
+      json.RawMessage: "Record<string, unknown>"
+      gorm.DeletedAt: "string | null"
+      gorm.Model: "{ ID: number; CreatedAt: string; UpdatedAt: string; DeletedAt: string | null }"
+      "*string": "string | null"
+      "*bool": "boolean | null"
+      "*int": "number | null"
+      "*uint": "number | null"
+    frontmatter: |
+      /* eslint-disable */
+      // This file is auto-generated. Do not edit manually.
+    
+
+  # API request/response types
+  - path: "github.com/skryfon/collex/internal/types"
+    output_path: "client/src/types/generated/api.ts"
+    type_mappings:
+      time.Time: "string"
+      uuid.UUID: "string"
+      json.RawMessage: "Record<string, unknown>"
+      gorm.DeletedAt: "string | null"
+      "*string": "string | null"
+      "*bool": "boolean | null"
+      "*int": "number | null"
+      "*uint": "number | null"
+    frontmatter: |
+      /* eslint-disable */
+      // This file is auto-generated. Do not edit manually.
+
+  # HTTP response types
+  - path: "github.com/skryfon/collex/internal/delivery/http/response"
+    output_path: "client/src/types/generated/responses.ts"
+    type_mappings:
+      time.Time: "string"
+      uuid.UUID: "string"
+      json.RawMessage: "Record<string, unknown>"
+      gorm.DeletedAt: "string | null"
+      "interface{}": "unknown"
+      "*string": "string | null"
+      "*bool": "boolean | null"
+      "*int": "number | null"
+      "*uint": "number | null"
+    frontmatter: |
+      /* eslint-disable */
+      // This file is auto-generated. Do not edit manually.
+
+  # Service types (like Claims)
+  - path: "github.com/skryfon/collex/internal/domain/service"
+    output_path: "client/src/types/generated/services.ts"
+    type_mappings:
+      time.Time: "string"
+      uuid.UUID: "string"
+      json.RawMessage: "Record<string, unknown>"
+      gorm.DeletedAt: "string | null"
+      "*string": "string | null"
+      "*bool": "boolean | null"
+      "*int": "number | null"
+      "*uint": "number | null"
+    frontmatter: |
+      /* eslint-disable */
+      // This file is auto-generated. Do not edit manually.

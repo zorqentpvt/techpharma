@@ -162,6 +162,8 @@ func (d *Database) Migrate() error {
 		&entity.Specialization{},
 		&entity.Pharmacy{},
 		&entity.Medicine{},
+		&entity.Cart{},
+		&entity.CartMedicine{},
 	}
 
 	// Run migrations
@@ -179,15 +181,48 @@ func (d *Database) CreateIndexes() error {
 
 	// Create composite indexes for better query performance
 	indexes := []string{
+		// User indexes
 		"CREATE INDEX IF NOT EXISTS idx_users_phone_status ON users(phone_number, status) WHERE deleted_at IS NULL",
 		"CREATE INDEX IF NOT EXISTS idx_users_email_status ON users(email, status) WHERE deleted_at IS NULL AND email IS NOT NULL",
+
+		// User session indexes
 		"CREATE INDEX IF NOT EXISTS idx_user_sessions_user_active ON user_sessions(user_id, is_active) WHERE deleted_at IS NULL",
+
+		// User activity indexes
 		"CREATE INDEX IF NOT EXISTS idx_user_activities_user_type ON user_activities(user_id, activity_type) WHERE deleted_at IS NULL",
+
+		// Role indexes
 		"CREATE INDEX IF NOT EXISTS idx_roles_category_active ON roles(category, is_active) WHERE deleted_at IS NULL",
+
+		// Permission indexes
 		"CREATE INDEX IF NOT EXISTS idx_permissions_module_resource ON permissions(module, resource) WHERE deleted_at IS NULL",
+
+		// User role indexes (if you have a user_roles join table)
 		"CREATE INDEX IF NOT EXISTS idx_user_roles_user_active ON user_roles(user_id, is_active) WHERE deleted_at IS NULL",
+
+		// Audit log indexes
 		"CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON audit_logs(entity_type, entity_id) WHERE deleted_at IS NULL",
+		"CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC) WHERE deleted_at IS NULL",
+
+		// System event indexes
 		"CREATE INDEX IF NOT EXISTS idx_system_events_type_created ON system_events(event_type, created_at) WHERE deleted_at IS NULL",
+
+		// Doctor indexes
+		"CREATE INDEX IF NOT EXISTS idx_doctors_specialization ON doctors(specialization_id) WHERE deleted_at IS NULL",
+		"CREATE INDEX IF NOT EXISTS idx_doctors_status ON doctors(status) WHERE deleted_at IS NULL",
+
+		// Medicine indexes
+		"CREATE INDEX IF NOT EXISTS idx_medicines_pharmacy_id ON medicines(pharmacy_id) WHERE deleted_at IS NULL",
+		"CREATE INDEX IF NOT EXISTS idx_medicines_name ON medicines(name) WHERE deleted_at IS NULL",
+		"CREATE INDEX IF NOT EXISTS idx_medicines_category ON medicines(category) WHERE deleted_at IS NULL",
+
+		// Cart indexes
+		"CREATE INDEX IF NOT EXISTS idx_carts_user_id ON carts(user_id) WHERE deleted_at IS NULL",
+
+		// Cart medicine indexes
+		"CREATE INDEX IF NOT EXISTS idx_cart_medicines_cart_id ON cart_medicines(cart_id) WHERE deleted_at IS NULL",
+		"CREATE INDEX IF NOT EXISTS idx_cart_medicines_medicine_id ON cart_medicines(medicine_id) WHERE deleted_at IS NULL",
+		"CREATE UNIQUE INDEX IF NOT EXISTS idx_cart_medicines_cart_medicine ON cart_medicines(cart_id, medicine_id) WHERE deleted_at IS NULL",
 	}
 
 	for _, indexSQL := range indexes {
@@ -216,8 +251,6 @@ func (d *Database) SeedData() error {
 		return fmt.Errorf("failed to check existing permissions: %w", err)
 	}
 
-	// Check if colleges already exist
-
 	// Seed roles if they don't exist
 	if roleCount == 0 {
 		if err := d.seedRoles(); err != nil {
@@ -232,13 +265,10 @@ func (d *Database) SeedData() error {
 		}
 	}
 
-	// Seed colleges if they don't exist
-
 	log.Println("Database seeded successfully")
 	return nil
 }
 
-// seedRoles creates default roles
 // seedRoles creates default roles for the medical system
 func (d *Database) seedRoles() error {
 	log.Println("Seeding roles...")
@@ -378,23 +408,76 @@ func (d *Database) seedPermissions() error {
 			Scope:              "business",
 			DisplayOrder:       4,
 		},
-		// College management permissions
+		// Medicine management permissions
 		{
 			BaseModel:          entity.BaseModel{},
-			Name:               "Manage Colleges",
-			Code:               "college:manage",
-			Description:        stringPtr("Create, update, and manage colleges"),
-			Module:             "college",
-			Resource:           "college",
-			Action:             "manage",
-			Category:           "college_management",
+			Name:               "View Medicines",
+			Code:               "medicine:read",
+			Description:        stringPtr("View medicine catalog"),
+			Module:             "medicine",
+			Resource:           "medicine",
+			Action:             "read",
+			Category:           "medicine_management",
 			IsSystemPermission: false,
 			IsActive:           true,
-			RequiresApproval:   true,
+			RequiresApproval:   false,
+			IsFullAccess:       false,
+			AccessLevel:        "read",
+			Scope:              "medical",
+			DisplayOrder:       5,
+		},
+		{
+			BaseModel:          entity.BaseModel{},
+			Name:               "Manage Medicines",
+			Code:               "medicine:manage",
+			Description:        stringPtr("Create, update, and manage medicines"),
+			Module:             "medicine",
+			Resource:           "medicine",
+			Action:             "manage",
+			Category:           "medicine_management",
+			IsSystemPermission: false,
+			IsActive:           true,
+			RequiresApproval:   false,
 			IsFullAccess:       true,
 			AccessLevel:        "admin",
-			Scope:              "system",
-			DisplayOrder:       5,
+			Scope:              "medical",
+			DisplayOrder:       6,
+		},
+		// Cart permissions
+		{
+			BaseModel:          entity.BaseModel{},
+			Name:               "Manage Cart",
+			Code:               "cart:manage",
+			Description:        stringPtr("Add, update, and remove items from cart"),
+			Module:             "cart",
+			Resource:           "cart",
+			Action:             "manage",
+			Category:           "cart_management",
+			IsSystemPermission: false,
+			IsActive:           true,
+			RequiresApproval:   false,
+			IsFullAccess:       false,
+			AccessLevel:        "write",
+			Scope:              "own",
+			DisplayOrder:       7,
+		},
+		// Doctor permissions
+		{
+			BaseModel:          entity.BaseModel{},
+			Name:               "View Doctors",
+			Code:               "doctor:read",
+			Description:        stringPtr("View doctor profiles"),
+			Module:             "doctor",
+			Resource:           "doctor",
+			Action:             "read",
+			Category:           "doctor_management",
+			IsSystemPermission: false,
+			IsActive:           true,
+			RequiresApproval:   false,
+			IsFullAccess:       false,
+			AccessLevel:        "read",
+			Scope:              "medical",
+			DisplayOrder:       8,
 		},
 		// Role management permissions
 		{
@@ -412,7 +495,7 @@ func (d *Database) seedPermissions() error {
 			IsFullAccess:       true,
 			AccessLevel:        "admin",
 			Scope:              "system",
-			DisplayOrder:       6,
+			DisplayOrder:       9,
 		},
 		// System permissions
 		{
@@ -430,7 +513,7 @@ func (d *Database) seedPermissions() error {
 			IsFullAccess:       true,
 			AccessLevel:        "admin",
 			Scope:              "system",
-			DisplayOrder:       7,
+			DisplayOrder:       10,
 		},
 	}
 
@@ -443,8 +526,6 @@ func (d *Database) seedPermissions() error {
 	log.Println("Permissions seeded successfully")
 	return nil
 }
-
-// seedColleges creates sample colleges in Alappuzha
 
 // stringPtr returns a pointer to a string
 func stringPtr(s string) *string {

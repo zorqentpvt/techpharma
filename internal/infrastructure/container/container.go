@@ -25,6 +25,7 @@ type Container struct {
 	SecurityRepository repository.SecurityEventRepository
 	MedicineRepository repository.MedicineRepository
 	DoctorRepository   repository.DoctorRepository
+	OrderRepository    repository.OrderRepository
 
 	// Domain Services
 	AuthService  service.AuthService
@@ -36,6 +37,7 @@ type Container struct {
 	UserUseCase     usecase.UserUseCase
 	MedicineUseCase usecase.MedicineUseCase
 	DoctorUseCase   usecase.DoctorUseCase
+	OrderUsecase    usecase.OrderUseCase
 }
 
 // NewContainer creates a new dependency injection container
@@ -64,6 +66,7 @@ func (c *Container) initRepositories() {
 	c.SecurityRepository = persistence.NewSecurityEventRepository(c.Database.DB)
 	c.MedicineRepository = persistence.NewMedicineRepository(c.Database.DB)
 	c.DoctorRepository = persistence.NewDoctorRepository(c.Database.DB)
+	c.OrderRepository = persistence.NewOrderRepository(c.Database.DB)
 }
 
 // initDomainServices initializes domain services
@@ -93,6 +96,9 @@ func (c *Container) initUseCases() {
 	)
 	c.DoctorUseCase = usecase.NewDoctorUseCase(
 		c.DoctorRepository,
+	)
+	c.OrderUsecase = usecase.NewOrderUseCase(
+		c.OrderRepository,
 	)
 }
 

@@ -42,6 +42,9 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 	doctorHanler := NewDoctorHandlerClean(
 		container.DoctorUseCase,
 	)
+	orderHandler := NewOrderHandlerClean(
+		container.OrderUsecase,
+	)
 
 	// Authentication routes (public)
 	authRoutes := api.Group("/auth")
@@ -56,7 +59,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 
 	// Protected routes (require authentication)
 	protectedRoutes := api.Group("/")
-	//	protectedRoutes.Use(middleware.JWTAuth(container.TokenService))
+	protectedRoutes.Use(middleware.JWTAuth(container.TokenService))
 	{
 		// User profile and account management routes (authenticated users)
 		patientRoutes := protectedRoutes.Group("/user")
@@ -64,6 +67,9 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			patientRoutes.GET("/medicines", medicineHanler.GetMedicines)
 			patientRoutes.POST("/doctors", doctorHanler.GetDoctors)
 			patientRoutes.POST("/medicines", medicineHanler.GetMedicines)
+			patientRoutes.POST("/add-cart", orderHandler.AddToCart)
+			patientRoutes.GET("/view-cart", orderHandler.GetCart)
+			patientRoutes.DELETE("/remove-cart", orderHandler.RemoveFromCart)
 
 			patientRoutes.GET("/profile", userHandler.GetUserProfile)          // Get current user's profile
 			patientRoutes.PUT("/profile", userHandler.UpdateUserProfile)       // Update current user's profile

@@ -36,3 +36,8 @@ type MedicineRepository interface {
 type DoctorRepository interface {
 	GetDoctors(ctx context.Context, searchQuery string) ([]*entity.Doctor, error)
 }
+type OrderRepository interface {
+	AddToCart(ctx context.Context, cart *entity.Cart) error
+	GetCartByUserID(ctx context.Context, userID uuid.UUID) (*entity.Cart, error)
+	RemoveFromCart(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID) error
+}

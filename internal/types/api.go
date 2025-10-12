@@ -304,3 +304,6 @@ type MedicineRequest struct {
 type DoctorRequest struct {
 	Query string `json:"query"`
 }
+type RemoveFromCartRequest struct {
+	MedicineID uuid.UUID `json:"medicine_id" binding:"required"`
+}

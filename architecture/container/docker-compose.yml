@@ -1,0 +1,133 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+    image: localhost/user-onboarding:latest
+    container_name: user-onboarding-app
+    restart: unless-stopped
+    ports:
+      - "9090:8080"
+    environment:
+      - PORT=${PORT}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - GO_ENV=${GO_ENV:-production}
+    env_file:
+      - .env
+    networks:
+      - user-onboarding-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - /home/user/logs/user-onboarding:/app/logs:Z
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    depends_on:
+      - db
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: client
+    image: localhost/user-onboarding-client:latest
+    container_name: user-onboarding-client
+    restart: unless-stopped
+    ports:
+      - "9091:80"
+    networks:
+      - user-onboarding-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost/",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    depends_on:
+      - app
+
+  db:
+    image: docker.io/library/postgres:15-alpine
+    container_name: user-onboarding-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data:Z
+      - ./scripts/init.sql/prod/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./scripts/init.sql/prod/init-pg-hba.sh:/docker-entrypoint-initdb.d/init-pg-hba.sh
+    networks:
+      - user-onboarding-network
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+networks:
+  user-onboarding-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  user-onboarding_logs:
+    driver: local
+  postgres_data:
+    driver: local

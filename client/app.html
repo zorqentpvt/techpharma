@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .search-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #ff5252;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .medicine-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .medicine-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .medicine-header {
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .medicine-name {
+            font-size: 1.4em;
+            color: #333;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .medicine-content {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .medicine-description {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .medicine-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .detail-label {
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 3px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .price-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .pharmacy-info {
+            background: #e8eaf6;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .pharmacy-name {
+            font-weight: 600;
+            color: #5e35b1;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .pharmacy-detail {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .badge-prescription {
+            background: #ff5252;
+            color: white;
+        }
+
+        .badge-no-prescription {
+            background: #4caf50;
+            color: white;
+        }
+
+        .no-results {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Medicine Search</h1>
+            <p>Search for medicines and find pharmacy details</p>
+        </div>
+
+        <div class="search-box">
+            <div class="search-input-group">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="Search for medicines (e.g., Paracetamol, Aspirin)"
+                />
+                <button id="searchBtn" class="search-btn">Search</button>
+            </div>
+        </div>
+
+        <div id="errorContainer"></div>
+        <div id="loadingContainer"></div>
+        <div id="resultsContainer" class="results-container"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api/user/medicines';
+        const AUTH_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjIwMWM2NmMtZDIxNC00NmU2LWI4ZmEtZmMwNjc4NTY3YTVmIiwiZW1haWwiOiJlYmluYmVubnk3NzdAZ21haWwuY29tIiwicm9sZSI6ImFkbWluIiwiZmlyc3RfbmFtZSI6ImViaW4iLCJsYXN0X25hbWUiOiJiZW5ueSIsImxhdGl0dWRlIjo5Ljg5NTgsImxvbmdpdHVkZSI6OC41NjgsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJpc3MiOiJ0ZWNocGhhcm1hIiwic3ViIjoiMjIwMWM2NmMtZDIxNC00NmU2LWI4ZmEtZmMwNjc4NTY3YTVmIiwiZXhwIjoxNzU5Njc5MDQ0LCJuYmYiOjE3NTk1OTI2NDQsImlhdCI6MTc1OTU5MjY0NCwianRpIjoiOWVjM2VhNTAtY2FhYy00YWMxLWI1MGEtZWZlNjNiOTM5NTRkIn0.W_V-wzPWV74d_MsV57EhAF793zV0qFETMaawqb0W4SA';
+
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const errorContainer = document.getElementById('errorContainer');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        async function searchMedicines(query) {
+            try {
+                showLoading();
+                clearError();
+                clearResults();
+
+                const response = await fetch(API_BASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': AUTH_TOKEN
+                    },
+                    body: JSON.stringify({
+                        SearchQuery: query
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                hideLoading();
+
+                if (data.success && data.data && data.data.length > 0) {
+                    displayResults(data.data);
+                } else {
+                    showNoResults();
+                }
+            } catch (error) {
+                hideLoading();
+                showError(`Failed to fetch medicines: ${error.message}`);
+            }
+        }
+
+        function displayResults(medicines) {
+            resultsContainer.innerHTML = medicines.map(medicine => `
+                <div class="medicine-card">
+                    <div class="medicine-header">
+                        <div class="medicine-name">${medicine.name}</div>
+                        <div class="medicine-content">${medicine.content}</div>
+                    </div>
+                    
+                    <div class="medicine-description">${medicine.description}</div>
+                    
+                    <div class="price-tag">₹${medicine.price}</div>
+                    
+                    <div class="medicine-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Manufacturer</div>
+                            <div class="detail-value">${medicine.manufacturer}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Batch Number</div>
+                            <div class="detail-value">${medicine.batchNumber}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Quantity</div>
+                            <div class="detail-value">${medicine.quantity} units</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Expiry Date</div>
+                            <div class="detail-value">${formatDate(medicine.expiryDate)}</div>
+                        </div>
+                    </div>
+                    
+                    ${medicine.prescriptionRequired 
+                        ? '<span class="badge badge-prescription">⚕️ Prescription Required</span>' 
+                        : '<span class="badge badge-no-prescription">✓ No Prescription Needed</span>'
+                    }
+                    
+                    <div class="pharmacy-info">
+                        <div class="pharmacy-name">📍 ${medicine.pharmacy.name}</div>
+                        <div class="pharmacy-detail">📧 ${medicine.pharmacy.email}</div>
+                        <div class="pharmacy-detail">📞 ${medicine.pharmacy.phoneNumber}</div>
+                        <div class="pharmacy-detail">🏠 ${medicine.pharmacy.address}, ${medicine.pharmacy.city}</div>
+                        <div class="pharmacy-detail">📮 ${medicine.pharmacy.postalCode}, ${medicine.pharmacy.state}, ${medicine.pharmacy.country}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function showLoading() {
+            loadingContainer.innerHTML = '<div class="loading">🔍 Searching for medicines...</div>';
+            searchBtn.disabled = true;
+        }
+
+        function hideLoading() {
+            loadingContainer.innerHTML = '';
+            searchBtn.disabled = false;
+        }
+
+        function showError(message) {
+            errorContainer.innerHTML = `<div class="error">❌ ${message}</div>`;
+        }
+
+        function clearError() {
+            errorContainer.innerHTML = '';
+        }
+
+        function clearResults() {
+            resultsContainer.innerHTML = '';
+        }
+
+        function showNoResults() {
+            resultsContainer.innerHTML = '<div class="no-results">No medicines found. Try a different search term.</div>';
+        }
+
+        searchBtn.addEventListener('click', () => {
+            const query = searchInput.value.trim();
+            if (query) {
+                searchMedicines(query);
+            } else {
+                showError('Please enter a search term');
+            }
+        });
+
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>

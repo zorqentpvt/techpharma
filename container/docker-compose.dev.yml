@@ -1,0 +1,234 @@
+services:
+  # =============================================================================
+  # Backend API Development Service
+  # =============================================================================
+  app-dev:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile
+      target: dev
+    image: collex/backend-dev:latest
+    container_name: collex-app-dev
+    restart: unless-stopped
+    ports:
+      - "7072:8080"
+    environment:
+      # Server Configuration
+      - SERVER_PORT=8080
+      - APP_ENV=development
+      - LOG_LEVEL=debug
+
+      # Database Configuration
+      - DB_HOST=db-dev
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-collex_dev}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_SSL_MODE=disable
+
+      # Connection Pool Configuration (Development)
+      - DB_MAX_OPEN_CONNS=50
+      - DB_MAX_IDLE_CONNS=5
+      - DB_CONN_MAX_LIFETIME=1h
+      - DB_CONN_MAX_IDLE_TIME=30m
+
+      # Migration Configuration
+      - DB_AUTO_MIGRATE=${DB_AUTO_MIGRATE:-true}
+      - DB_MIGRATE_PATH=${DB_MIGRATE_PATH:-migrations}
+
+      # JWT Configuration
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-secret-key-not-for-production}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-24h}
+      - JWT_REFRESH_EXPIRY=${JWT_REFRESH_EXPIRY:-168h}
+
+      # Development specific
+      - DEBUG=true
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+    networks:
+      - collex-dev-network
+    volumes:
+      - ..:/app:Z
+      - /app/tmp
+      - go-mod-cache:/go/pkg/mod
+      - collex_dev_logs:/app/logs:Z
+    depends_on:
+      db-dev:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =============================================================================
+  # Frontend Development Service
+  # =============================================================================
+  client-dev:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile
+      target: client-dev
+    image: collex/frontend-dev:latest
+    container_name: collex-client-dev
+    restart: unless-stopped
+    ports:
+      - "7073:5173"
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+      - VITE_APP_ENV=development
+      - NODE_ENV=development
+      - VITE_ALLOWED_HOSTS=collex.skryfon.com,.skryfon.com,localhost,127.0.0.1
+    networks:
+      - collex-dev-network
+    volumes:
+      - ../client:/app:Z
+      - /app/node_modules
+      - client-dev-cache:/app/.vite
+    depends_on:
+      - app-dev
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:5173/",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # =============================================================================
+  # PostgreSQL Development Database
+  # =============================================================================
+  db-dev:
+    image: docker.io/library/postgres:15-alpine
+    container_name: collex-db-dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_NAME:-collex_dev}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data:Z
+      - ./scripts/init-sql/dev/init-db.sh:/docker-entrypoint-initdb.d/01-init-db.sh:ro
+      - ./scripts/init-sql/dev/init-pg-hba.sh:/docker-entrypoint-initdb.d/02-init-pg-hba.sh:ro
+      - ./scripts/init-sql/dev/init-extensions.sh:/docker-entrypoint-initdb.d/03-init-extensions.sh:ro
+    networks:
+      - collex-dev-network
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-collex_dev}",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # =============================================================================
+  # Development Migration Service
+  # =============================================================================
+  migrate-dev:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile
+      target: migrate-runtime
+    image: collex/migrate-dev:latest
+    container_name: collex-migrate-dev
+    environment:
+      - DB_HOST=db-dev
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-collex_dev}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_SSL_MODE=disable
+    networks:
+      - collex-dev-network
+    volumes:
+      - ../migrations:/app/migrations:ro
+    depends_on:
+      db-dev:
+        condition: service_healthy
+    profiles:
+      - migrate
+    command: ["./migrate", "-action=migrate"]
+
+  # =============================================================================
+  # Redis Cache Service (Optional for Development)
+  # =============================================================================
+  redis-dev:
+    image: docker.io/library/redis:7-alpine
+    container_name: collex-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - collex-dev-network
+    volumes:
+      - redis_dev_data:/data:Z
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    profiles:
+      - cache
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  collex-dev-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+          gateway: 172.22.0.1
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres_dev_data:
+    driver: local
+  go-mod-cache:
+    driver: local
+  client-dev-cache:
+    driver: local
+  redis_dev_data:
+    driver: local
+  collex_dev_logs:
+    driver: local

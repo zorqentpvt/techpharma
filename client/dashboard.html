@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharma Search - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            min-width: 40px;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .sidebar.collapsed .logo-text,
+        .sidebar.collapsed .menu-text,
+        .sidebar.collapsed .user-info {
+            display: none;
+        }
+
+        .toggle-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .user-profile {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 0 1rem 2rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #667eea;
+            font-weight: bold;
+            min-width: 50px;
+        }
+
+        .user-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .user-info p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin: 0.5rem 1rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.2rem;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+            min-width: 30px;
+        }
+
+        .menu-text {
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .main-content.expanded {
+            margin-left: 80px;
+        }
+
+        .dashboard-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-left h1 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+
+        .header-left p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-bar {
+            position: relative;
+        }
+
+        .search-bar input {
+            padding: 0.8rem 1rem 0.8rem 3rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            width: 300px;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 1.2rem;
+        }
+
+        .notification-btn {
+            position: relative;
+            background: #f5f7fa;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.3rem;
+            transition: all 0.3s ease;
+        }
+
+        .notification-btn:hover {
+            background: #e8eaf0;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ff4757;
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.8rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .stat-icon.purple {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .stat-icon.green {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            color: white;
+        }
+
+        .stat-icon.orange {
+            background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+            color: white;
+        }
+
+        .stat-icon.blue {
+            background: linear-gradient(135deg, #2196f3 0%, #21cbf3 100%);
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .stat-trend {
+            font-size: 0.85rem;
+            color: #27ae60;
+            margin-top: 0.5rem;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .card-action {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .card-action:hover {
+            text-decoration: underline;
+        }
+
+        .activity-list {
+            list-style: none;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+
+        .activity-time {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .quick-actions {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.2rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .action-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateX(5px);
+        }
+
+        .action-icon {
+            font-size: 2rem;
+        }
+
+        .action-text h4 {
+            font-size: 1rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .action-text p {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .upcoming-list {
+            list-style: none;
+        }
+
+        .upcoming-item {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .upcoming-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .upcoming-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .upcoming-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .upcoming-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .upcoming-badge.urgent {
+            background: #ffe5e5;
+            color: #ff4757;
+        }
+
+        .upcoming-badge.upcoming {
+            background: #fff3cd;
+            color: #f2994a;
+        }
+
+        .upcoming-time {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            z-index: 999;
+        }
+
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .main-content.expanded {
+                margin-left: 0;
+            }
+
+            .search-bar input {
+                width: 200px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 1rem;
+            }
+
+            .dashboard-header {
+                padding: 1rem;
+            }
+
+            .header-left h1 {
+                font-size: 1.4rem;
+            }
+
+            .search-bar input {
+                width: 150px;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <span class="logo-icon">💊</span>
+                <span class="logo-text">Pharma Search</span>
+            </div>
+            <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+        </div>
+
+        <div class="user-profile">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <div class="user-info">
+                <h3 id="userName">User Name</h3>
+                <p id="userRole">Patient</p>
+            </div>
+        </div>
+
+        <nav>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" onclick="switchTab('dashboard')">
+                        <span class="nav-icon">📊</span>
+                        <span class="menu-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('medicines')">
+                        <span class="nav-icon">💊</span>
+                        <span class="menu-text">Find Medicines</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('orders')">
+                        <span class="nav-icon">📦</span>
+                        <span class="menu-text">My Orders</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('consultations')">
+                        <span class="nav-icon">👨‍⚕️</span>
+                        <span class="menu-text">Consultations</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('reminders')">
+                        <span class="nav-icon">⏰</span>
+                        <span class="menu-text">Reminders</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('health')">
+                        <span class="nav-icon">❤️</span>
+                        <span class="menu-text">Health Profile</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('chatbot')">
+                        <span class="nav-icon">🤖</span>
+                        <span class="menu-text">AI Assistant</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('settings')">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="menu-text">Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="logout()">
+                        <span class="nav-icon">🚪</span>
+                        <span class="menu-text">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+
+    <main class="main-content" id="mainContent">
+        <div class="dashboard-header">
+            <div class="header-left">
+                <h1>Welcome back, <span id="headerUserName">User</span>!</h1>
+                <p>Here's what's happening with your health today</p>
+            </div>
+            <div class="header-right">
+                <div class="search-bar">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="Search medicines, doctors...">
+                </div>
+                <button class="notification-btn">
+                    🔔
+                    <span class="notification-badge">3</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card" style="animation-delay: 0.1s">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Active Prescriptions</div>
+                        <div class="stat-trend">↑ 2 new this month</div>
+                    </div>
+                    <div class="stat-icon purple">💊</div>
+                </div>
+            </div>
+
+            <div class="stat-card" style="animation-delay: 0.2s">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">Upcoming Reminders</div>
+                        <div class="stat-trend">Next in 2 hours</div>
+                    </div>
+                    <div class="stat-icon green">⏰</div>
+                </div>
+            </div>
+
+            <div class="stat-card" style="animation-delay: 0.3s">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Pending Orders</div>
+                        <div class="stat-trend">1 arriving today</div>
+                    </div>
+                    <div class="stat-icon orange">📦</div>
+                </div>
+            </div>
+
+            <div class="stat-card" style="animation-delay: 0.4s">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value">98%</div>
+                        <div class="stat-label">Adherence Rate</div>
+                        <div class="stat-trend">↑ 5% from last month</div>
+                    </div>
+                    <div class="stat-icon blue">📈</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Recent Activities</h2>
+                    <a class="card-action">View All</a>
+                </div>
+                <ul class="activity-list">
+                    <li class="activity-item">
+                        <div class="activity-icon purple">💊</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Ordered Paracetamol 500mg</div>
+                            <div class="activity-time">2 hours ago • Order #12345</div>
+                        </div>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon green">✅</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Completed medication dose</div>
+                            <div class="activity-time">5 hours ago • Morning dose</div>
+                        </div>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon blue">👨‍⚕️</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Video consultation with Dr. Smith</div>
+                            <div class="activity-time">Yesterday • 30 minutes</div>
+                        </div>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon orange">📍</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Located nearby pharmacy</div>
+                            <div class="activity-time">2 days ago • 0.5 km away</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div>
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div class="card-header">
+                        <h2 class="card-title">Quick Actions</h2>
+                    </div>
+                    <div class="quick-actions">
+                        <a class="action-btn" onclick="switchTab('medicines')">
+                            <span class="action-icon">🔍</span>
+                            <div class="action-text">
+                                <h4>Find Medicine</h4>
+                                <p>Search nearby pharmacies</p>
+                            </div>
+                        </a>
+                        <a class="action-btn" onclick="switchTab('consultations')">
+                            <span class="action-icon">📹</span>
+                            <div class="action-text">
+                                <h4>Book Consultation</h4>
+                                <p>Connect with doctors</p>
+                            </div>
+                        </a>
+                        <a class="action-btn" onclick="switchTab('chatbot')">
+                            <span class="action-icon">💬</span>
+                            <div class="action-text">
+                                <h4>AI Assistant</h4>
+                                <p>Get instant answers</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Upcoming</h2>
+                    </div>
+                    <ul class="upcoming-list">
+                        <li class="upcoming-item">
+                            <div class="upcoming-header">
+                                <span class="upcoming-title">Medicine Reminder</span>
+                                <span class="upcoming-badge urgent">Urgent</span>
+                            </div>
+                            <div class="upcoming-time">⏰ Today at 2:00 PM</div>
+                        </li>
+                        <li class="upcoming-item">
+                            <div class="upcoming-header">
+                                <span class="upcoming-title">Dr. Johnson Consultation</span>
+                                <span class="upcoming-badge upcoming">Tomorrow</span>
+                            </div>
+                            <div class="upcoming-time">📅 Oct 6, 10:00 AM</div>
+                        </li>
+                        <li class="upcoming-item">
+                            <div class="upcoming-header">
+                                <span class="upcoming-title">Prescription Refill Due</span>
+                                <span class="upcoming-badge upcoming">In 3 days</span>
+                            </div>
+                            <div class="upcoming-time">💊 Oct 8</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api';
+
+        function initializeDashboard() {
+            const userId = sessionStorage.getItem('userId');
+            const firstName = sessionStorage.getItem('firstName');
+            const lastName = sessionStorage.getItem('lastName');
+            const email = sessionStorage.getItem('email');
+            const role = sessionStorage.getItem('role');
+            const roleName = sessionStorage.getItem('roleName');
+            const accessToken = sessionStorage.getItem('accessToken');
+            
+            if (!userId || !firstName || !role || !accessToken) {
+                alert('Session expired or not logged in. Redirecting to login page...');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                const userData = {
+                    userId: userId,
+                    firstName: firstName,
+                    lastName: lastName || '',
+                    email: email,
+                    role: role,
+                    roleName: roleName || role.charAt(0).toUpperCase() + role.slice(1),
+                    accessToken: accessToken,
+                    phoneNumber: sessionStorage.getItem('phoneNumber'),
+                    isActive: sessionStorage.getItem('isActive') === 'true',
+                    firsttime: sessionStorage.getItem('firsttime') === 'true'
+                };
+                
+                const userName = `${userData.firstName} ${userData.lastName}`.trim();
+                const initials = userData.lastName 
+                    ? `${userData.firstName[0]}${userData.lastName[0]}`.toUpperCase()
+                    : userData.firstName.substring(0, 2).toUpperCase();
+                
+                document.getElementById('userName').textContent = userName;
+                document.getElementById('headerUserName').textContent = userData.firstName;
+                document.getElementById('userRole').textContent = userData.roleName;
+                document.getElementById('userAvatar').textContent = initials;
+
+                customizeDashboardByRole(userData);
+                
+                console.log('Dashboard initialized for:', userData.email);
+                console.log('User role:', userData.role);
+                
+                window.currentUserData = userData;
+            } catch (error) {
+                console.error('Error initializing dashboard:', error);
+                alert('Error loading dashboard. Please login again.');
+                window.location.href = 'login.html';
+            }
+        }
+
+        function customizeDashboardByRole(userData) {
+            const role = userData.role.toLowerCase();
+            window.currentUserRole = role;
+            
+            switch(role) {
+                case 'doctor':
+                    updateStatsForDoctor();
+                    break;
+                case 'pharmacist':
+                    updateStatsForPharmacist();
+                    break;
+                case 'patient':
+                    updateStatsForPatient();
+                    break;
+                default:
+                    console.log('Dashboard customized for role:', role);
+            }
+        }
+
+        function updateStatsForDoctor() {
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card" style="animation-delay: 0.1s">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">24</div>
+                            <div class="stat-label">Appointments Today</div>
+                            <div class="stat-trend">↑ 3 new bookings</div>
+                        </div>
+                        <div class="stat-icon purple">👨‍⚕️</div>
+                    </div>
+                </div>
+                <div class="stat-card" style="animation-delay: 0.2s">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">156</div>
+                            <div class="stat-label">Total Patients</div>
+                            <div class="stat-trend">↑ 12 this month</div>
+                        </div>
+                        <div class="stat-icon green">👥</div>
+                    </div>
+                </div>
+                <div class="stat-card" style="animation-delay: 0.3s">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">8</div>
+                            <div class="stat-label">Pending Consultations</div>
+                            <div class="stat-trend">Next in 30 mins</div>
+                        </div>
+                        <div class="stat-icon orange">📹</div>
+                    </div>
+                </div>
+                <div class="stat-card" style="animation-delay: 0.4s">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">4.8</div>
+                            <div class="stat-label">Average Rating</div>
+                            <div class="stat-trend">Based on 89 reviews</div>
+                        </div>
+                        <div class="stat-icon blue">⭐</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateStatsForPharmacist() {
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card" style="animation-delay: 0.1s">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">45</div>
+                            <div class="stat-label">Pending Orders</div>
+                            <div class="stat-trend">↑ 8 new orders</div>
+                        </div>
+                        <div class="stat-icon purple">📦</div>
+                    </div>
+                </div>
+                <div class="stat-card" style="animation-delay: 0.2s">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">1,234</div>
+                            <div class="stat-label">Medicine Stock Items</div>
+                            <div class="stat-trend">15 low stock alerts</div>
+                        </div>
+                        <div class="stat-icon green">💊</div>
+                    </div>
+                </div>
+                <div class="stat-card" style="animation-delay: 0.3s">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">89</div>
+                            <div class="stat-label">Orders Completed Today</div>
+                            <div class="stat-trend">↑ 12% from yesterday</div>
+                        </div>
+                        <div class="stat-icon orange">✅</div>
+                    </div>
+                </div>
+                <div class="stat-card" style="animation-delay: 0.4s">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value">₹45,678</div>
+                            <div class="stat-label">Revenue Today</div>
+                            <div class="stat-trend">↑ 8% from yesterday</div>
+                        </div>
+                        <div class="stat-icon blue">💰</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateStatsForPatient() {
+            console.log('Patient dashboard loaded');
+        }
+
+        async function makeAuthenticatedRequest(endpoint, options = {}) {
+            const accessToken = sessionStorage.getItem('accessToken');
+            
+            if (!accessToken) {
+                alert('Session expired. Please login again.');
+                window.location.href = 'login.html';
+                return null;
+            }
+            
+            const defaultHeaders = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            };
+            
+            const config = {
+                ...options,
+                headers: {
+                    ...defaultHeaders,
+                    ...options.headers
+                }
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+                
+                if (response.status === 401) {
+                    alert('Session expired. Please login again.');
+                    sessionStorage.clear();
+                    window.location.href = 'login.html';
+                    return null;
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API request failed:', error);
+                return null;
+            }
+        }
+
+        function switchTab(tabName) {
+            console.log('Switching to tab:', tabName);
+            
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            if (event && event.target) {
+                event.target.closest('.nav-link').classList.add('active');
+            }
+            
+            const role = sessionStorage.getItem('role');
+            
+            switch(tabName) {
+                case 'dashboard':
+                    location.reload();
+                    break;
+                case 'medicines':
+                    alert(`Navigate to Find Medicines page (Role: ${role})`);
+                    break;
+                case 'orders':
+                    alert(`Navigate to Orders page (Role: ${role})`);
+                    break;
+                case 'consultations':
+                    alert(`Navigate to Consultations page (Role: ${role})`);
+                    break;
+                case 'reminders':
+                    alert(`Navigate to Reminders page (Role: ${role})`);
+                    break;
+                case 'health':
+                    alert(`Navigate to Health Profile page (Role: ${role})`);
+                    break;
+                case 'chatbot':
+                    alert(`Navigate to AI Assistant page (Role: ${role})`);
+                    break;
+                case 'settings':
+                    alert(`Navigate to Settings page (Role: ${role})`);
+                    break;
+                default:
+                    console.log('Unknown tab:', tabName);
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        function logout() {
+            const confirmLogout = confirm('Are you sure you want to logout?');
+            if (confirmLogout) {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+
+        window.onload = initializeDashboard;
+
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(event.target) && event.target !== mobileMenuBtn) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

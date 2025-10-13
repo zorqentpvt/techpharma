@@ -1,44 +1,30 @@
 package main
 
 import (
-	"context"
 	"log"
-	"net/http"
-	"os/signal"
-	"syscall"
-	"time"
 
-	"github.com/joho/godotenv"
-	"skryfon_blog/internal/server"
+	"github.com/skryfon/collex/internal/infrastructure/server"
+	"github.com/skryfon/collex/pkg/config"
 )
 
-func gracefulShutdown(apiServer *http.Server, done chan bool) {
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-	<-ctx.Done()
-
-	log.Println("Shutting down gracefully, press Ctrl+C again to force")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := apiServer.Shutdown(ctx); err != nil {
-		log.Printf("Server forced to shutdown: %v", err)
-	}
-	done <- true
-}
-
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("⚠️  No .env file found or failed to load")
-	}
+	// Load configuration
+	cfg := config.LoadConfig()
 
-	server := server.NewServer()
-	done := make(chan bool, 1)
-	go gracefulShutdown(server, done)
-
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("HTTP server error: %s", err)
+	// Initialize database connection with proper clean architecture setup
+	db, err := config.NewDatabaseConnection(cfg)
+	if err != nil {
+		log.Fatalf("database initialization failed: %v", err)
 	}
-	<-done
-	log.Println("✅ Graceful shutdown complete.")
+	defer db.Close()
+	// Run database migrations if enabled
+
+	// Initialize server with clean architecture
+	srv := server.NewCleanServer(cfg, db, cfg.Server.Port)
+
+	// Start server
+	log.Printf("Starting server on port %s with clean architecture", cfg.Server.Port)
+	if err := srv.Start(); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }

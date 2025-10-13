@@ -83,10 +83,6 @@ export default function SignIn() {
             ) : (
               <motion.div
                 key="signup-left"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4 }}
                 className="text-center"
               >
                 <h2 className="text-4xl font-bold mb-4 text-blue-500">New Here?</h2>
@@ -149,8 +145,17 @@ export default function SignIn() {
                   className="text-blue-600 font-semibold hover:underline"
                   onClick={() => {
                     setIsSignIn(!isSignIn);
+                    try {
+                      // Pass form data to /signup-form
+                    navigate("/Signup-form", {
+                      state: { username, email, password, role },
+                    });
+                    } catch (err: any) {
+                      setError(err.message || "❌ Something went wrong");
+                    } finally {
+                      setLoading(false);
+                    }
                     setError(""); setSuccess("");
-                    setUsername(""); setEmail(""); setPassword("");
                   }}
                 >
                   {isSignIn ? "Sign Up" : "Sign In"}

@@ -28,15 +28,7 @@ const Cart: React.FC = () => {
             <div className="max-w-5xl mx-auto flex flex-col lg:flex-row lg:space-x-8 xl:space-x-16">
               {/* Cart items */}
               <div className="mb-6 lg:mb-0">
-                <div className="mb-3">
-                  <div className="flex text-sm font-medium text-gray-800  space-x-2 bo">
-                    <span className="text-violet-500">Review</span>
-                    <span>-&gt;</span>
-                    <span className="text-gray-500 ">Payment</span>
-                    <span>-&gt;</span>
-                    <span className="text-gray-500 ">Confirm</span>
-                  </div>
-                </div>
+                
                 <header className="mb-2">
                   <h1 className="text-2xl md:text-3xl text-gray-800  font-bold">
                     Shopping Cart ({totalOrders})
@@ -49,7 +41,7 @@ const Cart: React.FC = () => {
 
               {/* Order summary sidebar */}
               <div>
-                <div className="bg-white dark:bg-gray-100 p-5 shadow-xs rounded-xl lg:w-72 xl:w-80 border-2" >
+                <div className="bg-white dark:bg-gray-100 p-5 mt-11.5 shadow-xs rounded-xl lg:w-72 xl:w-80 border-2" >
                   <div className="text-gray-800  font-semibold mb-2">
                     Order Summary
                   </div>

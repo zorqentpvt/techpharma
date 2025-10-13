@@ -5,15 +5,26 @@ export default function SignupForm() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    firstname: "",
+    lastname: "",
+    address:"",
+    dob:"",
     username: "",
+    qual:"",
     email: "",
+    gen:"",
+    num:"",
+    gstnumber:"",
+    pnum:"",
     password: "",
     cpassword: "",
     role: "",
+
+    certi:"",
     specialization: "", // for doctor
     licenseNumber: "",  // for doctor
     pharmacyName: "",   // for pharmacy
-    address: "",        // for pharmacy
+    paddress: "",        // for pharmacy
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -33,6 +44,7 @@ export default function SignupForm() {
   // Render role-specific fields
   const renderExtraFields = () => {
     switch (formData.role) {
+
       case "doctor":
         return (
           <>
@@ -44,7 +56,7 @@ export default function SignupForm() {
                 value={formData.specialization}
                 onChange={handleChange}
                 placeholder="e.g., Cardiologist, Dentist"
-                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -55,7 +67,29 @@ export default function SignupForm() {
                 value={formData.licenseNumber}
                 onChange={handleChange}
                 placeholder="Enter your medical license number"
-                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium"> Upload Doctor License Certificate</label>
+              <input
+                type="file"
+                name="certi"
+                value={formData.certi}
+                onChange={handleChange}
+                placeholder=""
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium"> Qualification</label>
+              <input
+                type="text"
+                name="qual"
+                value={formData.qual}
+                onChange={handleChange}
+                placeholder="e.g., MBBS,MD"
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </>
@@ -72,18 +106,18 @@ export default function SignupForm() {
                 value={formData.pharmacyName}
                 onChange={handleChange}
                 placeholder="Your pharmacy's name"
-                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block mb-1 font-medium">Address</label>
+              <label className="block mb-1 font-medium">Pharmacy Address</label>
               <input
                 type="text"
-                name="address"
-                value={formData.address}
+                name="paddress"
+                value={formData.paddress}
                 onChange={handleChange}
                 placeholder="Pharmacy address"
-                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -93,8 +127,45 @@ export default function SignupForm() {
                 name="licenseNumber"
                 value={formData.licenseNumber}
                 onChange={handleChange}
+                required
                 placeholder="Enter your Pharmacy license number"
-                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium"> Pharmacy GST Registration Number</label>
+              <input
+                type="text"
+                name="gstNumber"
+                value={formData.gstnumber}
+                onChange={handleChange}
+                placeholder="Enter your Pharmacy GST reg number"
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium"> Pharmacy Contact Number</label>
+              <input
+                type="number"
+                name="pnum"
+                value={formData.pnum}
+                onChange={handleChange}
+                placeholder="Enter your Pharmacy Contact number"
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium"> Upload Pharmacy License Certificate</label>
+              <input
+                type="file"
+                name="certi"
+                value={formData.certi}
+                onChange={handleChange}
+                placeholder=""
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </>
@@ -106,14 +177,45 @@ export default function SignupForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center bg-cover bg-center justify-center " style={{ backgroundImage: "url('/images/1.png')" }}>
-      <div className="w-full max-w-md bg-white/30 backdrop-blur-lg p-8 rounded-2xl shadow-2xl animated-bg">
-        <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">
+    <div className="min-h-screen flex items-center bg-cover bg-center justify-center " style={{ backgroundImage: "url('/images/sign.jpg')" }}>
+      <div className="  bg-white/80  p-8 rounded-xl m-5 shadow-xl animated-bg justify-items-center  flex-col">
+        <h2 className="text-6xl font-bold text-center text-blue-700 mb-6">
           Create an Account
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5 grid grid-cols-2 w-7xl  m-2 p-5 space-x-10  ">
           {/* Username */}
+
+          
+          
+          <div>
+            <label className="block mb-1 font-medium">FirstName</label>
+            <input
+              type="text"
+              name="firstname"
+              value={formData.firstname}
+              onChange={handleChange}
+              required
+              placeholder="Enter your Firstname"
+              className="w-full p-2 border-blue-400 border bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          
+          
+          <div>
+            <label className="block mb-1 font-medium">LastName</label>
+            <input
+              type="text"
+              name="lastname"
+              value={formData.lastname}
+              onChange={handleChange}
+              required
+              placeholder="Enter your Lastname"
+              className="w-full p-2 border-blue-400 border bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
           <div>
             <label className="block mb-1 font-medium">Username</label>
             <input
@@ -122,8 +224,63 @@ export default function SignupForm() {
               value={formData.username}
               onChange={handleChange}
               required
-              placeholder="Enter your username"
-              className="w-full p-2 border bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your Username"
+              className="w-full p-2 border-blue-400 border bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label className="block mb-1 font-medium">Select Gender</label>
+            <select
+              name="gen"
+              value={formData.gen}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border border-blue-400 rounded-lg bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Choose your Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Personal Address</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              required
+              placeholder="Enter your Address "
+              className="w-full p-2 border-blue-400 border bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Phone number</label>
+            <input
+              type="number"
+              name="num"
+              value={formData.num}
+              onChange={handleChange}
+              required
+              placeholder="Enter your Phone Number "
+              className="w-full p-2 border-blue-400 border bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Date Of Birth</label>
+            <input
+              type="date"
+              name="dob"
+              value={formData.dob}
+              onChange={handleChange}
+              required
+              placeholder="Enter your DOB "
+              className="w-full p-2 border-blue-400 border bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -137,7 +294,7 @@ export default function SignupForm() {
               onChange={handleChange}
               required
               placeholder="Enter your email"
-              className="w-full p-2 border bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 border border-blue-400 bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -151,7 +308,7 @@ export default function SignupForm() {
               onChange={handleChange}
               required
               placeholder="Enter a password"
-              className="w-full p-2 border bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 border border-blue-400 bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -164,7 +321,7 @@ export default function SignupForm() {
               onChange={handleChange}
               required
               placeholder="RE-Enter the Password"
-              className="w-full p-2 border bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 border border-blue-400 bg-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>  
 
@@ -176,7 +333,7 @@ export default function SignupForm() {
               value={formData.role}
               onChange={handleChange}
               required
-              className="w-full p-2 border rounded-lg bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 border border-blue-400 rounded-lg bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Choose your role</option>
               <option value="normal">Patient</option>
@@ -191,17 +348,19 @@ export default function SignupForm() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
+            className="w-50 h-10 bg-blue-600 hover:bg-blue-700 relative top-22 right-200  text-white font-semibold  ml-175  py-2 rounded-lg transition"
           >
             Sign Up 𓂃🖊
           </button>
+          
         </form>
+        
 
-        <p className="text-center mt-4 text-gray-600 text-sm">
+        <p className="text-center text-gray-600 text-sm mt-7">
           Already have an account?{" "}
           <span
             onClick={() => navigate("/")}
-            className="text-blue-700 font-medium hover:underline cursor-pointer"
+            className="text-blue-700  font-medium hover:underline cursor-pointer"
           >
             Login
           </span>

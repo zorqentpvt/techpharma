@@ -38,13 +38,13 @@ export default function Consultings() {
               Join call to start Patient consultation .
             </p>
 
-            <div className="bg-white rounded-2xl shadow-md p-6 space-y-4">
+            <div className="bg-white rounded-2xl shadow-md p-6 space-y-7 min-h-150">
               <h3 className="text-xl font-semibold text-gray-800">
                 Upcoming Consultations
               </h3>
 
               {/* Example Consultation List */}
-              <ul className="space-y-3">
+              <ul className="space-y-10">
                 <li className="flex justify-between items-center border-b pb-2">
                   <span>👤 John Doe — 4:00 PM</span>
                   <button
@@ -87,7 +87,7 @@ export default function Consultings() {
                 📅 Book a Consultation
               </button> */}
 
-              <div className="mt-4 border-t pt-4">
+              <div className="mt-4 border-t pt-4 min-h-150">
                 <h3 className="text-xl font-semibold text-blue-800 mb-3">
                   Upcoming Appointment
                 </h3>

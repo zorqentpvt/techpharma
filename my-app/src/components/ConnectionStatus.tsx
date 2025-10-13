@@ -47,9 +47,9 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   }, [backendUrl, checkInterval]);
 
   return (
-    <div className="p-1 rounded-2xl shadow-md bg-white max-w-sm mx-auto">
+    <div className="p-2 pt-0 pb-0 rounded-2xl shadow-md bg-white/50 flex mx-auto">
       <h2 className="text-indigo-800 font-bold ">Connection Status :</h2>
-      <div className="space-y-1 text-l">
+      <div className="space-y-1 text-l flex pl-1 space-x-1">
         <p>
            Internet:{" "}
           <span className={isOnline ? "text-green-600 tex" : "text-red-600" } >

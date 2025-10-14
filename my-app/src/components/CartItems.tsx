@@ -21,48 +21,22 @@ const CartItems: React.FC = () => {
           <div className="grow">
             <a href="#0">
               <h3 className="text-lg font-semibold text-gray-800  mb-1">
-                The Complete Front-End Development Course!
+                Panadol
               </h3>
             </a>
             <div className="text-sm mb-2">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut.
+              Paracetamol
             </div>
             {/* Product meta */}
             <div className="flex flex-wrap justify-between items-center">
               {/* Rating and price */}
               <div className="flex flex-wrap items-center space-x-2 mr-2">
                 {/* Rating */}
-                <div className="flex items-center space-x-2">
-                  <div className="flex space-x-1">
-                    {[1, 2, 3, 4].map((star) => (
-                      <svg
-                        key={star}
-                        className="fill-current text-yellow-500"
-                        width={16}
-                        height={16}
-                        viewBox="0 0 16 16"
-                      >
-                        <path d="M10 5.934L8 0 6 5.934H0l4.89 3.954L2.968 16 8 12.223 13.032 16 11.11 9.888 16 5.934z" />
-                      </svg>
-                    ))}
-                    <svg
-                      className="fill-current text-gray-300 "
-                      width={16}
-                      height={16}
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M10 5.934L8 0 6 5.934H0l4.89 3.954L2.968 16 8 12.223 13.032 16 11.11 9.888 16 5.934z" />
-                    </svg>
-                  </div>
-                  <div className="inline-flex text-sm font-medium text-yellow-600">
-                    4.2
-                  </div>
+                <div className="flex items-center space-y-2">
                 </div>
-                <div className="text-gray-400 dark:text-gray-600">·</div>
                 <div>
                   <div className="inline-flex text-sm font-medium bg-green-500/20 text-green-700 rounded-full text-center px-2 py-0.5">
-                    $89.00
+                    10 .00 Rs
                   </div>
                 </div>
               </div>
@@ -90,46 +64,20 @@ const CartItems: React.FC = () => {
           <div className="grow">
             <a href="#0">
               <h3 className="text-lg font-semibold text-gray-800  mb-1">
-                Web Development Ultimate Course 2024
+                Ozempic 
               </h3>
             </a>
             <div className="text-sm mb-2">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut.
+              Semaglutide injection
             </div>
             {/* Product meta */}
             <div className="flex flex-wrap justify-between items-center">
               <div className="flex flex-wrap items-center space-x-2 mr-2">
-                <div className="flex items-center space-x-2">
-                  <div className="flex space-x-1">
-                    {[1, 2, 3, 4].map((star) => (
-                      <svg
-                        key={star}
-                        className="fill-current text-yellow-500"
-                        width={16}
-                        height={16}
-                        viewBox="0 0 16 16"
-                      >
-                        <path d="M10 5.934L8 0 6 5.934H0l4.89 3.954L2.968 16 8 12.223 13.032 16 11.11 9.888 16 5.934z" />
-                      </svg>
-                    ))}
-                    <svg
-                      className="fill-current text-gray-300 "
-                      width={16}
-                      height={16}
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M10 5.934L8 0 6 5.934H0l4.89 3.954L2.968 16 8 12.223 13.032 16 11.11 9.888 16 5.934z" />
-                    </svg>
-                  </div>
-                  <div className="inline-flex text-sm font-medium text-yellow-600">
-                    4.2
-                  </div>
-                </div>
-                <div className="text-gray-400 dark:text-gray-600">·</div>
+                    
+                
                 <div>
                   <div className="inline-flex text-sm font-medium bg-green-500/20 text-green-700 rounded-full text-center px-2 py-0.5">
-                    $89.00
+                    30 .00 Rs
                   </div>
                 </div>
               </div>
@@ -141,7 +89,7 @@ const CartItems: React.FC = () => {
         </li>
 
         {/* Cart item */}
-        <li className="sm:flex items-center py-6 border-b border-gray-200 dark:border-gray-700/60">
+        <li className="sm:flex items-center py-6 border-b border-gray-200 dark:border-gray-700/60 min-w-150">
           <a
             className="block mb-4 sm:mb-0 mr-5 md:w-32 xl:w-auto shrink-0"
             href="#0"
@@ -154,49 +102,23 @@ const CartItems: React.FC = () => {
               alt="Product 03"
             />
           </a>
-          <div className="grow">
+          <div className="grow ">
             <a href="#0">
               <h3 className="text-lg font-semibold text-gray-800  mb-1">
-                Full-Stack JavaScript Course!
+                Cipro
               </h3>
             </a>
             <div className="text-sm mb-2">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut.
+              ciprofloxacin (oral) 
             </div>
             {/* Product meta */}
             <div className="flex flex-wrap justify-between items-center">
               <div className="flex flex-wrap items-center space-x-2 mr-2">
-                <div className="flex items-center space-x-2">
-                  <div className="flex space-x-1">
-                    {[1, 2, 3, 4].map((star) => (
-                      <svg
-                        key={star}
-                        className="fill-current text-yellow-500"
-                        width={16}
-                        height={16}
-                        viewBox="0 0 16 16"
-                      >
-                        <path d="M10 5.934L8 0 6 5.934H0l4.89 3.954L2.968 16 8 12.223 13.032 16 11.11 9.888 16 5.934z" />
-                      </svg>
-                    ))}
-                    <svg
-                      className="fill-current text-gray-300 "
-                      width={16}
-                      height={16}
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M10 5.934L8 0 6 5.934H0l4.89 3.954L2.968 16 8 12.223 13.032 16 11.11 9.888 16 5.934z" />
-                    </svg>
-                  </div>
-                  <div className="inline-flex text-sm font-medium text-yellow-600">
-                    4.2
-                  </div>
-                </div>
+                
                 <div className="text-gray-400 dark:text-gray-600">·</div>
                 <div>
                   <div className="inline-flex text-sm font-medium bg-green-500/20 text-green-700 rounded-full text-center px-2 py-0.5">
-                    $89.00
+                    27 .00 Rs
                   </div>
                 </div>
               </div>
@@ -208,12 +130,12 @@ const CartItems: React.FC = () => {
         </li>
       </ul>
 
-      <div className="mt-6">
+      <div className="flex items-center gap-3 text-left px-4 py-2 rounded-lg hover:shadow-xl pt-3 mt-6 w-40 font-medium transition-all
+      bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md">
         <a
-          className="text-sm font-medium text-violet-500 hover:text-violet-600 dark:hover:text-violet-400"
-          href="#0"
-        >
-          &lt;- Back To Shopping
+          className="text-sm font-medium text-blue-50 "          
+          href="#0">
+           Back To Shopping
         </a>
       </div>
     </>

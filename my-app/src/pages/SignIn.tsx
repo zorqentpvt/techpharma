@@ -41,12 +41,6 @@ export default function SignIn() {
     setSuccess("");
     setLoading(true);
   
-    if (!username || !email || !password) {
-      setError("❌ Please fill all fields");
-      setLoading(false);
-      return;
-    }
-  
     try {
       // Pass form data to /signup-form
       navigate("/Signup-form", {
@@ -89,10 +83,6 @@ export default function SignIn() {
             ) : (
               <motion.div
                 key="signup-left"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4 }}
                 className="text-center"
               >
                 <h2 className="text-4xl font-bold mb-4 text-blue-500">New Here?</h2>
@@ -120,7 +110,11 @@ export default function SignIn() {
               {success && <Notification message={success} type="success" />}
 
               <form onSubmit={isSignIn ? handleSignIn : handleSignUp} className="flex flex-col gap-4">
-                <input 
+                
+                {isSignIn && (
+                  <>
+
+                  <input 
                   type="text" 
                   placeholder="Username" 
                   className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white/60 backdrop-blur-sm"
@@ -128,29 +122,8 @@ export default function SignIn() {
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={loading}
                 />
-                {!isSignIn && (
-                  <>
+                    
                     <input 
-                      type="email" 
-                      placeholder="Email" 
-                      className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white/60 backdrop-blur-sm"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={loading}
-                    />
-                    <select 
-                      className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white/60 backdrop-blur-sm"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value as any)}
-                      disabled={loading}
-                    >
-                      <option value="normal">Normal</option>
-                      <option value="doctor">Doctor</option>
-                      <option value="pharmacy">Pharmacy</option>
-                    </select>
-                  </>
-                )}
-                <input 
                   type="password" 
                   placeholder="Password" 
                   className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white/60 backdrop-blur-sm"
@@ -158,8 +131,11 @@ export default function SignIn() {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
                 />
+                  </>
+                )}
+                
                 <Button type="submit" disabled={loading}>
-                  {loading ? "Please wait..." : isSignIn ? "Sign In" : "Sign Up 🎉"}
+                  {loading ? "Please wait..." : isSignIn ? "Sign In" : "Sign Up 𓂃🖊"}
                 </Button>
               </form>
 
@@ -169,8 +145,17 @@ export default function SignIn() {
                   className="text-blue-600 font-semibold hover:underline"
                   onClick={() => {
                     setIsSignIn(!isSignIn);
+                    try {
+                      // Pass form data to /signup-form
+                    navigate("/Signup-form", {
+                      state: { username, email, password, role },
+                    });
+                    } catch (err: any) {
+                      setError(err.message || "❌ Something went wrong");
+                    } finally {
+                      setLoading(false);
+                    }
                     setError(""); setSuccess("");
-                    setUsername(""); setEmail(""); setPassword("");
                   }}
                 >
                   {isSignIn ? "Sign Up" : "Sign In"}

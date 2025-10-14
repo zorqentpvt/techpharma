@@ -2,4 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Alan+Sans&display=swap');
 @import "tailwindcss";
 
+body {
+  font-family: "Alan Sans", sans-serif;
 
+} 

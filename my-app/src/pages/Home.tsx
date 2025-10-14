@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import AnalyticsComponent from "../components/AnalyticsComponent";
+import "../index.css";
 import React from "react";
 
 interface User {
@@ -16,7 +17,7 @@ export default function Home() {
     <div className="min-h-screen p-6 bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
       {/* Header */}
       <header className="flex flex-col sm:flex-row justify-between items-center mb-7 gap-6">
-        <h1 className="pl-7 text-6xl sm:text-6xl font-semibold font-serif bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
+        <h1 className="pl-7 text-6xl sm:text-6xl font-alan-sans font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
           Welcome {user.username}
         </h1>
       </header>
@@ -34,8 +35,6 @@ export default function Home() {
           />
         </div>
       )}
-
-      {/* Cart Button */}
 
 
     </div>

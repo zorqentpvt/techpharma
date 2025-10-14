@@ -9,7 +9,7 @@ import ConnectionStatus from "./components/ConnectionStatus";
 import Medicines from "./pages/Medicines";
 import Cart from "./pages/Cart";
 import SignupForm from "./pages/SignupForm";
-import "./index.css";
+import "./index.css"
 import React from "react";
 import Consultings from "./pages/Consultings";
 

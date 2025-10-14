@@ -87,16 +87,16 @@ export default function PatientAppointment({
   };
 
   return (
-    <div className="p-6 bg-gray-50 rounded-xl shadow-md max-w-3xl mx-auto">
+    <div className="p-6 bg-gray-50 rounded-xl shadow-md max-w-3xl space-x-3 mx-auto">
       <h2 className="text-2xl font-bold mb-4">Book Appointment</h2>
 
       <div className="mb-4">
-        <label className="block font-semibold mb-1">Reason</label>
+        <label className="block   font-semibold mb-1">Reason</label>
         <input
           type="text"
           value={reason}
           onChange={e => setReason(e.target.value)}
-          className="w-full p-2 border rounded-lg"
+          className="w-full p-2 border-blue-400 border rounded-lg"
           placeholder="Reason for appointment"
         />
       </div>
@@ -106,7 +106,7 @@ export default function PatientAppointment({
         <select
           value={mode}
           onChange={e => setMode(e.target.value as "online" | "offline")}
-          className="w-full p-2 border rounded-lg"
+          className="w-full p-2 border-blue-400 border focus:border-blue-600 focus:border-2 rounded-lg"
         >
           <option value="offline">Offline</option>
           <option value="online">Online</option>
@@ -120,7 +120,7 @@ export default function PatientAppointment({
           onChange={(date: Date) => setSelectedDate(date)}
           minDate={addDays(new Date(), 2)}
           maxDate={addDays(new Date(), 32)}
-          className="w-full p-2 border rounded-lg"
+          className="w-full p-2 border border-blue-400   rounded-lg"
           dateFormat="EEEE, MMM d, yyyy"
           placeholderText="Pick a date"
         />
@@ -156,7 +156,7 @@ export default function PatientAppointment({
 
       <Button
         onClick={selectNextSlot}
-        className="mt-2 mb-4 px-6 py-2 bg-green-500 text-white rounded-xl shadow hover:bg-green-600 transition"
+        className="mt-2 mb-4 px-6 py-2 bg-green-500  text-white rounded-xl shadow hover:bg-green-600 transition"
       >
         Select Next Slot
       </Button>

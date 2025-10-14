@@ -10,7 +10,9 @@
   import Medicines from "./Medicines";
   import Consultings from "./Consultings";
   import Cart from "./Cart";
+  import Chatbot from "./ChatbotInterface";
   import React from "react";
+import ChatbotInterface from "./ChatbotInterface";
 
   // Utility to get user from localStorage
   const getUserFromStorage = () => {
@@ -65,6 +67,8 @@
           return <Home />;
         case "doctor":
           return user.role === "normal" ? <Doctors /> : <div>Access Denied</div>;
+        case "chatbot":
+          return user.role === "normal" ? <ChatbotInterface /> : <div>Access Denied</div>;
         case "Medicine":
           return user.role === "normal" ? (
             <Medicines setActiveTab={setActiveTab} />

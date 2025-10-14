@@ -12,6 +12,7 @@ import SignupForm from "./pages/SignupForm";
 import "./index.css"
 import React from "react";
 import Consultings from "./pages/Consultings";
+import ChatbotInterface from "./pages/ChatbotInterface";
 
 function App() {
   return (
@@ -30,7 +31,9 @@ function App() {
 
         {/* Dashboard layout route */}
         <Route path="/dashboard" element={<Dashboard />}>
+          
           <Route path="store" element={<Store />} />
+          <Route path="chatbot" element={<ChatbotInterface />} />
           <Route path="consult" element={<Consultings />} />
           <Route path="medicine" element={<Medicines />} />
           <Route path="orders" element={<Orders />} />

@@ -3,7 +3,7 @@ import React from "react";
 const CartItems: React.FC = () => {
   return (
     <>
-      <ul className=" p-6 bg-gray-100 border-2 rounded-2xl">
+      <ul className=" p-6 bg-gradient-to-br from-blue-50 to-blue-200 border-2 border-blue-200 rounded-2xl">
         {/* Cart item */}
         <li className="sm:flex items-center py-6 border-b border-gray-200 dark:border-gray-700/60">
           <a
@@ -20,7 +20,7 @@ const CartItems: React.FC = () => {
           </a>
           <div className="grow">
             <a href="#0">
-              <h3 className="text-lg font-semibold text-gray-800  mb-1">
+              <h3 className="text-lg font-semibold text-blue-800  mb-1">
                 Panadol
               </h3>
             </a>
@@ -40,7 +40,7 @@ const CartItems: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button className="text-sm underline hover:no-underline">
+              <button className="text-xs rounded-2xl text-blue-50 bg-blue-500  hover:bg-blue-50 hover:text-blue-800 p-1.5 pt-0.5 pb-0.5">
                 Remove
               </button>
             </div>
@@ -63,7 +63,7 @@ const CartItems: React.FC = () => {
           </a>
           <div className="grow">
             <a href="#0">
-              <h3 className="text-lg font-semibold text-gray-800  mb-1">
+              <h3 className="text-lg font-semibold text-blue-800  mb-1">
                 Ozempic 
               </h3>
             </a>
@@ -81,7 +81,7 @@ const CartItems: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button className="text-sm underline hover:no-underline">
+              <button className="text-xs rounded-2xl text-blue-50 bg-blue-500  hover:bg-blue-50 hover:text-blue-800 p-1.5 pt-0.5 pb-0.5">
                 Remove
               </button>
             </div>
@@ -104,7 +104,7 @@ const CartItems: React.FC = () => {
           </a>
           <div className="grow ">
             <a href="#0">
-              <h3 className="text-lg font-semibold text-gray-800  mb-1">
+              <h3 className="text-lg font-semibold text-blue-800  mb-1">
                 Cipro
               </h3>
             </a>
@@ -122,7 +122,7 @@ const CartItems: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button className="text-sm underline hover:no-underline">
+              <button className="text-xs rounded-2xl text-blue-50 bg-blue-500  hover:bg-blue-50 hover:text-blue-800 p-1.5 pt-0.5 pb-0.5">
                 Remove
               </button>
             </div>

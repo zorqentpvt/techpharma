@@ -8,6 +8,7 @@ import {
 } from "../api/medapi";
 import { CalendarGridY } from "react-appointment-ui";
 import { appointments as appointmentY } from "../mock/appointments";
+import React from "react";
 
 interface Provider {
   id: string;
@@ -16,7 +17,6 @@ interface Provider {
 
 const providers: Provider[] = [
   { id: "p1", name: "Dr. Smith" },
-  { id: "p2", name: "Dr. Johnson" },
 ];
 
 
@@ -47,7 +47,8 @@ export default function Appointments() {
       <h1 className="text-3xl font-bold mb-8 text-blue-900">
         📅 Doctor’s Appointments
       </h1>  
-      <CalendarGridY providers={providers} appts={appointmentY} />
+      
+      <CalendarGridY sections={providers} appointments={appointmentY} />
     </div>
   );
 }

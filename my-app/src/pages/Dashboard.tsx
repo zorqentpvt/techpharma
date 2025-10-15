@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "../components/Button";
 import Store from "./Store";
 import Appointments from "./Appointments";
 import Home from "./Home";
@@ -12,10 +11,24 @@ import Consultings from "./Consultings";
 import Cart from "./Cart";
 import ChatbotInterface from "./ChatbotInterface";
 import ProfilePage from "./Profile";
-import { FaUserCircle } from "react-icons/fa"; // Profile Icon
+import {
+  FaUserCircle,
+  FaBars,
+  FaChevronLeft,
+  FaHome,
+  FaPills,
+  FaUserMd,
+  FaCalendarAlt,
+  FaComments,
+  FaStore,
+  FaClipboardList,
+  FaClipboardCheck,
+  FaShoppingCart,
+  FaSignOutAlt,
+} from "react-icons/fa";
 import React from "react";
+import { ChevronLeft, Menu } from "lucide-react";
 
-// Utility to get user from localStorage
 const getUserFromStorage = () => {
   const stored = localStorage.getItem("user");
   try {
@@ -26,16 +39,29 @@ const getUserFromStorage = () => {
   }
 };
 
+const tabIcons = {
+  home: FaHome,
+  Medicine: FaPills,
+  doctor: FaUserMd,
+  schedule: FaCalendarAlt,
+  consultings: FaComments,
+  chatbot: FaComments,
+  store: FaStore,
+  "Order management": FaClipboardList,
+  appointments: FaClipboardCheck,
+  cart: FaShoppingCart,
+  Profile: FaUserCircle,
+  logout: FaSignOutAlt,
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(getUserFromStorage());
   const [activeTab, setActiveTab] = useState("home");
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      console.log("[Dashboard] No user found, redirecting to login...");
-      navigate("/");
-    }
+    if (!user) navigate("/");
   }, [user, navigate]);
 
   const handleLogout = () => {
@@ -56,6 +82,8 @@ export default function Dashboard() {
     { key: "store", label: "Store", roles: ["pharmacy"] },
     { key: "Order management", label: "Order management", roles: ["pharmacy"] },
     { key: "appointments", label: "Appointments", roles: ["doctor"] },
+    { key: "logout", label: "logout", roles: ["normal", "doctor", "pharmacy"] },
+
   ];
 
   const renderContent = () => {
@@ -80,8 +108,9 @@ export default function Dashboard() {
         return user.role === "doctor" ? <Schedule /> : <div>Access Denied</div>;
       case "Order management":
         return user.role === "pharmacy" ? <Orders /> : <div>Access Denied</div>;
-      case "cart":
-        return <Cart />;
+      case "logout":
+        handleLogout();
+        return null;
       default:
         return <div>Tab not found</div>;
     }
@@ -90,50 +119,73 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen flex bg-gradient-to-r from-gray-50 via-blue-100 to-blue-50">
       {/* Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col w-64 bg-white shadow-2xl p-6 rounded-tr-3xl rounded-br-3xl">
+      <aside
+        className={`hidden lg:flex flex-col bg-white shadow-2xl p-4 rounded-tr-3xl rounded-br-3xl transition-all duration-300
+        ${collapsed ? "w-28" : "w-68"}`}
+      >
+        {/* Toggle Button */}
+        <div className="flex items-center justify-center mb-4">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="text-gray-600 hover:text-blue-600 transition transform hover:scale-110"
+          >
+            {collapsed ? <Menu size={32} /> : <ChevronLeft size={32} />}
+          </button>
+        </div>
+
         {/* Profile */}
         <div
-          className="flex items-center gap-3 p-4 mb-6 cursor-pointer rounded-xl hover:bg-blue-50 transition"
+          className={`flex items-center gap-3 p-3 mb-6 cursor-pointer rounded-xl hover:bg-blue-50 transition ${collapsed ? "justify-center" : ""
+            }`}
           onClick={() => setActiveTab("Profile")}
         >
-          <FaUserCircle size={40} className="text-blue-600" />
-          <div className="flex flex-col">
-            <span className="text-lg font-semibold text-gray-700">{user.name || "User"}</span>
-            <span className="text-sm text-gray-500 capitalize">{user.role}</span>
-          </div>
+          <FaUserCircle size={40} className="text-[#002E6E]" />
+          {!collapsed && (
+            <div className="flex flex-col">
+              <span className="text-lg font-semibold text-gray-700">{user.name || "User"}</span>
+              <span className="text-sm text-gray-500 capitalize">{user.role}</span>
+            </div>
+          )}
         </div>
-
-  
 
         {/* Nav Links */}
-        <nav className="flex flex-col gap-3 flex-1">
-          {tabs
-            .filter((tab) => tab.roles.includes(user.role))
-            .map((tab) => (
-              <button
-                key={tab.key}
-                className={`flex items-center gap-3 text-left px-4 py-2 rounded-lg hover:shadow-xl pt-3 font-medium transition-all ${
-                  activeTab === tab.key
-                    ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md"
-                    : "text-gray-700 hover:bg-blue-50"
-                }`}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
-        </nav>
+        <nav className="flex flex-col gap-8 flex-1">
+  {tabs
+    .filter((tab) => tab.roles.includes(user.role))
+    .map((tab) => {
+      const Icon = tabIcons[tab.key];
+      const isActive = activeTab === tab.key;
+      return (
+        <button
+          key={tab.key}
+          className={`relative flex items-center gap-3 text-left px-4 py-2 rounded-lg font-medium transition-all duration-300
+            ${isActive ? "bg-[#002E6E] text-white shadow-lg" : "text-gray-700 hover:bg-[#0043A4] group"} 
+            ${collapsed ? "justify-center p-3" : ""}`}
+          onClick={() => setActiveTab(tab.key)}
+        >
+          <Icon
+            size={collapsed ? 28 : 20}
+            className={`transition-transform duration-300 
+              ${isActive ? "text-white" : "text-gray-700 group-hover:text-white"} 
+              group-hover:scale-125`}
+          />
+          {collapsed ? (
+            <span className="absolute left-20 bg-white shadow-md rounded-md px-2 py-1 text-gray-700 whitespace-nowrap 
+              opacity-0 group-hover:opacity-100 group-hover:left-12 group-hover:text-white transition-all duration-300">
+              {tab.label}
+            </span>
+          ) : (
+            <span className={`group-hover:text-white transition-colors`}>
+              {tab.label}
+            </span>
+          )}
+        </button>
+      );
+    })}
+</nav>
 
-        {/* Logout at bottom */}
-        <div className="mt-8">
-          <Button
-            onClick={handleLogout}
-            variant="secondary"
-            className="w-full px-4 py-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition"
-          >
-            Logout
-          </Button>
-        </div>
+
+
       </aside>
 
       {/* Main content */}

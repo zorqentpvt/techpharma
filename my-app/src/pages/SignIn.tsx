@@ -5,6 +5,7 @@ import Notification from "../components/Notification";
 import Button from "../components/Button";
 import { login, signup } from "../api/authapi";
 import React from "react";
+import { signin } from "../api/authapir";
 
 export default function SignIn() {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -20,11 +21,15 @@ export default function SignIn() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); setSuccess(""); setLoading(true);
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
     try {
       const res = await login({ username, password });
-      if (res.success) {
+      if (res.success || res.token) {
         localStorage.setItem("user", JSON.stringify(res.user));
+        localStorage.setItem("token", res.token);
         setSuccess("✅ Logged in successfully!");
         setTimeout(() => navigate("/dashboard"), 500);
       } else {
@@ -32,7 +37,9 @@ export default function SignIn() {
       }
     } catch (err: any) {
       setError(err.message || "❌ Something went wrong");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {

@@ -102,13 +102,13 @@ export default function ChatbotInterface() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl h-[80vh] bg-white rounded-2xl shadow-2xl grid grid-rows-[auto_1fr_auto] overflow-hidden">
+      <div className="w-full max-w-7xl h-[100vh] bg-white rounded-2xl shadow-2xl grid grid-rows-[auto_1fr_auto] overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-3 border-b flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-400 rounded-full flex items-center justify-center text-white font-bold">PB</div>
+        <div className="px-4 py-3 border-b-2 border-b-blue-300 flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-400 rounded-full flex items-center justify-center text-white font-bold">PB</div>
           <div className="flex-1">
-            <div className="text-sm font-semibold">Pharmabot</div>
-            <div className="text-xs text-slate-500">AI assistant </div>
+            <div className="text-xl font-semibold">Pharmabot</div>
+            <div className="text-sm text-slate-500">AI assistant </div>
           </div>
           <div className="text-xs text-slate-400">Online</div>
         </div>
@@ -118,7 +118,7 @@ export default function ChatbotInterface() {
           <div className="flex flex-col gap-4">
             {messages.map((m) => (
               <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[78%] md:max-w-[64%] text-sm leading-6 p-3 rounded-2xl ${m.role === "user" ? "bg-indigo-600 text-white rounded-br-none" : "bg-slate-100 text-slate-900 rounded-bl-none"}`}>
+                <div className={`max-w-[78%] md:max-w-[64%] text-lg leading-6 p-3 rounded-2xl ${m.role === "user" ? "bg-blue-500 text-white rounded-br-none" : "bg-slate-100 text-slate-900 rounded-bl-none"}`}>
                   <div className="whitespace-pre-wrap">{m.text}</div>
                   {m.attachments && (
                     <div className="mt-2 flex gap-2 flex-wrap">
@@ -139,7 +139,7 @@ export default function ChatbotInterface() {
 
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-slate-100 p-2 rounded-2xl rounded-bl-none">
+                <div className="bg-slate-200 p-2 rounded-2xl rounded-bl-none">
                   <div className="flex items-center gap-2">
                     <span className="inline-block h-2 w-2 rounded-full animate-bounce" />
                     <span className="inline-block h-2 w-2 rounded-full animate-bounce delay-75" />
@@ -154,7 +154,7 @@ export default function ChatbotInterface() {
         </div>
 
         {/* Composer */}
-        <div className="px-4 py-3 border-t bg-white">
+        <div className="px-4 py-3 border-t-2 border-blue-400 bg-white">
           {attachments && (
             <div className="mb-2 flex items-center gap-2">
               {attachments.map((a) => (
@@ -176,7 +176,7 @@ export default function ChatbotInterface() {
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message.. "
                 rows={1}
-                className="w-full resize-none rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full resize-none rounded-xl border border-blue-600 px-3 py-2 text-md focus:outline-none focus:ring-2 focus:ring-blue-300"
                 style={{ maxHeight: 160, overflow: "auto" }}
               />
               <div className="mt-1 text-[12px] text-slate-400">Press Enter to send | Shift+Enter for newline</div>
@@ -186,7 +186,7 @@ export default function ChatbotInterface() {
               <button
                 onClick={() => sendMessage(value)}
                 disabled={!value.trim()}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 mb-7 rounded-lg bg-blue-600 text-white text-sm disabled:opacity-50 "
               >
                 Send
               </button>

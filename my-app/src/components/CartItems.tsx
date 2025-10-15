@@ -3,7 +3,7 @@ import React from "react";
 const CartItems: React.FC = () => {
   return (
     <>
-      <ul className=" p-6 bg-gradient-to-br from-blue-50 to-blue-200 border-2 border-blue-200 rounded-2xl">
+      <ul className=" p-6 bg-gradient-to-br from-white to-blue-50 border-2 border-blue-100 rounded-2xl">
         {/* Cart item */}
         <li className="sm:flex items-center py-6 border-b border-gray-200 dark:border-gray-700/60">
           <a
@@ -20,7 +20,7 @@ const CartItems: React.FC = () => {
           </a>
           <div className="grow">
             <a href="#0">
-              <h3 className="text-lg font-semibold text-blue-800  mb-1">
+              <h3 className="text-2xl font-semibold text-blue-800  mb-1">
                 Panadol
               </h3>
             </a>
@@ -63,7 +63,7 @@ const CartItems: React.FC = () => {
           </a>
           <div className="grow">
             <a href="#0">
-              <h3 className="text-lg font-semibold text-blue-800  mb-1">
+              <h3 className="text-2xl font-semibold text-blue-800  mb-1">
                 Ozempic 
               </h3>
             </a>
@@ -104,7 +104,7 @@ const CartItems: React.FC = () => {
           </a>
           <div className="grow ">
             <a href="#0">
-              <h3 className="text-lg font-semibold text-blue-800  mb-1">
+              <h3 className="text-2xl font-semibold text-blue-800  mb-1">
                 Cipro
               </h3>
             </a>

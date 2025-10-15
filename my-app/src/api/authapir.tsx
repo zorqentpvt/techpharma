@@ -30,7 +30,7 @@ export async function signin(payload: { username: string; password: string }) {
   console.log("API Payload (signin):", payload);
 
   try {
-    const response = await api.post("/auth/signin", payload);
+    const response = await api.post("api/auth/login", payload);
     console.log("API Response (signin):", response.data);
 
     // Save token & user info in localStorage if returned
@@ -49,11 +49,11 @@ export async function signin(payload: { username: string; password: string }) {
 }
 
 // SIGNUP
-export async function signup(payload: { username: string; email: string; password: string; role?: string }) {
+export async function signup(payload: any) {
   console.log("API Payload (signup):", payload);
 
   try {
-    const response = await api.post("/auth/signup", payload);
+    const response = await api.post("api/auth/register", payload);
     console.log("API Response (signup):", response.data);
     return response.data;
   } catch (error: any) {

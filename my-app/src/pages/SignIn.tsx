@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Notification from "../components/Notification";
 import Button from "../components/Button";
-import { login, signup } from "../api/authapi";
 import React from "react";
 import { signin } from "../api/authapir";
 
@@ -26,7 +25,7 @@ export default function SignIn() {
     setLoading(true);
 
     try {
-      const res = await login({ username, password });
+      const res = await signin({ username, password });
       if (res.success || res.token) {
         localStorage.setItem("user", JSON.stringify(res.user));
         localStorage.setItem("token", res.token);

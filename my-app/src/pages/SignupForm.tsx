@@ -1,6 +1,7 @@
 import { Divide } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { signup } from "../api/authapir";
 
 export default function SignupForm() {
 
@@ -47,13 +48,26 @@ export default function SignupForm() {
     
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Save user in localStorage or send to backend
-    localStorage.setItem("user", JSON.stringify(formData));
-    alert(`Welcome, ${formData.username}!`);
-    navigate("/dashboard");
+  
+    try {
+      // Call signup API
+      const result = await signup(formData);
+  
+      if (result.success) {
+        // Optionally save user info to localStorage
+        localStorage.setItem("user", JSON.stringify(result.user || formData));
+  
+        alert(`Welcome, ${formData.username}!`);
+        navigate("/dashboard");
+      } else {
+        alert(result.message || "Signup failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("An unexpected error occurred. Please try again.");
+    }
   };
 
   // Render role-specific fields

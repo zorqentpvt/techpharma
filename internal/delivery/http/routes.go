@@ -50,7 +50,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 	authRoutes := api.Group("/auth")
 	{
 		authRoutes.POST("/login", authHandler.Login)
-		authRoutes.POST("/register", authHandler.Register)
+		authRoutes.POST("/register", userHandler.CreateUser)
 		authRoutes.POST("/refresh", authHandler.RefreshToken)
 		authRoutes.GET("/validate", authHandler.ValidateToken)
 		authRoutes.POST("/forgot-password", authHandler.ForgotPassword)
@@ -85,7 +85,6 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			adminUserRoutes := adminRoutes.Group("/users")
 			{
 				adminUserRoutes.GET("/roles", userHandler.FetchRoles)
-				adminUserRoutes.POST("/", userHandler.CreateUser) // Changed from add-users to standard REST
 				adminUserRoutes.GET("/", userHandler.ListUsers)
 				//adminUserRoutes.GET("/:id", userHandler.GetUserByID)         // Get specific user by ID
 				adminUserRoutes.PUT("/update-user/:id", userHandler.UpdateUser) // Changed from update/:id to standard REST

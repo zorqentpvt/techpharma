@@ -40,11 +40,30 @@ type RegisterRequest struct {
 
 // tygo:emit
 type CreateUserRequest struct {
-	FirstName   string     `json:"firstName"`
-	LastName    string     `json:"lastName"`
-	Email       *string    `json:"email,omitempty"`
-	RoleID      *uuid.UUID `json:"RoleId,omitempty"` // ADD THIS FIELD
-	PhoneNumber string     `json:"phoneNumber,omitempty"`
+	// Basic fields
+	FirstName   string `json:"firstname" binding:"required"`
+	LastName    string `json:"lastname" binding:"required"`
+	Username    string `json:"username" binding:"required"`
+	Email       string `json:"email" binding:"required,email"`
+	Password    string `json:"password" binding:"required,min=6"`
+	CPassword   string `json:"cpassword" binding:"required"`
+	PhoneNumber string `json:"num" binding:"required"`
+	Address     string `json:"address" binding:"required"`
+	DateOfBirth string `json:"dob" binding:"required"`
+	Gender      string `json:"gen" binding:"required"`
+	RoleID      string `json:"roleId" binding:"required"` // UUID as string
+
+	// Doctor-specific fields
+	SpecializationID string `json:"specializationId,omitempty"` // UUID as string
+	LicenseNumber    string `json:"licenseNumber,omitempty"`
+	Qualification    string `json:"qual,omitempty"`
+	Certificate      string `json:"certi,omitempty"`
+
+	// Pharmacy-specific fields
+	PharmacyName    string `json:"pharmacyName,omitempty"`
+	PharmacyAddress string `json:"paddress,omitempty"`
+	GSTNumber       string `json:"gstnumber,omitempty"`
+	PharmacyPhone   string `json:"pnum,omitempty"`
 }
 
 // tygo:emit

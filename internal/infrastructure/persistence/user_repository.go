@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/google/uuid"
@@ -30,6 +31,8 @@ func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Use
 	var user entity.User
 	if err := r.db.WithContext(ctx).
 		Preload("Role").
+		Preload("Doctor").
+		Preload("Pharmacy").
 		First(&user, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -43,6 +46,8 @@ func (r *userRepository) GetByPhoneNumber(ctx context.Context, phoneNumber strin
 	var user entity.User
 	if err := r.db.WithContext(ctx).
 		Preload("Role").
+		Preload("Doctor").
+		Preload("Pharmacy").
 		Where("phone_number = ?", phoneNumber).
 		First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -57,6 +62,8 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*entity.
 	var user entity.User
 	if err := r.db.WithContext(ctx).
 		Preload("Role").
+		Preload("Doctor").
+		Preload("Pharmacy").
 		Where("email = ?", email).
 		First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -64,7 +71,7 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*entity.
 		}
 		return nil, err
 	}
-	log.Printf("User found by email: %s", user.ID)
+	log.Printf("User found by email: %s (ID: %s)", email, user.ID)
 	return &user, nil
 }
 
@@ -207,4 +214,41 @@ func (r *userRepository) ListWithFilters(ctx context.Context, filters types.User
 	}
 
 	return users, total, nil
+}
+func (r *userRepository) GetRoleByID(ctx context.Context, id uuid.UUID) ([]*entity.Role, error) {
+	var role []*entity.Role
+
+	if err := r.db.WithContext(ctx).First(&role, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	// Print role details properly
+	if len(role) > 0 {
+		fmt.Printf("Fetched role: ID=%s, Name=%s, Description=%s\n",
+			role[0].ID,
+			role[0].Name,
+			role[0].Description)
+	} else {
+		fmt.Println("No role found")
+	}
+
+	return role, nil
+}
+
+func (r *userRepository) DeleteUser(ctx context.Context, id uuid.UUID) error {
+
+	return r.db.WithContext(ctx).Delete(&entity.User{}, "id = ?", id).Error
+}
+
+func (r *userRepository) CreateDoctor(ctx context.Context, user *entity.Doctor) (*entity.Doctor, error) {
+	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+func (r *userRepository) CreatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error) {
+	if err := r.db.WithContext(ctx).Create(pharmacy).Error; err != nil {
+		return nil, err
+	}
+	return pharmacy, nil
 }

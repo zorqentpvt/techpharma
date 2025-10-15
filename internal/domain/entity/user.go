@@ -33,15 +33,18 @@ type User struct {
 	// System fields
 	Status       string     `gorm:"type:varchar(50);default:'active';index" json:"status"`
 	LastLoginAt  *time.Time `json:"lastLoginAt,omitempty"`
-	RefreshToken *string    `gorm:"type	:varchar(500)" json:"-"`
+	RefreshToken *string    `gorm:"type:varchar(500)" json:"-"`
 
 	// Preferences and settings
 	Language    string          `gorm:"type:varchar(10);default:'en'" json:"language"`
 	Preferences json.RawMessage `gorm:"type:jsonb;default:'{}'" json:"preferences"`
 
 	RoleID *uuid.UUID `gorm:"type:uuid;index" json:"roleId,omitempty"`
-	Role   *Role      `gorm:"foreignKey:RoleID" json:"collage,omitempty"`
+	Role   *Role      `gorm:"foreignKey:RoleID" json:"role,omitempty"`
 
+	// Add this: Doctor relationship (one-to-one)
+	Doctor   *Doctor   `gorm:"foreignKey:UserID" json:"doctor,omitempty"`
+	Pharmacy *Pharmacy `gorm:"foreignKey:UserID" json:"pharmacy,omitempty"`
 	// Audit fields
 	IsActive       bool       `gorm:"default:true;index" json:"isActive"`
 	DeactivatedAt  *time.Time `json:"deactivatedAt,omitempty"`

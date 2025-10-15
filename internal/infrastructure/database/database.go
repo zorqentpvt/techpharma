@@ -159,7 +159,6 @@ func (d *Database) Migrate() error {
 		&entity.SecurityEvent{},
 		&entity.DataRetentionPolicy{},
 		&entity.Doctor{},
-		&entity.Specialization{},
 		&entity.Pharmacy{},
 		&entity.Medicine{},
 		&entity.Cart{},

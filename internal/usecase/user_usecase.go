@@ -2,10 +2,7 @@ package usecase
 
 import (
 	"context"
-	"crypto/rand"
-	"math/big"
 
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,7 +11,6 @@ import (
 	"github.com/skryfon/collex/internal/domain/repository"
 	"github.com/skryfon/collex/internal/domain/service"
 	"github.com/skryfon/collex/internal/types"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // UserUseCase defines the interface for user-related operations
@@ -27,6 +23,10 @@ type UserUseCase interface {
 	ListUsers(ctx context.Context, filters types.UserListFilters, pagination types.PaginationOptions) (*types.UserListResult, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*entity.User, error) // Fixed: added return types
 	UpdateUserProfile(ctx context.Context, userID uuid.UUID, user *entity.User) (*entity.User, error)
+	GetRoleByID(ctx context.Context, id uuid.UUID) ([]*entity.Role, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) error
+	CreateDoctor(ctx context.Context, doctor *entity.Doctor) (*entity.Doctor, error)
+	CreatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error)
 }
 
 // userUseCase implements the UserUseCase interface
@@ -109,19 +109,6 @@ func (u *userUseCase) CreateUser(ctx context.Context, user *entity.User) (*entit
 	displayName := user.FirstName + " " + user.LastName
 	user.DisplayName = &displayName
 
-	// Generate default password
-	defaultPassword := u.generateDefaultPassword(user)
-
-	// Hash the generated password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, &errors.DomainError{
-			Code:    "PASSWORD_HASH_ERROR",
-			Message: "Failed to secure password",
-		}
-	}
-	user.Password = string(hashedPassword)
-
 	// Set system fields
 	user.ID = uuid.New()
 	now := time.Now()
@@ -144,37 +131,6 @@ func (u *userUseCase) CreateUser(ctx context.Context, user *entity.User) (*entit
 	// Assign role to user
 
 	return user, nil
-}
-
-// generateDefaultPassword creates a default password for the user
-func (u *userUseCase) generateDefaultPassword(user *entity.User) string {
-	if user.Email == nil || *user.Email == "" {
-		// Fallback to random password if no email
-		return u.generateRandomPassword(8)
-	}
-
-	email := *user.Email
-	// Get the part before @ symbol
-	emailPrefix := strings.Split(email, "@")[0]
-
-	// Use first few characters of email + random numbers
-	if len(emailPrefix) >= 4 {
-		return emailPrefix[:4] + "123!"
-	}
-
-	return emailPrefix + "123!"
-}
-
-// generateRandomPassword creates a random password of specified length
-
-func (u *userUseCase) generateRandomPassword(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
-	password := make([]byte, length)
-	for i := range password {
-		num, _ := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
-		password[i] = charset[num.Int64()]
-	}
-	return string(password)
 }
 
 func (u *userUseCase) GetAllRoles(ctx context.Context) ([]*entity.Role, error) {
@@ -605,3 +561,26 @@ func (u *userUseCase) UpdateUserProfile(ctx context.Context, userID uuid.UUID, u
 }
 
 /*PATIENT*/
+func (u *userUseCase) GetRoleByID(ctx context.Context, id uuid.UUID) ([]*entity.Role, error) {
+	roles, err := u.userRepo.GetRoleByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if len(roles) == 0 {
+		return nil, &errors.DomainError{
+			Code:    "ROLE_NOT_FOUND",
+			Message: "Role not found",
+		}
+	}
+	return roles, nil
+}
+func (u *userUseCase) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	return u.userRepo.DeleteUser(ctx, id)
+}
+func (u *userUseCase) CreateDoctor(ctx context.Context, user *entity.Doctor) (*entity.Doctor, error) {
+	return u.userRepo.CreateDoctor(ctx, user)
+}
+
+func (u *userUseCase) CreatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error) {
+	return u.userRepo.CreatePharmacy(ctx, pharmacy)
+}

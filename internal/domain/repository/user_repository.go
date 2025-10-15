@@ -19,6 +19,10 @@ type UserRepository interface {
 	List(ctx context.Context, limit, offset int) ([]*entity.User, error)
 	GetAllRoles(ctx context.Context) ([]*entity.Role, error)
 	ListWithFilters(ctx context.Context, filters types.UserListFilters, limit, offset int, sortField, sortOrder string) ([]*entity.User, int64, error)
+	GetRoleByID(ctx context.Context, id uuid.UUID) ([]*entity.Role, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) error
+	CreateDoctor(ctx context.Context, user *entity.Doctor) (*entity.Doctor, error)
+	CreatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error)
 }
 
 type AuditLogRepository interface {

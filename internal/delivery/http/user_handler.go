@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/skryfon/collex/internal/domain/entity"
 	"github.com/skryfon/collex/internal/types"
 	"github.com/skryfon/collex/internal/usecase"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // UserHandlerClean handles HTTP requests for user operations
@@ -31,7 +33,7 @@ func NewUserHandlerClean(userUseCase usecase.UserUseCase) *UserHandlerClean {
 func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 	var req types.CreateUserRequest
 
-	// Strict JSON validation - must match RegisterRequest struct exactly
+	// Bind and validate JSON
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Invalid request",
@@ -41,78 +43,211 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Validate required fields
-	if req.FirstName == "" {
+	// Validate password match
+	if req.Password != req.CPassword {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Invalid request",
-			Message: "First name is required",
+			Message: "Passwords do not match",
 		})
 		return
 	}
 
-	if req.LastName == "" {
+	// Parse and validate Role UUID
+	roleUUID, err := uuid.Parse(req.RoleID)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Invalid request",
-			Message: "Last name is required",
+			Message: "Invalid role ID format",
 		})
 		return
 	}
 
-	if req.Email == nil || *req.Email == "" {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error:   "Invalid request",
-			Message: "Email is required",
-		})
-		return
-	}
-	if req.PhoneNumber == "" {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error:   "Invalid request",
-			Message: "Phone number is required",
-		})
-		return
-	}
-	if req.RoleID == nil { // Assuming UserRoleID is an integer
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error:   "Invalid request",
-			Message: "User role is required",
-		})
-		return
-	}
-
-	// Create context with userID from Gin context (set by JWT middleware)
+	// Create context once
 	ctx := context.WithValue(c.Request.Context(), "userID", c.GetString("userID"))
 
-	// Create user entity with only required fields
+	// Get role to determine user type
+	role, err := h.userUseCase.GetRoleByID(ctx, roleUUID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "Invalid role ID",
+		})
+		return
+	}
+
+	// Validate role-specific required fields
+	if err := h.validateRoleSpecificFields(&req, role[0].Name); err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid request",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// Parse date of birth
+	dob, err := time.Parse("2006-01-02", req.DateOfBirth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "Invalid date of birth format",
+		})
+		return
+	}
+
+	// Hash password
+	hashedPassword, err := h.hashPassword(req.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   "Failed to process password",
+			Message: "Password hashing failed",
+		})
+		return
+	}
+
+	// Create base user entity
 	user := &entity.User{
 		FirstName:       req.FirstName,
 		LastName:        req.LastName,
-		Email:           req.Email,
+		Email:           &req.Email,
 		PhoneNumber:     req.PhoneNumber,
-		RoleID:          req.RoleID,
-		IsEmailVerified: false,
+		Password:        hashedPassword,
+		DateOfBirth:     &dob,
+		Gender:          &req.Gender,
+		RoleID:          &roleUUID,
+		IsEmailVerified: true,
+		IsPhoneVerified: true,
 		Status:          "active",
 		Language:        "en",
 		FirstTimeLogin:  true,
+		IsActive:        true,
 	}
 
-	// Call CreateUser with enriched context
+	// Set address
+	user.Address = entity.GeoLocation{
+		Address: req.Address,
+	}
+
+	// Create user in database
 	createdUser, err := h.userUseCase.CreateUser(ctx, user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
 			Error:   "Failed to create user",
-			Message: "User creation failed",
-			Details: err.Error(),
+			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusCreated, types.RegisterResponse{
-		UserID:  createdUser.ID,
-		Message: "User created successfully",
+	// Handle role-specific creation based on role name
+	switch role[0].Name {
+	case "Doctor":
+		if err := h.createDoctor(ctx, createdUser.ID, &req); err != nil {
+			// Rollback user creation if doctor creation fails
+			h.userUseCase.DeleteUser(ctx, createdUser.ID)
+			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+				Error:   "Failed to create doctor profile",
+				Message: err.Error(),
+			})
+			return
+		}
+
+	case "Pharmacist":
+		if err := h.createPharmacy(ctx, createdUser.ID, &req); err != nil {
+			// Rollback user creation if pharmacy creation fails
+			h.userUseCase.DeleteUser(ctx, createdUser.ID)
+			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+				Error:   "Failed to create pharmacy profile",
+				Message: err.Error(),
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"userId":  createdUser.ID,
+		"message": "User created successfully",
+		"role":    role[0].Name,
 	})
 }
 
+// validateRoleSpecificFields validates required fields based on user role
+func (h *UserHandlerClean) validateRoleSpecificFields(req *types.CreateUserRequest, roleName string) error {
+	switch roleName {
+	case "Doctor":
+		if req.SpecializationID == "" {
+			return fmt.Errorf("specialization ID is required for doctors")
+		}
+		// Validate specialization UUID
+
+		if req.LicenseNumber == "" {
+			return fmt.Errorf("license number is required for doctors")
+		}
+		if req.Qualification == "" {
+			return fmt.Errorf("qualification is required for doctors")
+		}
+
+	case "Pharmacist":
+		if req.PharmacyName == "" {
+			return fmt.Errorf("pharmacy name is required")
+		}
+		if req.PharmacyAddress == "" {
+			return fmt.Errorf("pharmacy address is required")
+		}
+		if req.LicenseNumber == "" {
+			return fmt.Errorf("pharmacy license number is required")
+		}
+	}
+
+	return nil
+}
+
+// createDoctor creates a doctor profile linked to the user
+func (h *UserHandlerClean) createDoctor(ctx context.Context, userID uuid.UUID, req *types.CreateUserRequest) error {
+	// Parse specialization UUID
+
+	doctor := &entity.Doctor{
+		UserID:           userID,
+		SpecializationID: req.SpecializationID,
+		LicenseNumber:    req.LicenseNumber,
+		Experience:       0, // Default, can be added to form
+		ConsultationFee:  0, // Default, can be added to form
+		IsActive:         true,
+	}
+
+	_, err := h.userUseCase.CreateDoctor(ctx, doctor)
+	if err != nil {
+		return fmt.Errorf("failed to create doctor profile: %w", err)
+	}
+
+	return nil
+}
+
+// createPharmacy creates a pharmacy profile
+func (h *UserHandlerClean) createPharmacy(ctx context.Context, userID uuid.UUID, req *types.CreateUserRequest) error {
+	pharmacy := &entity.Pharmacy{
+		UserID:      userID,
+		Name:        req.PharmacyName,
+		Email:       &req.Email,
+		PhoneNumber: req.PharmacyPhone,
+		Address:     req.PharmacyAddress,
+		IsActive:    true,
+	}
+
+	_, err := h.userUseCase.CreatePharmacy(ctx, pharmacy)
+	if err != nil {
+		return fmt.Errorf("failed to create pharmacy profile: %w", err)
+	}
+
+	return nil
+}
+
+// hashPassword hashes the password using bcrypt
+func (h *UserHandlerClean) hashPassword(password string) (string, error) {
+	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedBytes), nil
+}
 func (h *UserHandlerClean) FetchRoles(c *gin.Context) {
 	roles, err := h.userUseCase.GetAllRoles(c.Request.Context())
 	if err != nil {

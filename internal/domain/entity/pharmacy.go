@@ -9,6 +9,8 @@ import (
 // Pharmacy represents a pharmacy in the system
 type Pharmacy struct {
 	BaseModel
+	UserID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex" json:"userId"`
+	User   *User     `gorm:"foreignKey:UserID" json:"user,omitempty"`
 
 	Name        string  `gorm:"type:varchar(200);not null" json:"name"`
 	Email       *string `gorm:"type:varchar(100);uniqueIndex" json:"email,omitempty"`

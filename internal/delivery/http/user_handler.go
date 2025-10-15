@@ -162,10 +162,10 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"userId":  createdUser.ID,
-		"message": "User created successfully",
-		"role":    role[0].Name,
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Data:    createdUser.ID,
+		Message: "User Created successfully",
 	})
 }
 
@@ -224,12 +224,13 @@ func (h *UserHandlerClean) createDoctor(ctx context.Context, userID uuid.UUID, r
 // createPharmacy creates a pharmacy profile
 func (h *UserHandlerClean) createPharmacy(ctx context.Context, userID uuid.UUID, req *types.CreateUserRequest) error {
 	pharmacy := &entity.Pharmacy{
-		UserID:      userID,
-		Name:        req.PharmacyName,
-		Email:       &req.Email,
-		PhoneNumber: req.PharmacyPhone,
-		Address:     req.PharmacyAddress,
-		IsActive:    true,
+		UserID:        userID,
+		Name:          req.PharmacyName,
+		LicenseNumber: req.LicenseNumber,
+		Email:         &req.Email,
+		PhoneNumber:   req.PharmacyPhone,
+		Address:       req.PharmacyAddress,
+		IsActive:      true,
 	}
 
 	_, err := h.userUseCase.CreatePharmacy(ctx, pharmacy)

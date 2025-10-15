@@ -12,9 +12,10 @@ type Pharmacy struct {
 	UserID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex" json:"userId"`
 	User   *User     `gorm:"foreignKey:UserID" json:"user,omitempty"`
 
-	Name        string  `gorm:"type:varchar(200);not null" json:"name"`
-	Email       *string `gorm:"type:varchar(100);uniqueIndex" json:"email,omitempty"`
-	PhoneNumber string  `gorm:"type:varchar(20);not null" json:"phoneNumber"`
+	Name          string  `gorm:"type:varchar(200);not null" json:"name"`
+	Email         *string `gorm:"type:varchar(100);uniqueIndex" json:"email,omitempty"`
+	PhoneNumber   string  `gorm:"type:varchar(20);not null" json:"phoneNumber"`
+	LicenseNumber string  `json:"licenseNumber,omitempty"`
 
 	// Location fields
 	Address    string  `gorm:"type:varchar(500)" json:"address"`

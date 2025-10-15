@@ -41,9 +41,9 @@ const Cart: React.FC = () => {
 
               {/* Order summary sidebar */}
               <div>
-                <div className="bg-gradient-to-br from-blue-50 to-blue-200  p-5 mt-11.5 shadow-xs border-blue-200 rounded-xl lg:w-72 xl:w-80 border-2" >
-                  <div className="text-blue-800  font-semibold mb-2">
-                    Order Summary
+                <div className="bg-gradient-to-br from-white to-blue-50  p-5 mt-11.5 shadow-xs border-blue-100 rounded-xl lg:w-72 xl:w-80 border-2" >
+                  <div className="text-blue-800 text-xl font-semibold mb-2">
+                    <h1>Order Summary</h1>
                   </div>
 
                   {/* Order details */}

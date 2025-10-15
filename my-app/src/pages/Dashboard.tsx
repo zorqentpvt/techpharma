@@ -137,7 +137,7 @@ export default function Dashboard() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 p-6 lg:p-10">
+      <main className="flex-1 lg:p-5">
         <div className="bg-white rounded-2xl shadow-xl p-6 min-h-[80vh]">{renderContent()}</div>
       </main>
     </div>

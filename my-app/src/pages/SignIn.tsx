@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Notification from "../components/Notification";
 import Button from "../components/Button";
+import { login, signup } from "../api/authapi";
 import React from "react";
 import { signin } from "../api/authapir";
 
@@ -17,18 +18,28 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     setLoading(true);
-
+  
     try {
       const res = await signin({ username, password });
-      if (res.success || res.token) {
-        localStorage.setItem("user", JSON.stringify(res.user));
-        localStorage.setItem("token", res.token);
+  
+      if (res.success && res.data?.user) {
+        // Create a simplified user object
+        const user = {
+          username: res.data.user.firstName.toLowerCase(), // or any username logic
+          email: res.data.user.email,
+          password: password, // store the entered password (not recommended for production!)
+          role: res.data.user.role.name.toLowerCase(),
+        };
+  
+        // Save to localStorage
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("token", res.data.accessToken);
+  
         setSuccess("✅ Logged in successfully!");
         setTimeout(() => navigate("/dashboard"), 500);
       } else {
@@ -40,6 +51,7 @@ export default function SignIn() {
       setLoading(false);
     }
   };
+  
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();

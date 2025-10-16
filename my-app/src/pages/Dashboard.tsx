@@ -83,6 +83,7 @@ export default function Dashboard() {
     { key: "Order management", label: "Order management", roles: ["pharmacy"] },
     { key: "appointments", label: "Appointments", roles: ["doctor"] },
     { key: "logout", label: "logout", roles: ["normal", "doctor", "pharmacy"] },
+    { key: "cart", label: "cart", roles: [] },
 
   ];
 
@@ -90,6 +91,8 @@ export default function Dashboard() {
     switch (activeTab) {
       case "Profile":
         return <ProfilePage />;
+        case "cart":
+          return <Cart/>;
       case "home":
         return <Home />;
       case "doctor":

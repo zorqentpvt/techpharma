@@ -86,6 +86,37 @@ export async function updateProfile(payload: { username?: string; email?: string
 
 // --- HELPER FUNCTIONS ---
 
+
+export interface Role {
+  id: string;
+  name: string;
+}
+
+interface RolesApiResponse {
+  success: boolean;
+  message: string;
+  data: Role[];
+}
+
+export async function fetchRoles(): Promise<Role[]> {
+  try {
+    const response = await api.get<RolesApiResponse>("api/auth/roles");
+    console.log(response);
+
+    if (!response || !response.data || !response.data.data) {
+      throw new Error(`Failed to fetch roles: ${response.statusText}`);
+    }
+
+    // Return the roles array, not the whole response object
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching roles:", error);
+    throw error;
+  }
+}
+
+
+
 // Get stored user role
 export function getUserRole(): string | null {
   const user = localStorage.getItem("user");

@@ -28,24 +28,20 @@ func (r *DoctorRepository) GetDoctors(ctx context.Context, searchQuery string) (
 	// Start with basic query
 	query := r.db.WithContext(ctx).
 		Preload("User").
-		Preload("Specialization").
 		Where("doctors.is_active = ?", true)
 
-	// If search query is provided, add search conditions with joins
+		// If search query is provided, add search conditions with joins
 	if searchQuery != "" {
 		searchPattern := "%" + strings.ToLower(searchQuery) + "%"
 
 		query = query.
 			Joins("LEFT JOIN users ON users.id = doctors.user_id").
-			Joins("LEFT JOIN specializations ON specializations.id = doctors.specialization_id").
 			Where(
 				"LOWER(users.first_name) LIKE ? OR "+
 					"LOWER(users.last_name) LIKE ? OR "+
 					"LOWER(CONCAT(users.first_name, ' ', users.last_name)) LIKE ? OR "+
 					"LOWER(COALESCE(users.display_name, '')) LIKE ? OR "+
-					"LOWER(specializations.name) LIKE ? OR "+
-					"LOWER(specializations.description) LIKE ?",
-				searchPattern,
+					"LOWER(COALESCE(doctors.specialization_id, '')) LIKE ?",
 				searchPattern,
 				searchPattern,
 				searchPattern,
@@ -54,7 +50,6 @@ func (r *DoctorRepository) GetDoctors(ctx context.Context, searchQuery string) (
 			).
 			Group("doctors.id")
 	}
-
 	// Execute query with ordering
 	if err := query.
 		Order("doctors.created_at DESC").

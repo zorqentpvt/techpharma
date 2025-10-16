@@ -60,18 +60,20 @@ export default function Medicines({ setActiveTab }: MedicinesProps) {
     if (!search.trim()) return;
     setIsSearching(true);
     setNoResults(false);
-
-    const payload = nearby && coords ? { query: search, coords } : { query: search };
-    const data = await searchMedicine(payload);
+  
+    // ✅ Only send coords if nearby is ON
+    const coordsToSend = nearby ? coords : null;
+  
+    const data = await searchMedicine(search, coordsToSend);
     const medicines: Medicine[] = Array.isArray(data) ? data : [];
-
+  
     if (medicines.length === 0) setNoResults(true);
-
+  
     const sorted = sortMedicinesByLocation(medicines, nearby);
     setResults(sorted);
     setIsSearching(false);
   };
-
+  
   const handleBuy = (med: Medicine) => {
     localStorage.setItem("transaction", JSON.stringify(med));
     setActiveTab("cart");

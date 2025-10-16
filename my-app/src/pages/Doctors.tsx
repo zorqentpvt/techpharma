@@ -102,14 +102,15 @@ export default function Doctors() {
     setLoading(true);
     setIsSearching(true);
     try {
-      const payload = nearby && coords ? { query: searchTerm, coords } : { query: searchTerm };
-      const res = await searchDoctor(payload);
-      let fetchedDoctors: Doctor[] = Array.isArray(res) ? res: [];
-
+      const coordsToSend = nearby ? coords : null; // ✅ use this instead of modifying state
+  
+      const res = await searchDoctor(searchTerm, coordsToSend);
+      let fetchedDoctors: Doctor[] = Array.isArray(res) ? res : [];
+  
       if (nearby && coords) {
         fetchedDoctors = sortByDistance(fetchedDoctors, coords);
       }
-
+  
       setDoctors(fetchedDoctors);
       setError("");
     } catch (err) {
@@ -121,6 +122,7 @@ export default function Doctors() {
       setIsSearching(false);
     }
   };
+  
 
   const sortByDistance = (list: Doctor[], coords: { latitude: number; longitude: number }) => {
     return [...list].sort((a, b) => {

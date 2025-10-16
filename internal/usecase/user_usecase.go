@@ -77,7 +77,7 @@ func (u *userUseCase) CreateUser(ctx context.Context, user *entity.User) (*entit
 		}
 	}
 	// Validate role
-	if user.RoleID == nil {
+	if user.RoleID == "" {
 		return nil, &errors.DomainError{
 			Code:    "USER_VALIDATION_ERROR",
 			Message: "User role is required",

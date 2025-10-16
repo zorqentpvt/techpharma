@@ -52,12 +52,29 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Parse and validate Role UUID
-	roleUUID, err := uuid.Parse(req.RoleID)
-	if err != nil {
+	// Validate RoleID is not empty
+	if req.RoleID == "" {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Invalid request",
-			Message: "Invalid role ID format",
+			Message: "Role ID is required",
+		})
+		return
+	}
+
+	// Normalize role name (case-insensitive)
+	roleName := strings.ToLower(strings.TrimSpace(req.RoleID))
+
+	// Validate role exists
+	validRoles := map[string]bool{
+		"normal":   true,
+		"doctor":   true,
+		"pharmacy": true,
+	}
+
+	if !validRoles[roleName] {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "Invalid role. Must be one of: patient, doctor, pharmacy",
 		})
 		return
 	}
@@ -65,18 +82,8 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 	// Create context once
 	ctx := context.WithValue(c.Request.Context(), "userID", c.GetString("userID"))
 
-	// Get role to determine user type
-	role, err := h.userUseCase.GetRoleByID(ctx, roleUUID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error:   "Invalid request",
-			Message: "Invalid role ID",
-		})
-		return
-	}
-
 	// Validate role-specific required fields
-	if err := h.validateRoleSpecificFields(&req, role[0].Name); err != nil {
+	if err := h.validateRoleSpecificFields(&req, roleName); err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Invalid request",
 			Message: err.Error(),
@@ -89,7 +96,7 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Invalid request",
-			Message: "Invalid date of birth format",
+			Message: "Invalid date of birth format (use YYYY-MM-DD)",
 		})
 		return
 	}
@@ -113,18 +120,13 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 		Password:        hashedPassword,
 		DateOfBirth:     &dob,
 		Gender:          &req.Gender,
-		RoleID:          &roleUUID,
+		RoleID:          req.RoleID, // Now stores the string directly
 		IsEmailVerified: true,
 		IsPhoneVerified: true,
 		Status:          "active",
 		Language:        "en",
 		FirstTimeLogin:  true,
 		IsActive:        true,
-	}
-
-	// Set address
-	user.Address = entity.GeoLocation{
-		Address: req.Address,
 	}
 
 	// Create user in database
@@ -138,8 +140,8 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 	}
 
 	// Handle role-specific creation based on role name
-	switch role[0].Name {
-	case "Doctor":
+	switch roleName {
+	case "doctor":
 		if err := h.createDoctor(ctx, createdUser.ID, &req); err != nil {
 			// Rollback user creation if doctor creation fails
 			h.userUseCase.DeleteUser(ctx, createdUser.ID)
@@ -150,7 +152,7 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 			return
 		}
 
-	case "Pharmacist":
+	case "pharmacy":
 		if err := h.createPharmacy(ctx, createdUser.ID, &req); err != nil {
 			// Rollback user creation if pharmacy creation fails
 			h.userUseCase.DeleteUser(ctx, createdUser.ID)
@@ -160,24 +162,26 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 			})
 			return
 		}
+
+	case "normal":
+		// No additional profile creation needed for patients
+		// Add patient-specific logic here if needed in the future
 	}
 
 	c.JSON(http.StatusOK, response.Response{
 		Success: true,
 		Data:    createdUser.ID,
-		Message: "User Created successfully",
+		Message: "User created successfully",
 	})
 }
 
 // validateRoleSpecificFields validates required fields based on user role
 func (h *UserHandlerClean) validateRoleSpecificFields(req *types.CreateUserRequest, roleName string) error {
 	switch roleName {
-	case "Doctor":
+	case "doctor":
 		if req.SpecializationID == "" {
 			return fmt.Errorf("specialization ID is required for doctors")
 		}
-		// Validate specialization UUID
-
 		if req.LicenseNumber == "" {
 			return fmt.Errorf("license number is required for doctors")
 		}
@@ -185,7 +189,7 @@ func (h *UserHandlerClean) validateRoleSpecificFields(req *types.CreateUserReque
 			return fmt.Errorf("qualification is required for doctors")
 		}
 
-	case "Pharmacist":
+	case "pharmacy":
 		if req.PharmacyName == "" {
 			return fmt.Errorf("pharmacy name is required")
 		}
@@ -195,6 +199,10 @@ func (h *UserHandlerClean) validateRoleSpecificFields(req *types.CreateUserReque
 		if req.LicenseNumber == "" {
 			return fmt.Errorf("pharmacy license number is required")
 		}
+
+	case "patient":
+		// No additional required fields for patients
+		// Add patient-specific validation here if needed
 	}
 
 	return nil
@@ -324,7 +332,7 @@ func (h *UserHandlerClean) UpdateUser(c *gin.Context) {
 	}
 
 	// Handle optional user role update
-	if req.RoleID != nil {
+	if req.RoleID != "" {
 		user.RoleID = req.RoleID
 	}
 
@@ -496,13 +504,6 @@ func (h *UserHandlerClean) ListUsers(c *gin.Context) {
 		}
 
 		// Add role information if available
-		if user.Role != nil {
-			userResponse.Role = &types.RoleInfo{
-				ID:   user.Role.ID,
-				Name: user.Role.Name,
-				Code: user.Role.Code,
-			}
-		}
 
 		// Add college information if available
 
@@ -619,11 +620,6 @@ func (h *UserHandlerClean) UserProfile(c *gin.Context) {
 	}
 
 	// Add role name if available
-	if user.Role != nil {
-		profileResponse["roleName"] = user.Role.Name
-	} else {
-		profileResponse["roleName"] = ""
-	}
 
 	// Add college name if available
 
@@ -748,17 +744,6 @@ func (h *UserHandlerClean) GetUserProfile(c *gin.Context) {
 	}
 
 	// Add role information if available
-	if user.Role != nil {
-		profileResponse["role"] = map[string]interface{}{
-			"id":   user.Role.ID,
-			"name": user.Role.Name,
-			"code": user.Role.Code,
-		}
-		profileResponse["roleName"] = user.Role.Name
-	} else {
-		profileResponse["role"] = nil
-		profileResponse["roleName"] = ""
-	}
 
 	// Add college information if available
 
@@ -922,19 +907,6 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 		"lastLoginAt":     formatLastLogin(updatedUser.LastLoginAt),
 		"isActive":        updatedUser.IsActive,
 		"firstTimeLogin":  updatedUser.FirstTimeLogin,
-	}
-
-	// Add role information if available
-	if updatedUser.Role != nil {
-		profileResponse["role"] = map[string]interface{}{
-			"id":   updatedUser.Role.ID,
-			"name": updatedUser.Role.Name,
-			"code": updatedUser.Role.Code,
-		}
-		profileResponse["roleName"] = updatedUser.Role.Name
-	} else {
-		profileResponse["role"] = nil
-		profileResponse["roleName"] = ""
 	}
 
 	// Add college information if available

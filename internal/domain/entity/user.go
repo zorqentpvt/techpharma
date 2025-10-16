@@ -39,8 +39,7 @@ type User struct {
 	Language    string          `gorm:"type:varchar(10);default:'en'" json:"language"`
 	Preferences json.RawMessage `gorm:"type:jsonb;default:'{}'" json:"preferences"`
 
-	RoleID *uuid.UUID `gorm:"type:uuid;index" json:"roleId,omitempty"`
-	Role   *Role      `gorm:"foreignKey:RoleID" json:"role,omitempty"`
+	RoleID string `gorm:"type:varchar(50);index" json:"roleId,omitempty"`
 
 	// Add this: Doctor relationship (one-to-one)
 	Doctor   *Doctor   `gorm:"foreignKey:UserID" json:"doctor,omitempty"`

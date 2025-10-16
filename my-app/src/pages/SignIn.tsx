@@ -33,7 +33,7 @@ export default function SignIn() {
           username: res.data.user.firstName.toLowerCase(), // or any username logic
           email: res.data.user.email,
           password: password, // store the entered password (not recommended for production!)
-          role: res.data.user.role.name.toLowerCase(),
+          role: res.data.user.roleId.toLowerCase(),
         };
   
         // Save to localStorage

@@ -48,13 +48,13 @@ type CreateUserRequest struct {
 	Password    string `json:"password" binding:"required,min=6"`
 	CPassword   string `json:"cpassword" binding:"required"`
 	PhoneNumber string `json:"num" binding:"required"`
-	Address     string `json:"address" binding:"required"`
+	Address     string `json:"address"`
 	DateOfBirth string `json:"dob" binding:"required"`
 	Gender      string `json:"gen" binding:"required"`
-	RoleID      string `json:"roleId" binding:"required"` // UUID as string
+	RoleID      string `json:"role,omitempty" ` // UUID as string
 
 	// Doctor-specific fields
-	SpecializationID string `json:"specializationId,omitempty"` // UUID as string
+	SpecializationID string `json:"specialization,omitempty"` // UUID as string
 	LicenseNumber    string `json:"licenseNumber,omitempty"`
 	Qualification    string `json:"qual,omitempty"`
 	Certificate      string `json:"certi,omitempty"`
@@ -95,7 +95,7 @@ type UpdateUserRequest struct {
 	PhoneNumber string          `json:"phoneNumber,omitempty"`
 	Address     *AddressRequest `json:"address,omitempty"`     // Now an object
 	ContactInfo *ContactRequest `json:"contactInfo,omitempty"` // Optional contact info as a JSON string
-	RoleID      *uuid.UUID      `json:"RoleId,omitempty"`      // ADD THIS FIELD
+	RoleID      string          `json:"RoleId,omitempty"`      // ADD THIS FIELD
 	Status      string          `json:"status,omitempty"`      // e.g., "active", "inactive"
 
 }

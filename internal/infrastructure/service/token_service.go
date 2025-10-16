@@ -50,7 +50,7 @@ func (s *tokenService) GenerateAccessToken(user *entity.User) (string, time.Time
 	claims := &service.JWTClaims{
 		UserID:    user.ID,
 		Email:     s.getEmailValue(user.Email),
-		Role:      s.getUserRole(user),
+		Role:      user.RoleID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Latitude:  user.Address.Latitude,
@@ -82,7 +82,7 @@ func (s *tokenService) GenerateRefreshToken(user *entity.User) (string, error) {
 	claims := &service.JWTClaims{
 		UserID:    user.ID,
 		Email:     s.getEmailValue(user.Email),
-		Role:      s.getUserRole(user),
+		Role:      user.RoleID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Latitude:  user.Address.Latitude,
@@ -172,31 +172,14 @@ func (s *tokenService) getEmailValue(email *string) string {
 	}
 	return ""
 }
-func (s *tokenService) getUserRole(user *entity.User) string {
-	// Check if the UserRole relationship exists and is loaded
-	if user.Role != nil {
-		// Check if the user role is currently active
 
-		// Check if Role has a valid Name
-		if user.Role.Code != "" {
-			return user.Role.Code
-		}
-
-		// Fallback to Role.Code if Name is not available
-		/*if user.UserRole.Role.Code != "" {
-			return user.UserRole.Role.Code
-		}*/
-	}
-	// Return default role if no valid role is found
-	return "user"
-}
 func (s *tokenService) GenerateResetToken(user *entity.User) (string, error) {
 	expirationTime := time.Now().Add(s.config.JWT.Expiration)
 
 	claims := &service.JWTClaims{
 		UserID:    user.ID,
 		Email:     s.getEmailValue(user.Email),
-		Role:      s.getUserRole(user),
+		Role:      user.RoleID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Latitude:  user.Address.Latitude,

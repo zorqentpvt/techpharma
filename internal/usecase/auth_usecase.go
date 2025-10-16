@@ -251,7 +251,6 @@ func (uc *authUseCase) Register(ctx context.Context, req *types.RegisterRequest)
 		PhoneNumber:     req.PhoneNumber,
 		Password:        string(hashedPassword),
 		Email:           req.Email,
-		RoleID:          req.RoleID,
 		IsPhoneVerified: true, // Require phone verification
 		IsEmailVerified: true,
 		Status:          "active", // Require activation
@@ -352,7 +351,7 @@ func (uc *authUseCase) ValidateToken(ctx context.Context, token string) (*types.
 		Valid:  true,
 		UserID: user.ID,
 		Email:  uc.getEmailValue(user.Email),
-		Role:   uc.getUserRole(user),
+		Role:   user.RoleID,
 		Claims: claims,
 	}, nil
 }
@@ -363,24 +362,6 @@ func (uc *authUseCase) getEmailValue(email *string) string {
 		return *email
 	}
 	return ""
-}
-
-func (uc *authUseCase) getUserRole(user *entity.User) string {
-	if user == nil {
-		return "user"
-	}
-
-	// First check if Role is preloaded and active
-	if user.Role != nil {
-
-		// Check if the Role has a name (no nil check needed for struct)
-		if user.Role.Name != "" {
-			return user.Role.Name
-
-		}
-	}
-
-	return "user"
 }
 
 func parseUUID(s string) (uuid.UUID, error) {

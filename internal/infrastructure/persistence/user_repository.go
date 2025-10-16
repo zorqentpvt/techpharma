@@ -30,7 +30,6 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
 	var user entity.User
 	if err := r.db.WithContext(ctx).
-		Preload("Role").
 		Preload("Doctor").
 		Preload("Pharmacy").
 		First(&user, "id = ?", id).Error; err != nil {
@@ -61,7 +60,6 @@ func (r *userRepository) GetByPhoneNumber(ctx context.Context, phoneNumber strin
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
 	var user entity.User
 	if err := r.db.WithContext(ctx).
-		Preload("Role").
 		Preload("Doctor").
 		Preload("Pharmacy").
 		Where("email = ?", email).

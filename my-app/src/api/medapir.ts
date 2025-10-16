@@ -106,42 +106,19 @@ export async function cartdata(id: string) {
   console.log("API Payload (cartdata):", id);
 
   try {
-    const response = {
-      success: true,
-      message: "Cart fetched successfully",
-      data: {
-        products: [
-          {
-            id: 1,
-            name: "Panadols",
-            description: "Paracetamol",
-            price: 10,
-            image: "https://via.placeholder.com/200x142.png?text=Product+01",
-            quantity: 12,
-          },
-          {
-            id: 2,
-            name: "Ozempic",
-            description: "Semaglutide injection",
-            price: 30,
-            image: "https://via.placeholder.com/200x142.png?text=Product+02",
-            quantity: 12,
-          },
-          {
-            id: 3,
-            name: "Cipro",
-            description: "Ciprofloxacin (oral)",
-            price: 27,
-            image: "https://via.placeholder.com/200x142.png?text=Product+03",
-            quantity: 12,
-          },
-        ],
-        shipping: 0,
-        taxes: 5,
-        totalcost: 12000,
-      },
-    }
-    //const response = await api.get(`/view-cart`,  { userId: id });
+    const response = await api.get(`api/user/view-cart`,  { userId: id });
+    console.log("API Response (cartdata):", response.data);
+    return response.data; // expected { success, message, data }
+  } catch (error: any) {
+    console.log("API Error (cartdata):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}
+export async function addtocart(medicine_id: string) {
+  console.log("API Payload (cartdata):quantity:1", medicine_id);
+
+  try {
+    const response = await api.post(`api/user/add-cart`,  { medicine_id,quantity:1});
     console.log("API Response (cartdata):", response.data);
     return response; // expected { success, message, data }
   } catch (error: any) {

@@ -4,6 +4,7 @@ import { MedicineResults } from "../components/MedicineResults";
 import { HiShoppingCart } from "react-icons/hi";
 import { X, Search } from "lucide-react";
 import React from "react";
+import { getUserRole } from "../api/authapir";
 
 interface User {
   username: string;
@@ -16,7 +17,8 @@ interface MedicinesProps {
 
 export default function Medicines({ setActiveTab }: MedicinesProps) {
   const user: User = JSON.parse(localStorage.getItem("user") || "{}");
-
+ const role=getUserRole()
+ console.log(role)
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Medicine[]>([]);
   const [location, setLocation] = useState<string>("");
@@ -64,13 +66,20 @@ export default function Medicines({ setActiveTab }: MedicinesProps) {
     // ✅ Only send coords if nearby is ON
     const coordsToSend = nearby ? coords : null;
   
-    const data = await searchMedicine(search, coordsToSend);
-    const medicines: Medicine[] = Array.isArray(data) ? data : [];
-  
+    const res = await searchMedicine(search, coordsToSend);
+    console.log(res.data)
+    const medicines: any[] = Array.isArray(res.data) ? res.data : [];
+  console.log(medicines)
     if (medicines.length === 0) setNoResults(true);
-  
-    const sorted = sortMedicinesByLocation(medicines, nearby);
+  if(nearby){
+    console.log("sorting")
+    const sorted = sortMedicinesByLocation(medicines, nearby); 
     setResults(sorted);
+  }
+  else{
+    console.log("No sorting")
+    setResults(medicines);
+  }
     setIsSearching(false);
   };
   
@@ -105,7 +114,7 @@ export default function Medicines({ setActiveTab }: MedicinesProps) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
-
+console.log(results)
   return (
     <div className="min-h-screen bg-gray-50 relative">
       {/* Top Bar */}
@@ -163,7 +172,7 @@ export default function Medicines({ setActiveTab }: MedicinesProps) {
         {noResults ? (
           <div className="text-center text-gray-500 mt-8 text-lg">⚠️ No results found</div>
         ) : (
-          <MedicineResults results={results} userRole={user.role} handleBuy={handleBuy} cart={addToCart} />
+          <MedicineResults results={results} userRole={role} handleBuy={handleBuy} cart={addToCart} />
         )}
       </div>
 

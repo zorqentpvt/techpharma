@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { searchDoctor, Doctor,docAppointments  } from "../api/medapir";
+import { searchDoctor, docAppointments  } from "../api/medapir";
 import { Search, X } from "lucide-react";
 import PatientAppointment, { AppointmentSlot } from "../components/PatientAppointment";
 import docImage from "../assets/doc.png";
@@ -13,13 +13,14 @@ function DoctorCard({
   doctor: Doctor;
   onAppointment: (id: string) => void;
 }) {
- 
+  console.log(doctor);
+
   return (
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 transition-transform transform hover:-translate-y-1 p-5 flex flex-row items-center space-x-6">
       <div className="flex-shrink-0">
         <img
           src={doctor.photo || docImage}
-          alt={doctor.name}
+          alt={doctor.user.displayName}
           className="w-32 h-32 rounded-full object-cover"
           onError={(e) => { e.currentTarget.src = docImage; }}
         />
@@ -27,15 +28,12 @@ function DoctorCard({
 
       <div className="flex flex-col flex-1">
         <div className="mb-2">
-          <h2 className="text-xl font-semibold text-gray-800">{doctor.name}</h2>
-          <p className="text-sm text-gray-500">{doctor.specialty}</p>
+          <h2 className="text-xl font-semibold text-gray-800">{doctor.user.displayName}</h2>
+          <p className="text-sm text-gray-500">Specialization  : {doctor.specialty || doctor.specializationId}</p>
+          <p className="text-sm text-gray-500">Consultation Fee: ${doctor.consultationFee}</p>
         </div>
 
-        {doctor.address && (
-          <div className="mb-4 text-sm text-gray-500">
-            <p>{doctor.address}</p>
-          </div>
-        )}
+       
 
         <div className="mt-auto pt-3">
           <button
@@ -50,10 +48,11 @@ function DoctorCard({
   );
 }
 
+
 // Main Doctors page
 export default function Doctors() {
   const navigate = useNavigate();
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -105,8 +104,7 @@ export default function Doctors() {
       const coordsToSend = nearby ? coords : null; // ✅ use this instead of modifying state
   
       const res = await searchDoctor(searchTerm, coordsToSend);
-      let fetchedDoctors: Doctor[] = Array.isArray(res) ? res : [];
-  
+      let fetchedDoctors: Doctor[] = Array.isArray(res.data) ? res.data : [];
       if (nearby && coords) {
         fetchedDoctors = sortByDistance(fetchedDoctors, coords);
       }
@@ -122,7 +120,7 @@ export default function Doctors() {
       setIsSearching(false);
     }
   };
-  
+ 
 
   const sortByDistance = (list: Doctor[], coords: { latitude: number; longitude: number }) => {
     return [...list].sort((a, b) => {
@@ -160,7 +158,7 @@ export default function Doctors() {
       console.error("Unexpected error:", error);
     }
   };
-  
+  console.log(doctors)
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
       {/* Top Bar */}

@@ -3,7 +3,7 @@ import CartItems from "../components/CartItems";
 import { cartdata } from "../api/medapir";
 
 type Product = {
-  id: number;
+  id: string;
   name: string;
   description: string;
   price: number;
@@ -25,18 +25,39 @@ const Cart: React.FC<{ userId: string }> = ({ userId }) => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const response: any = await cartdata(userId);
-      if (response.success && response.data) {
-        setOrderSummary(response.data);
-      } else {
+      try {
+        const response: any = await cartdata(userId);
+
+        if (response.success && response.data) {
+          const medicines: Product[] = response.data.medicines.map((item: any) => ({
+            id: item.id,
+            name: item.medicine.name,
+            description: item.medicine.description,
+            price: item.medicine.price,
+            image: "", // no image in API, can add URL if available
+            quantity: item.quantity,
+          }));
+
+          setOrderSummary({
+            products: medicines,
+            shipping: 0,
+            taxes: 0,
+            totalcost: response.data.total_amount,
+          });
+        } else {
+          setOrderSummary({ products: [], shipping: 0, taxes: 0, totalcost: 0 });
+        }
+      } catch (error) {
+        console.error(error);
         setOrderSummary({ products: [], shipping: 0, taxes: 0, totalcost: 0 });
       }
       setLoading(false);
     };
+
     fetchData();
   }, [userId]);
 
-  const handleQuantityChange = (productId: number, quantity: number) => {
+  const handleQuantityChange = (productId: string, quantity: number) => {
     if (!orderSummary) return;
     const updatedProducts = orderSummary.products.map((p) =>
       p.id === productId ? { ...p, quantity } : p
@@ -44,7 +65,7 @@ const Cart: React.FC<{ userId: string }> = ({ userId }) => {
     setOrderSummary({ ...orderSummary, products: updatedProducts });
   };
 
-  const handleRemove = (productId: number) => {
+  const handleRemove = (productId: string) => {
     if (!orderSummary) return;
     const updatedProducts = orderSummary.products.filter((p) => p.id !== productId);
     setOrderSummary({ ...orderSummary, products: updatedProducts });
@@ -99,23 +120,23 @@ const Cart: React.FC<{ userId: string }> = ({ userId }) => {
                   <ul className="mb-6">
                     <li className="flex justify-between py-2 border-b">
                       <span>Products & Subscriptions</span>
-                      <span>${productsTotal}</span>
+                      <span>${productsTotal.toFixed(2)}</span>
                     </li>
                     <li className="flex justify-between py-2 border-b">
                       <span>Shipping</span>
-                      <span>{shipping === 0 ? "-" : `$${shipping}`}</span>
+                      <span>{shipping === 0 ? "-" : `$${shipping.toFixed(2)}`}</span>
                     </li>
                     <li className="flex justify-between py-2 border-b">
                       <span>Taxes</span>
-                      <span>${taxes}</span>
+                      <span>${taxes.toFixed(2)}</span>
                     </li>
                     <li className="flex justify-between py-2 font-semibold text-blue-600">
                       <span>Total due</span>
-                      <span>${totalDue}</span>
+                      <span>${totalDue.toFixed(2)}</span>
                     </li>
                   </ul>
                   <button className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700">
-                    Buy Now - ${totalDue}
+                    Buy Now - ${totalDue.toFixed(2)}
                   </button>
                 </div>
               </div>

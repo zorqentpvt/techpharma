@@ -24,14 +24,14 @@ func NewMedicineHandlerClean(medicineUseCase usecase.MedicineUseCase) *MedicineH
 
 /*PATEINT*/
 func (h *MedicineHandlerClean) GetMedicines(c *gin.Context) {
-	userIDStr := c.GetString("userID")
+	/*userIDStr := c.GetString("userID")
 	if userIDStr == "" {
 		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
 			Error:   "Unauthorized",
 			Message: "User ID not found in context",
 		})
 		return
-	}
+	}*/
 
 	lattitude := c.GetFloat64("lattitude")
 	longitude := c.GetFloat64("longitude")

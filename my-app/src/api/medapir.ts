@@ -20,39 +20,30 @@ export async function searchMedicine(params: MedicineSearchParams) {
   console.log("API Payload (searchMedicine):", params);
 
   try {
-    const response={
+    const response = {
       "success": true,
       "message": "Medicines fetched successfully.",
       "data": [
-        {
-          "id": "1",
-          "name": "Paracetamol 500mg",
-          "pharmacy": "HealthPlus Pharmacy",
-          "stock": 25,
-          "contents": "Paracetamol 500mg tablets for fever and pain relief.",
-          "photo": "data:image/jpeg;base64,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",
-          "price": 5.99
-        },
-        {
-          "id": "2",
-          "name": "Amoxicillin 250mg",
-          "pharmacy": "City Care Pharmacy",
-          "stock": 10,
-          "contents": "Antibiotic capsules used to treat bacterial infections.",
-          "photo": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=400&q=80",
-          "price": 12.5
-        },
-        {
-          "id": "3",
-          "name": "Ibuprofen 200mg",
-          "pharmacy": "MediLine Pharmacy",
-          "stock": 100,
-          "contents": "Pain reliever and anti-inflammatory tablets.",
-          "photo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdNdmx1NielmXxUGz3tGh8SdT75OAiWZzckw&s",
-          "price": 8.99
-        }
+        { "id": "1", "name": "Paracetamol 500mg", "pharmacy": "HealthPlus Pharmacy", "stock": 25, "contents": "Paracetamol tablets for fever and pain relief.", "price": 5.99 },
+        { "id": "2", "name": "Amoxicillin 250mg", "pharmacy": "City Care Pharmacy", "stock": 10, "contents": "Antibiotic capsules for bacterial infections.", "price": 12.5 },
+        { "id": "3", "name": "Ibuprofen 200mg", "pharmacy": "MediLine Pharmacy", "stock": 100, "contents": "Pain reliever and anti-inflammatory tablets.", "price": 8.99 },
+        { "id": "4", "name": "Cetirizine 10mg", "pharmacy": "HealthPlus Pharmacy", "stock": 50, "contents": "Antihistamine for allergy relief.", "price": 6.5 },
+        { "id": "5", "name": "Metformin 500mg", "pharmacy": "City Care Pharmacy", "stock": 30, "contents": "Used for managing type 2 diabetes.", "price": 9.99 },
+        { "id": "6", "name": "Omeprazole 20mg", "pharmacy": "MediLine Pharmacy", "stock": 40, "contents": "For treating acid reflux and stomach ulcers.", "price": 11.5 },
+        { "id": "7", "name": "Loratadine 10mg", "pharmacy": "HealthPlus Pharmacy", "stock": 60, "contents": "Non-drowsy antihistamine for allergy relief.", "price": 7.25 },
+        { "id": "8", "name": "Azithromycin 250mg", "pharmacy": "City Care Pharmacy", "stock": 15, "contents": "Antibiotic used for bacterial infections.", "price": 13.0 },
+        { "id": "9", "name": "Vitamin C 500mg", "pharmacy": "MediLine Pharmacy", "stock": 80, "contents": "Supports immune system and general health.", "price": 4.99 },
+        { "id": "10", "name": "Aspirin 81mg", "pharmacy": "HealthPlus Pharmacy", "stock": 70, "contents": "Low-dose aspirin for heart health.", "price": 6.0 },
+        { "id": "11", "name": "Hydrochlorothiazide 25mg", "pharmacy": "City Care Pharmacy", "stock": 35, "contents": "Diuretic for high blood pressure.", "price": 8.25 },
+        { "id": "12", "name": "Simvastatin 20mg", "pharmacy": "MediLine Pharmacy", "stock": 45, "contents": "Used to control cholesterol levels.", "price": 9.5 },
+        { "id": "13", "name": "Furosemide 40mg", "pharmacy": "HealthPlus Pharmacy", "stock": 20, "contents": "Diuretic for fluid retention.", "price": 7.0 },
+        { "id": "14", "name": "Prednisone 10mg", "pharmacy": "City Care Pharmacy", "stock": 15, "contents": "Corticosteroid for inflammation.", "price": 11.75 },
+        { "id": "15", "name": "Clindamycin 300mg", "pharmacy": "MediLine Pharmacy", "stock": 30, "contents": "Antibiotic for bacterial infections.", "price": 13.25 },
+        { "id": "16", "name": "Doxycycline 100mg", "pharmacy": "HealthPlus Pharmacy", "stock": 50, "contents": "Broad-spectrum antibiotic.", "price": 12.0 }
       ]
-    }
+    };
+    
+    
     
     //const response = await api.get("/medicines/search", { params });
     console.log("API Response (searchMedicine):", response.data);
@@ -68,11 +59,173 @@ export async function searchDoctor(params: DoctorSearchParams) {
   console.log("API Payload (searchDoctor):", params);
 
   try {
-    const response = await api.get("/doctors/search", { params });
+    const response = {
+      success: true,
+      message: "Doctors fetched successfully.",
+      data: [
+        {
+          id: "doc-001",
+          name: "Dr. Sarah Thompson",
+          specialty: "Cardiologist",
+          address: "123 Health St, New York, NY",
+          photo: "https://randomuser.me/api/portraits/women/65.jpg",
+          lat: 40.7128,
+          lng: -74.0060,
+         
+        },
+        {
+          id: "doc-002",
+          name: "Dr. Michael Lee",
+          specialty: "Dermatologist",
+          address: "456 Skin Ave, Brooklyn, NY",
+          photo: "https://randomuser.me/api/portraits/men/45.jpg",
+          lat: 40.6782,
+          lng: -73.9442,
+        
+        },
+        {
+          id: "doc-003",
+          name: "Dr. Priya Patel",
+          specialty: "Pediatrician",
+          address: "789 Care Blvd, Queens, NY",
+          photo: "https://randomuser.me/api/portraits/women/32.jpg",
+          lat: 40.7282,
+          lng: -73.7949,
+        
+        },
+        {
+          id: "doc-004",
+          name: "Dr. James Robinson",
+          specialty: "Orthopedic Surgeon",
+          address: "55 Joint St, Manhattan, NY",
+          photo: "https://randomuser.me/api/portraits/men/72.jpg",
+          lat: 40.7831,
+          lng: -73.9712,
+         
+        },
+        {
+          id: "doc-005",
+          name: "Dr. Maria Gonzales",
+          specialty: "Psychiatrist",
+          address: "789 Mind Rd, Bronx, NY",
+          photo: "https://randomuser.me/api/portraits/women/41.jpg",
+          lat: 40.8448,
+          lng: -73.8648,
+         
+        },
+        {
+          id: "doc-006",
+          name: "Dr. Ahmed Khan",
+          specialty: "General Physician",
+          address: "123 Health Plaza, Staten Island, NY",
+          photo: "https://randomuser.me/api/portraits/men/23.jpg",
+          lat: 40.5795,
+          lng: -74.1502,
+        
+        }
+      ]
+    };
+    
+    
+    //const response = await api.get("/doctors/search", { params });
     console.log("API Response (searchDoctor):", response.data);
     return response.data;
   } catch (error: any) {
     console.log("API Error (searchDoctor):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}
+
+// Corrected async function
+export async function docAppointments(id: string) {
+  console.log("API Payload (docAppointments):", id);
+
+  try {
+
+    const response ={
+      "success": true,
+      "message": "Appointments fetched successfully",
+      "data": [
+        { "date": "2025-10-19", "time": "08:00" },
+        { "date": "2025-10-19", "time": "09:00" },
+        { "date": "2025-10-19", "time": "10:00" },
+        { "date": "2025-10-19", "time": "11:00" },
+        { "date": "2025-10-19", "time": "12:00" },
+        { "date": "2025-10-19", "time": "13:00" },
+        { "date": "2025-10-19", "time": "14:00" },
+        { "date": "2025-10-20", "time": "08:00" },
+        { "date": "2025-10-20", "time": "09:00" },
+        { "date": "2025-10-20", "time": "10:00" },
+        { "date": "2025-10-20", "time": "11:00" },
+        { "date": "2025-10-20", "time": "12:00" },
+        { "date": "2025-10-20", "time": "13:00" },
+        { "date": "2025-10-20", "time": "14:00" },
+        { "date": "2025-10-20", "time": "15:00" },
+        { "date": "2025-10-21", "time": "08:00" },
+        { "date": "2025-10-21", "time": "09:00" },
+        { "date": "2025-10-21", "time": "10:00" },
+        { "date": "2025-10-21", "time": "11:00" },
+        { "date": "2025-10-21", "time": "12:00" },
+        { "date": "2025-10-21", "time": "13:00" },
+        { "date": "2025-10-21", "time": "14:00" },
+        { "date": "2025-10-21", "time": "15:00" },
+        { "date": "2025-10-21", "time": "16:00" },
+        { "date": "2025-10-21", "time": "17:00" }
+      ]
+    }
+    //const response = await api.get(`/doctors/${id}/appointments`);
+    console.log("API Response (docAppointments):", response.data);
+    return response.data; // expected to have { success, message, data }
+  } catch (error: any) {
+    console.log("API Error (docAppointments):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}
+
+export async function cartdata(id: string) {
+  console.log("API Payload (cartdata):", id);
+
+  try {
+    const response = {
+      success: true,
+      message: "Cart fetched successfully",
+      data: {
+        products: [
+          {
+            id: 1,
+            name: "Panadols",
+            description: "Paracetamol",
+            price: 10,
+            image: "https://via.placeholder.com/200x142.png?text=Product+01",
+            quantity: 12,
+          },
+          {
+            id: 2,
+            name: "Ozempic",
+            description: "Semaglutide injection",
+            price: 30,
+            image: "https://via.placeholder.com/200x142.png?text=Product+02",
+            quantity: 12,
+          },
+          {
+            id: 3,
+            name: "Cipro",
+            description: "Ciprofloxacin (oral)",
+            price: 27,
+            image: "https://via.placeholder.com/200x142.png?text=Product+03",
+            quantity: 12,
+          },
+        ],
+        shipping: 0,
+        taxes: 5,
+        totalcost: 12000,
+      },
+    }
+    //const response = await api.get(`/view-cart`,  { userId: id });
+    console.log("API Response (cartdata):", response.data);
+    return response; // expected { success, message, data }
+  } catch (error: any) {
+    console.log("API Error (cartdata):", error.response?.data || error.message);
     return { success: false, message: error.response?.data?.message || error.message };
   }
 }

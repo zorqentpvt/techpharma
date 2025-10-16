@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { searchDoctor, Doctor } from "../api/medapir";
+import { searchDoctor, Doctor,docAppointments  } from "../api/medapir";
 import { Search, X } from "lucide-react";
 import PatientAppointment, { AppointmentSlot } from "../components/PatientAppointment";
 import docImage from "../assets/doc.png";
@@ -13,6 +13,7 @@ function DoctorCard({
   doctor: Doctor;
   onAppointment: (id: string) => void;
 }) {
+ 
   return (
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 transition-transform transform hover:-translate-y-1 p-5 flex flex-row items-center space-x-6">
       <div className="flex-shrink-0">
@@ -58,6 +59,7 @@ export default function Doctors() {
   const [error, setError] = useState("");
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [DoctorAppointments, setDoctorAppointments] = useState<AppointmentSlot[]>([]);
   const [nearby, setNearby] = useState(true);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [location, setLocation] = useState<string>("");
@@ -102,7 +104,7 @@ export default function Doctors() {
     try {
       const payload = nearby && coords ? { query: searchTerm, coords } : { query: searchTerm };
       const res = await searchDoctor(payload);
-      let fetchedDoctors: Doctor[] = Array.isArray(res.data) ? res.data : [];
+      let fetchedDoctors: Doctor[] = Array.isArray(res) ? res: [];
 
       if (nearby && coords) {
         fetchedDoctors = sortByDistance(fetchedDoctors, coords);
@@ -139,14 +141,24 @@ export default function Doctors() {
     return R * c;
   };
 
-  const handleAppointment = (id: string) => setSelectedDoctorId(id);
-
-  const mockBookedSlots: AppointmentSlot[] = [
-    { date: "2025-10-01", time: "09:00" },
-    { date: "2025-10-02", time: "15:00" },
-    { date: "2025-10-03", time: "10:00" },
-  ];
-
+  const handleAppointment = async (id: string) => {
+    try {
+      // Call your API helper function
+      const appointments = await docAppointments(id);
+  
+      // If API returned an error object
+      if ((appointments as any).success === false) {
+        console.error("Error fetching appointments:", (appointments as any).message);
+        return;
+      }
+ // Update state
+      setSelectedDoctorId(id);
+      setDoctorAppointments(appointments); // assuming you have this state
+    } catch (error) {
+      console.error("Unexpected error:", error);
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
       {/* Top Bar */}
@@ -222,7 +234,7 @@ export default function Doctors() {
                 <PatientAppointment
                   doctorId={selectedDoctorId}
                   patientId="mock-patient-id"
-                  bookedSlots={mockBookedSlots}
+                  bookedSlots={DoctorAppointments}
                   onSubmit={(data) => {
                     console.log("Submitted appointment:", data);
                     alert("Appointment request submitted!");

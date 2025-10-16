@@ -1,112 +1,125 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import CartItems from "../components/CartItems";
-import AnalyticsComponent from "../components/AnalyticsComponent";
+import { cartdata } from "../api/medapir";
+
+type Product = {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  quantity: number;
+};
 
 type OrderSummary = {
-  productsTotal: number;
+  products: Product[];
   shipping: number;
   taxes: number;
+  totalcost: number;
 };
 
-const mockOrderSummary: OrderSummary = {
-  productsTotal: 205,
-  shipping: 0,
-  taxes: 48,
-};
+const Cart: React.FC<{ userId: string }> = ({ userId }) => {
+  const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
+  const [loading, setLoading] = useState(true);
 
-const Cart: React.FC = () => {
-  const totalOrders = 5; // mock total orders
-  const totalRevenue = 253; // mock total revenue (productsTotal + taxes)
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const response: any = await cartdata(userId);
+      if (response.success && response.data) {
+        setOrderSummary(response.data);
+      } else {
+        setOrderSummary({ products: [], shipping: 0, taxes: 0, totalcost: 0 });
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [userId]);
+
+  const handleQuantityChange = (productId: number, quantity: number) => {
+    if (!orderSummary) return;
+    const updatedProducts = orderSummary.products.map((p) =>
+      p.id === productId ? { ...p, quantity } : p
+    );
+    setOrderSummary({ ...orderSummary, products: updatedProducts });
+  };
+
+  const handleRemove = (productId: number) => {
+    if (!orderSummary) return;
+    const updatedProducts = orderSummary.products.filter((p) => p.id !== productId);
+    setOrderSummary({ ...orderSummary, products: updatedProducts });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[100dvh]">Loading...</div>
+    );
+  }
+
+  if (!orderSummary || orderSummary.products.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[100dvh] text-gray-700">
+        <h2 className="text-2xl font-semibold mb-4">Your shopping cart is empty</h2>
+        <p>Add some products to see them here.</p>
+      </div>
+    );
+  }
+
+  const { products, shipping, taxes } = orderSummary;
+  const productsTotal = products.reduce((sum, p) => sum + p.price * p.quantity, 0);
+  const totalDue = productsTotal + taxes + shipping;
 
   return (
     <div className="flex h-[100dvh] overflow-hidden">
-      {/* Content area */}
       <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
         <main className="grow">
           <div className="px-4 sm:px-6 lg:px-8 py-8 w-full">
-            {/* Page content */}
             <div className="max-w-5xl mx-auto flex flex-col lg:flex-row lg:space-x-8 xl:space-x-16">
-              {/* Cart items */}
-              <div className="mb-6 lg:mb-0">
-                
-                <header className="mb-2">
-                  <h1 className="text-2xl md:text-3xl text-gray-800  font-bold">
-                    Shopping Cart ({totalOrders})
+
+              {/* Cart Items */}
+              <div className="mb-6 lg:mb-0 flex-1">
+                <header className="mb-4">
+                  <h1 className="text-2xl md:text-3xl text-gray-800 font-bold">
+                    Shopping Cart ({products.length} items)
                   </h1>
                 </header>
-
-                {/* Cart items */}
-                <CartItems />
+                <CartItems
+                  products={products}
+                  onQuantityChange={handleQuantityChange}
+                  onRemove={handleRemove}
+                />
               </div>
 
-              {/* Order summary sidebar */}
-              <div>
-                <div className="bg-gradient-to-br from-white to-blue-50  p-5 mt-11.5 shadow-xs border-blue-100 rounded-xl lg:w-72 xl:w-80 border-2" >
-                  <div className="text-blue-800 text-xl font-semibold mb-2">
-                    <h1>Order Summary</h1>
-                  </div>
-
-                  {/* Order details */}
-                  <ul className="mb-4 ">
-                    <li className="text-sm w-full flex justify-between py-3 border-b border-gray-200 dark:border-blue-700/60">
-                      <div>Products & Subscriptions</div>
-                      <div className="font-medium text-gray-800 ">
-                        ${mockOrderSummary.productsTotal}
-                      </div>
+              {/* Order Summary */}
+              <div className="lg:w-72 xl:w-80">
+                <div className="bg-white p-5 mt-6 shadow rounded-xl border">
+                  <h2 className="text-blue-800 text-xl font-semibold mb-4">
+                    Order Summary
+                  </h2>
+                  <ul className="mb-6">
+                    <li className="flex justify-between py-2 border-b">
+                      <span>Products & Subscriptions</span>
+                      <span>${productsTotal}</span>
                     </li>
-                    <li className="text-sm w-full flex justify-between py-3 border-b border-gray-200 dark:border-blue-700/60">
-                      <div>Shipping</div>
-                      <div className="font-medium text-gray-800 ">
-                        {mockOrderSummary.shipping === 0 ? "-" : `$${mockOrderSummary.shipping}`}
-                      </div>
+                    <li className="flex justify-between py-2 border-b">
+                      <span>Shipping</span>
+                      <span>{shipping === 0 ? "-" : `$${shipping}`}</span>
                     </li>
-                    <li className="text-sm w-full flex justify-between py-3 border-b border-gray-200 dark:border-blue-700/60">
-                      <div>Taxes</div>
-                      <div className="font-medium text-gray-800 ">
-                        ${mockOrderSummary.taxes}
-                      </div>
+                    <li className="flex justify-between py-2 border-b">
+                      <span>Taxes</span>
+                      <span>${taxes}</span>
                     </li>
-                    <li className="text-sm w-full flex justify-between py-3 border-b border-gray-200 dark:border-blue-700/60">
-                      <div>Total due (including taxes)</div>
-                      <div className="font-medium text-blue-600">
-                        ${mockOrderSummary.productsTotal + mockOrderSummary.taxes}
-                      </div>
+                    <li className="flex justify-between py-2 font-semibold text-blue-600">
+                      <span>Total due</span>
+                      <span>${totalDue}</span>
                     </li>
                   </ul>
-
-                  {/* Promo box */}
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-sm font-medium mb-1" htmlFor="promo">
-                        Promo Code
-                      </label>
-                      <div className="text-sm text-gray-500  italic">
-                        optional
-                      </div>
-                    </div>
-                    <input id="promo" className="form-input w-full mb-2" type="text" />
-                    <button
-                      className="btn w-full bg-blue-200 text-gray-100 hover:bg-blue-800 dark:bg-gray-100 dark:text-gray-200 dark:hover:bg-white disabled:border-gray-200 dark:disabled:border-gray-700 disabled:bg-white dark:disabled:bg-blue-800 disabled:text-gray-300 dark:disabled:text-gray-200 disabled:cursor-not-allowed"
-                      disabled
-                    >
-                      Apply Code
-                    </button>
-                  </div>
-
-                  <div className="mb-4">
-                    <button className="btn w-full bg-gray-900 text-gray-8u00 hover:bg-blue-800 dark:bg-gray-100 dark:hover:text-gray-100 dark:hover:bg-blue-800">
-                      Buy Now - ${mockOrderSummary.productsTotal + mockOrderSummary.taxes}
-                    </button>
-                  </div>
-                  <div className="text-xs text-gray-500 italic text-center">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do{" "}
-                    <a className="underline hover:no-underline" href="#0">
-                      Terms
-                    </a>
-                    .
-                  </div>
+                  <button className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Buy Now - ${totalDue}
+                  </button>
                 </div>
               </div>
+
             </div>
           </div>
         </main>

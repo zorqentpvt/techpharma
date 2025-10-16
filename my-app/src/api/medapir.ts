@@ -25,7 +25,7 @@ export async function searchMedicine(searchQuery: string, coordinates: { lat: nu
   console.log("API Payload (searchMedicine):", payload);
 
   try {
-    const response = await api.post("/medicines/search", payload);
+    const response = await api.post("api/user/medicines", payload);
     console.log("API Response (searchMedicine):", response.data);
     return response.data;
   } catch (error: any) {
@@ -37,16 +37,16 @@ export async function searchMedicine(searchQuery: string, coordinates: { lat: nu
 
 
 // SEARCH DOCTOR
-export async function searchDoctor(searchQuery: string, coordinates: { lat: number; long: number }) {
+export async function searchDoctor(query: string, coordinates: { lat: number; long: number }) {
   const payload = {
-    searchQuery,
+    query,
     coordinates,  // ✅ same structure
   };
 
   console.log("API Payload (searchDoctor):", payload);
 
   try {
-    const response = await api.post("/doctors/search", payload);
+    const response = await api.post("api/user/doctors", payload);
     console.log("API Response (searchDoctor):", response.data);
     return response.data;
   } catch (error: any) {

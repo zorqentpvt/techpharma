@@ -93,6 +93,7 @@ func (c *Container) initUseCases() {
 	)
 	c.MedicineUseCase = usecase.NewMedicineUseCase(
 		c.MedicineRepository,
+		c.UserRepository,
 	)
 	c.DoctorUseCase = usecase.NewDoctorUseCase(
 		c.DoctorRepository,

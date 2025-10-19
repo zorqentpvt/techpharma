@@ -333,6 +333,30 @@ func (d *Database) seedRoles() error {
 	return nil
 }
 
+/*func (d *Database) seedMedicine() error {
+	log.Println("Seeding roles...")
+	medicine := []entity.Medicine{
+		{
+			BaseModel:   entity.BaseModel{},
+			Name:        "Paracetamol",
+			Description: stringPtr("Pain reliever and fever reducer"),
+			Content:     stringPtr("Paracetamol 500mg"),
+			Quantity: 100,
+			PharmacyID: ,
+			IsActive:    true,
+		},
+	}
+
+	for i := range medicine {
+		if err := d.DB.Create(&medicine[i]).Error; err != nil {
+			return fmt.Errorf("failed to create medicine %s: %w", medicine[i].Name, err)
+		}
+	}
+
+	log.Println("Medicine seeded successfully")
+	return nil
+}*/
+
 // seedPermissions creates default permissions
 func (d *Database) seedPermissions() error {
 	log.Println("Seeding permissions...")

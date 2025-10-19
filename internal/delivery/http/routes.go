@@ -38,6 +38,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 	)
 	medicineHanler := NewMedicineHandlerClean(
 		container.MedicineUseCase,
+		container.UserRepository,
 	)
 	doctorHanler := NewDoctorHandlerClean(
 		container.DoctorUseCase,
@@ -75,6 +76,14 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			patientRoutes.GET("/profile", userHandler.GetUserProfile)          // Get current user's profile
 			patientRoutes.PUT("/profile", userHandler.UpdateUserProfile)       // Update current user's profile
 			patientRoutes.POST("/change-password", authHandler.ChangePassword) // Change password (moved here for better organization)
+
+		}
+		pharmacyRoutes := protectedRoutes.Group("/pharmacy")
+		{
+			pharmacyRoutes.POST("/add-medicine", medicineHanler.AddMedicine)
+			pharmacyRoutes.GET("/list-medicine", medicineHanler.ListMedicines)
+			pharmacyRoutes.GET("/get-medicine/:id", medicineHanler.GetMedicineByID)
+			pharmacyRoutes.DELETE("/delete-medicine/:id", medicineHanler.DeleteMedicine)
 
 		}
 

@@ -36,6 +36,10 @@ type SecurityEventRepository interface {
 }
 type MedicineRepository interface {
 	GetMedicines(ctx context.Context, searchQuery string) ([]*entity.Medicine, error)
+	AddMedicine(ctx context.Context, userId uuid.UUID, medicine *entity.Medicine) (*entity.Medicine, error)
+	ListMedicines(ctx context.Context, filters types.MedicineFilters) ([]*entity.Medicine, int64, error)
+	GetMedicineByID(ctx context.Context, medicineID uuid.UUID) (*entity.Medicine, error)
+	DeleteMedicine(ctx context.Context, medicineID uuid.UUID) error
 }
 type DoctorRepository interface {
 	GetDoctors(ctx context.Context, searchQuery string) ([]*entity.Doctor, error)

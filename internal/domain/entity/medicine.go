@@ -19,6 +19,7 @@ type Medicine struct {
 	Price                float64    `gorm:"not null" json:"price"`
 	Quantity             int        `gorm:"default:0" json:"quantity"`
 	PrescriptionRequired bool       `gorm:"default:false" json:"prescriptionRequired"`
+	ImageURL             *string    `gorm:"type:varchar(500)" json:"image,omitempty"`
 
 	// Relations
 	PharmacyID uuid.UUID `gorm:"type:uuid;index;not null" json:"pharmacyId"`

@@ -326,3 +326,54 @@ type DoctorRequest struct {
 type RemoveFromCartRequest struct {
 	MedicineID uuid.UUID `json:"medicine_id" binding:"required"`
 }
+
+/*
+type MedicineAddRequest struct {
+	Name                 string    `json:"name" binding:"required"`
+	Quantity             int       `json:"quantity" binding:"required"`
+	Content              string    `json:"content" binding:"required"`
+	PharmacyID           uuid.UUID `json:"pharmacyId" binding:"required"`
+	Description          string    `json:"description,omitempty"`
+	Price                float64   `json:"price" binding:"required"`
+	PrescriptionRequired bool      `gorm:"default:false" json:"prescriptionRequired"`
+	ImageURL             string    `gorm:"type:varchar(500)" json:"image,omitempty"`
+}*/
+// Update your MedicineAddRequest struct
+type MedicineAddRequest struct {
+	Name                 string     `form:"name" json:"name" binding:"required"`
+	Content              string     `form:"content" json:"content" binding:"required"`
+	Price                float64    `form:"price" json:"price" binding:"required,gt=0"`
+	Quantity             int        `form:"quantity" json:"quantity" binding:"required,gte=0"`
+	Description          string     `form:"description" json:"description"`
+	PharmacyID           uuid.UUID  `form:"pharmacy_id" json:"pharmacy_id"`
+	PrescriptionRequired bool       `form:"prescriptionRequired" json:"prescriptionRequired"`
+	ExpiryDate           *time.Time `form:"expiryDate" json:"expiryDate" time_format:"2006-01-02"`
+	ImageURL             *string    `form:"imageURL" json:"imageURL"`
+}
+type MedicineResponse struct {
+	ID                   uuid.UUID  `json:"id"`
+	Name                 string     `json:"name"`
+	Content              *string    `json:"content,omitempty"`
+	Description          *string    `json:"description,omitempty"`
+	Manufacturer         *string    `json:"manufacturer,omitempty"`
+	BatchNumber          *string    `json:"batchNumber,omitempty"`
+	ExpiryDate           *time.Time `json:"expiryDate,omitempty"`
+	Price                float64    `json:"price"`
+	Quantity             int        `json:"quantity"`
+	PrescriptionRequired bool       `json:"prescriptionRequired"`
+	PharmacyID           uuid.UUID  `json:"pharmacyId"`
+	IsActive             bool       `json:"isActive"`
+	CreatedAt            time.Time  `json:"createdAt"`
+	UpdatedAt            time.Time  `json:"updatedAt"`
+}
+type MedicineFilters struct {
+	Page                 int
+	Limit                int
+	Name                 string
+	Content              string
+	PharmacyID           *uuid.UUID
+	PrescriptionRequired *bool
+	IsActive             *bool
+	SortBy               string
+	SortOrder            string
+}

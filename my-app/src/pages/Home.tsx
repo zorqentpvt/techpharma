@@ -170,156 +170,235 @@ export default function Home() {
 
         {/* Normal User Dashboard */}
         {user.role === "normal" && (
-          <div className="space-y-10">
-            {/* --- Dashboard Cards --- */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {/* Last Order */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-md hover:shadow-xl transition-all p-6">
-                <h2 className="text-lg font-semibold text-[#0f4c81] mb-2 flex items-center gap-2">
-                  📦 Last Order
-                </h2>
-                <p className="text-gray-700">Paracetamol 500mg, Vitamin C</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Delivered on: Oct 10, 2025
-                </p>
-              </div>
+  <div className="space-y-10 max-w-4xl mx-auto">
 
-              {/* 💡 Health Tip */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-md hover:shadow-xl transition-all p-6">
-                <h2 className="text-lg font-semibold text-[#0f4c81] mb-2 flex items-center gap-2">
-                  💡 Health Tip
-                </h2>
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={currentTipIndex}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.6 }}
-                    className="text-gray-700 leading-relaxed"
-                  >
-                    {tips[currentTipIndex]}
-                  </motion.p>
-                </AnimatePresence>
-              </div>
-
-              {/* ⏰ Reminder Summary */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-md hover:shadow-xl transition-all p-6">
-                <h2 className="text-lg font-semibold text-[#0f4c81] mb-2 flex items-center gap-2">
-                  ⏰ Reminders
-                </h2>
-                <ul className="list-disc list-inside text-gray-700 space-y-1">
-                  {reminders.length > 0 ? (
-                    reminders.map((r) => (
-                      <li key={r.id} className="text-sm">
-                        {r.title} at {r.time}{" "}
-                        {r.repeatDays?.length > 0 && (
-                          <span className="text-gray-500">
-                            | {r.repeatDays.join(", ")}
-                          </span>
-                        )}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="text-gray-500">No reminders set.</li>
-                  )}
-                </ul>
-              </div>
+          {/* --- 🔔 Notifications --- */}
+        <div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8  flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <div className="flex items-start gap-3">
+            <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
+              🔔
             </div>
-
-            {/* --- Reminder Setup Section --- */}
-            <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-3xl shadow-lg max-w-2xl mx-auto">
-              <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
-                ⏰ Set Reminder
-              </h2>
-
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
-                <input
-                  type="text"
-                  placeholder="Reminder Title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="border border-blue-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                />
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="border border-blue-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                />
-                <input
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="border border-blue-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                />
-
-                {/* Repeat Days */}
-                <div className="col-span-full flex flex-wrap gap-2 items-center">
-                  {daysOfWeek.map((day) => (
-                    <button
-                      key={day}
-                      type="button"
-                      className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-all ${
-                        repeatDays.includes(day)
-                          ? "bg-[#0f4c81] text-white border-[#0f4c81]"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-blue-50"
-                      }`}
-                      onClick={() => toggleDay(day)}
-                    >
-                      {day}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Add Reminder Button */}
-              <div className="flex justify-center">
-                <button
-                  onClick={addReminder}
-                  className="bg-[#0f4c81] hover:bg-[#0c3a66] text-white font-medium px-5 py-2 rounded-full shadow-md transition-all"
-                >
-                  ➕ Add Reminder
-                </button>
-              </div>
-
-              {/* --- List of Reminders --- */}
-              <div className="mt-3 space-y-4">
-                {reminders.length === 0 && (
-                  <p className="text-gray-500 text-center">
-                    No reminders set yet.
-                  </p>
-                )}
-                {reminders.map((r) => (
-                  <div
-                    key={r.id}
-                    className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg flex justify-between items-center transition"
-                  >
-                    <div>
-                      <h3 className="font-semibold text-[#0f4c81]">
-                        {r.title}
-                      </h3>
-                      <p className="text-gray-600 text-sm">
-                        {r.date} at {r.time}{" "}
-                        {r.repeatDays?.length > 0 && (
-                          <span className="text-gray-500">
-                            | {r.repeatDays.join(", ")}
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => deleteReminder(r.id)}
-                      className="text-red-500 font-bold hover:text-red-700 transition"
-                    >
-                      ✖
-                    </button>
-                  </div>
-                ))}
-              </div>
+            <div>
+              <h3 className="font-bold text-[#0f4c81] text-xl">Notifications</h3>
+              <p className="text-gray-600">3 unread alerts — one about a prescription refill.</p>
+              <p className="text-sm text-gray-500 mt-1">Last updated 2 hours ago</p>
             </div>
           </div>
+          <button className="text-[#0f4c81] font-semibold hover:underline mt-4 sm:mt-0">
+            View All →
+          </button>
+        </div>
+
+
+        {/* --- 💡 Health Tip Section --- */}
+    <div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex flex-col sm:flex-row items-center justify-between">
+      <div className="flex-1">
+        <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
+          💡 Daily Health Tip
+        </h2>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={currentTipIndex}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-gray-700 leading-relaxed text-lg"
+          >
+            {tips[currentTipIndex]}
+          </motion.p>
+        </AnimatePresence>
+        <p className="text-sm text-gray-500 mt-2">
+          Source: World Health Organization
+        </p>
+      </div>
+      <img
+        src="https://cdn-icons-png.flaticon.com/512/2966/2966481.png"
+        alt="Health tip"
+        className="w-28 h-28 mt-6 sm:mt-0"
+      />
+    </div>
+
+
+    {/* --- 📦 Last Order Section --- */}
+    <div className="w-full bg-white/90 backdrop-blur-sm rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+      <div>
+        <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
+          📦 Last Order
+        </h2>
+        <p className="text-gray-700 text-lg">
+          <span className="font-semibold">Medicines:</span> Paracetamol 500mg, Vitamin C
+        </p>
+        <p className="text-sm text-gray-500 mt-2">
+          Delivered on <strong>Oct 10, 2025</strong> | Order ID: #PHM10234
+        </p>
+      </div>
+      <div className="mt-5 sm:mt-0 flex flex-col items-end">
+        <span className="text-sm font-medium text-green-600 bg-green-100 px-3 py-1 rounded-full">
+          ✅ Delivered
+        </span>
+        <button className="mt-3 text-[#0f4c81] font-semibold hover:underline">
+          View Invoice →
+        </button>
+      </div>
+    </div>
+
+    
+
+    {/* --- 💊 Active Prescriptions --- */}
+      <div className="w-full bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10  flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <div className="flex items-start gap-3">
+          <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
+            💊
+          </div>
+          <div>
+            <h3 className="font-bold text-[#0f4c81] text-xl">Active Prescriptions</h3>
+            <p className="text-gray-600">
+              2 ongoing — <strong>Amoxicillin</strong> and <strong>Vitamin D3</strong>
+            </p>
+            <p className="text-sm text-gray-500 mt-1">Next refill due: Oct 25, 2025</p>
+          </div>
+        </div>
+        <button className="text-[#0f4c81] font-semibold hover:underline mt-4 sm:mt-0">
+          Manage →
+        </button>
+      </div>
+
+          {/* --- 🏥 Nearby Pharmacies ---
+          <div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 border-l-4 border-[#0f4c81] flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div className="flex items-start gap-3">
+              <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
+                🏥
+              </div>
+              <div>
+                <h3 className="font-bold text-[#0f4c81] text-xl">Nearby Pharmacies</h3>
+                <p className="text-gray-600">
+                  <strong>HealthPlus</strong> — 0.8 km away  
+                </p>
+                <p className="text-sm text-gray-500 mt-1">Open till 10:00 PM</p>
+              </div>
+            </div>
+            <button className="text-[#0f4c81] font-semibold hover:underline mt-4 sm:mt-0">
+              View Map →
+            </button>
+          </div> */}
+
+          {/* --- 🧘 Wellness Goals --- */}
+        <div className="w-full bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10  flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <div className="flex items-start gap-3">
+            <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
+              🧘
+            </div>
+            <div>
+              <h3 className="font-bold text-[#0f4c81] text-xl">Wellness Goals</h3>
+              <p className="text-gray-600">Goal: Walk 6,000 steps daily</p>
+              <p className="text-sm text-gray-500 mt-1">Progress: 4,320 steps today</p>
+            </div>
+          </div>
+          <button className="text-[#0f4c81] font-semibold hover:underline mt-4 sm:mt-0">
+            Update Goals →
+          </button>
+        </div>
+
+          
+
+    {/* --- ⏰ Reminder Setup Section --- */}
+    <div className="bg-gradient-to-br from-white to-blue-50 p-8 rounded-3xl shadow-lg w-full">
+      <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
+        ⏰ Set a New Reminder
+      </h2>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
+        <input
+          type="text"
+          placeholder="Reminder Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="border border-blue-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+        />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="border border-blue-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+        />
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          className="border border-blue-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+        />
+
+        {/* Repeat Days */}
+        <div className="col-span-full flex flex-wrap gap-2 items-center">
+          {daysOfWeek.map((day) => (
+            <button
+              key={day}
+              type="button"
+              className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-all ${
+                repeatDays.includes(day)
+                  ? "bg-[#0f4c81] text-white border-[#0f4c81]"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-blue-50"
+              }`}
+              onClick={() => toggleDay(day)}
+            >
+              {day}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex justify-center mb-6">
+        <button
+          onClick={addReminder}
+          className="bg-[#0f4c81] hover:bg-[#0c3a66] text-white font-medium px-6 py-2.5 rounded-full shadow-md transition-all"
+        >
+          ➕ Add Reminder
+        </button>
+      </div>
+
+      {/* --- Enhanced Reminder List --- */}
+      <div className="space-y-4">
+        {reminders.length === 0 ? (
+          <p className="text-gray-500 text-center">No reminders set yet.</p>
+        ) : (
+          reminders.map((r) => (
+            <div
+              key={r.id}
+              className="w-full bg-white rounded-3xl p-6 shadow-md hover:shadow-lg transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center border-l-4 border-[#0f4c81]"
+            >
+              <div className="flex items-start gap-3">
+                <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
+                  ⏰
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[#0f4c81] text-lg">
+                    {r.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    {r.date} at {r.time}{" "}
+                    {r.repeatDays?.length > 0 && (
+                      <span className="text-gray-500">
+                        | {r.repeatDays.join(", ")}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => deleteReminder(r.id)}
+                className="text-red-500 font-bold hover:text-red-700 transition mt-4 sm:mt-0"
+              >
+                ✖ Delete
+              </button>
+            </div>
+          ))
         )}
+      </div>
+    </div>
+  </div>
+)}
+
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -165,9 +166,9 @@ export default function SignIn() {
                     setIsSignIn(!isSignIn);
                     try {
                       // Pass form data to /signup-form
-                    navigate("/Signup-form", {
-                      state: { username, email, password, role },
-                    });
+                      navigate("/Signup-form", {
+                        state: { username, email, password, role },
+                      });
                     } catch (err: any) {
                       setError(err.message || "❌ Something went wrong");
                     } finally {

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import CartItems from "../components/CartItems";
 import { cartdata } from "../api/medapir";
 
+import { useNavigate } from "react-router-dom";
+
 type Product = {
   id: string;
   name: string;
@@ -17,6 +19,8 @@ type OrderSummary = {
   taxes: number;
   totalcost: number;
 };
+
+  // const navigate = useNavigate();
 
 const Cart: React.FC<{ userId: string }> = ({ userId }) => {
   const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
@@ -135,7 +139,21 @@ const Cart: React.FC<{ userId: string }> = ({ userId }) => {
                       <span>${totalDue.toFixed(2)}</span>
                     </li>
                   </ul>
-                  <button className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700">
+                  <button onClick={() => {
+                    setIsSignIn(!isSignIn);
+                    try {
+                      // Pass form data to /signup-form
+                      navigate("/Pay", {
+                        
+                      });
+                    } catch (err: any) {
+                      setError(err.message || "❌ Something went wrong");
+                    } finally {
+                      setLoading(false);
+                    }
+                    setError(""); setSuccess("");
+                  }}
+                   className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700">
                     Buy Now - ${totalDue.toFixed(2)}
                   </button>
                 </div>

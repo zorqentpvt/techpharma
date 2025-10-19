@@ -381,7 +381,7 @@ export default function SignupForm() {
       <input
         type={showPassword ? "text" : "password"}
         name="cpassword"
-        value={formData.password}
+        value={formData.cpassword}
         onChange={handleChange}
         required
         placeholder="Re-enter the password"

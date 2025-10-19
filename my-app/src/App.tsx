@@ -13,6 +13,7 @@ import "./index.css"
 import React from "react";
 import Consultings from "./pages/Consultings";
 import ChatbotInterface from "./pages/ChatbotInterface";
+import Pay from "./pages/Pay";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />}>
           
           <Route path="store" element={<Store />} />
+          <Route path="pay" element={<Pay />} />
           <Route path="chatbot" element={<ChatbotInterface />} />
           <Route path="consult" element={<Consultings />} />
           <Route path="medicine" element={<Medicines />} />

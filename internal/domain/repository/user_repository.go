@@ -49,3 +49,10 @@ type OrderRepository interface {
 	GetCartByUserID(ctx context.Context, userID uuid.UUID) (*entity.Cart, error)
 	RemoveFromCart(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID) error
 }
+type PaymentRepository interface {
+	Create(ctx context.Context, payment *entity.Payment) error
+	GetByOrderID(ctx context.Context, orderID string) (*entity.Payment, error)
+	GetByRazorpayOrderID(ctx context.Context, razorpayOrderID string) (*entity.Payment, error)
+	UpdateStatus(ctx context.Context, orderID string, status string, razorpayPaymentID, razorpaySignature, paymentMethod, failureReason string) error
+	GetUserPayments(ctx context.Context, userID uuid.UUID, page, limit int) ([]*entity.Payment, int64, error)
+}

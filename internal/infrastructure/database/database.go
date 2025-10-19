@@ -163,6 +163,7 @@ func (d *Database) Migrate() error {
 		&entity.Medicine{},
 		&entity.Cart{},
 		&entity.CartMedicine{},
+		&entity.Payment{},
 	}
 
 	// Run migrations

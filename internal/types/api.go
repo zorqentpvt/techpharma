@@ -377,3 +377,37 @@ type MedicineFilters struct {
 	SortBy               string
 	SortOrder            string
 }
+type CreateOrderRequest struct {
+	Amount          float64                `json:"amount" binding:"required,gt=0"`
+	Currency        string                 `json:"currency" binding:"required"`
+	Description     string                 `json:"description"`
+	CartID          *string                `json:"cartId"`
+	DeliveryAddress string                 `json:"deliveryAddress"`
+	Notes           map[string]interface{} `json:"notes"`
+}
+
+type VerifyPaymentRequest struct {
+	OrderID           string `json:"orderId" binding:"required"`
+	RazorpayOrderID   string `json:"razorpayOrderId" binding:"required"`
+	RazorpayPaymentID string `json:"razorpayPaymentId" binding:"required"`
+	RazorpaySignature string `json:"razorpaySignature" binding:"required"`
+}
+
+type OrderResponse struct {
+	OrderID         string                 `json:"orderId"`
+	RazorpayOrderID string                 `json:"razorpayOrderId"`
+	Amount          float64                `json:"amount"`
+	Currency        string                 `json:"currency"`
+	RazorpayKeyID   string                 `json:"razorpayKeyId"`
+	Notes           map[string]interface{} `json:"notes"`
+}
+
+type PaymentStatusResponse struct {
+	OrderID           string  `json:"orderId"`
+	RazorpayOrderID   string  `json:"razorpayOrderId"`
+	RazorpayPaymentID string  `json:"razorpayPaymentId"`
+	Status            string  `json:"status"`
+	Amount            float64 `json:"amount"`
+	Currency          string  `json:"currency"`
+	PaymentMethod     string  `json:"paymentMethod"`
+}

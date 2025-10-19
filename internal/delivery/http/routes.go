@@ -46,6 +46,10 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 	orderHandler := NewOrderHandlerClean(
 		container.OrderUsecase,
 	)
+	paymentHandler := NewPaymentHandlerClean(
+		container.PaymentUseCase,
+		container.UserRepository,
+	)
 
 	// Authentication routes (public)
 	authRoutes := api.Group("/auth")
@@ -85,6 +89,13 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			pharmacyRoutes.GET("/get-medicine/:id", medicineHanler.GetMedicineByID)
 			pharmacyRoutes.DELETE("/delete-medicine/:id", medicineHanler.DeleteMedicine)
 
+		}
+		paymentRoutes := protectedRoutes.Group("/payment")
+		{
+			paymentRoutes.POST("/create-order", paymentHandler.CreateOrder)
+			paymentRoutes.POST("/verify", paymentHandler.VerifyPayment)
+			paymentRoutes.GET("/status/:orderId", paymentHandler.GetPaymentStatus)
+			paymentRoutes.GET("/history", paymentHandler.GetUserPayments)
 		}
 
 		// Admin routes (require authentication + admin role)

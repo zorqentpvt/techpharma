@@ -1,4 +1,4 @@
-// Updated container/container.go
+// container/container.go
 package container
 
 import (
@@ -26,11 +26,12 @@ type Container struct {
 	MedicineRepository repository.MedicineRepository
 	DoctorRepository   repository.DoctorRepository
 	OrderRepository    repository.OrderRepository
+	PaymentRepository  repository.PaymentRepository // ✅ Keep as interface
 
 	// Domain Services
 	AuthService  service.AuthService
 	TokenService service.TokenService
-	EmailService service.EmailService // ✅ Added Email Service
+	EmailService service.EmailService
 
 	// Use Cases (Application Layer)
 	AuthUseCase     usecase.AuthUseCase
@@ -38,6 +39,7 @@ type Container struct {
 	MedicineUseCase usecase.MedicineUseCase
 	DoctorUseCase   usecase.DoctorUseCase
 	OrderUsecase    usecase.OrderUseCase
+	PaymentUseCase  *usecase.PaymentUseCase // ✅ Keep as pointer
 }
 
 // NewContainer creates a new dependency injection container
@@ -67,13 +69,14 @@ func (c *Container) initRepositories() {
 	c.MedicineRepository = persistence.NewMedicineRepository(c.Database.DB)
 	c.DoctorRepository = persistence.NewDoctorRepository(c.Database.DB)
 	c.OrderRepository = persistence.NewOrderRepository(c.Database.DB)
+	c.PaymentRepository = persistence.NewPaymentRepository(c.Database.DB) // ✅ Initialize Payment Repository
 }
 
 // initDomainServices initializes domain services
 func (c *Container) initDomainServices() {
 	c.TokenService = infraService.NewTokenService(c.Config)
 	c.AuthService = infraService.NewAuthService(c.UserRepository)
-	c.EmailService = infraService.NewEmailService(c.Config) // ✅ Initialize Email Service
+	c.EmailService = infraService.NewEmailService(c.Config)
 }
 
 // initUseCases initializes all use cases
@@ -84,12 +87,12 @@ func (c *Container) initUseCases() {
 		c.SecurityRepository,
 		c.TokenService,
 		c.AuthService,
-		c.EmailService, // ✅ Pass Email Service to AuthUseCase
+		c.EmailService,
 		c.Config,
 	)
 	c.UserUseCase = usecase.NewUserUseCase(
 		c.UserRepository,
-		c.EmailService, // ✅ Pass Email Service to UserUseCase
+		c.EmailService,
 	)
 	c.MedicineUseCase = usecase.NewMedicineUseCase(
 		c.MedicineRepository,
@@ -101,6 +104,18 @@ func (c *Container) initUseCases() {
 	c.OrderUsecase = usecase.NewOrderUseCase(
 		c.OrderRepository,
 	)
+	// ✅ CRITICAL FIX: Don't dereference the pointer
+	c.PaymentUseCase = usecase.NewPaymentUseCase(
+		c.PaymentRepository,
+		c.OrderRepository,
+		c.Config.Payment.RazorpayKey,
+		c.Config.Payment.RazorpaySecret,
+	)
+}
+
+// GetPaymentUseCase returns the payment use case
+func (c *Container) GetPaymentUseCase() *usecase.PaymentUseCase {
+	return c.PaymentUseCase
 }
 
 // GetAuthUseCase returns the authentication use case
@@ -117,8 +132,15 @@ func (c *Container) GetUserUseCase() usecase.UserUseCase {
 func (c *Container) GetMedicineUseCase() usecase.MedicineUseCase {
 	return c.MedicineUseCase
 }
+
+// GetDoctorUseCase returns the doctor use case
 func (c *Container) GetDoctorUseCase() usecase.DoctorUseCase {
 	return c.DoctorUseCase
+}
+
+// GetOrderUseCase returns the order use case
+func (c *Container) GetOrderUseCase() usecase.OrderUseCase {
+	return c.OrderUsecase
 }
 
 // GetTokenService returns the token service
@@ -131,7 +153,7 @@ func (c *Container) GetAuthService() service.AuthService {
 	return c.AuthService
 }
 
-// GetEmailService returns the email service ✅ Added getter
+// GetEmailService returns the email service
 func (c *Container) GetEmailService() service.EmailService {
 	return c.EmailService
 }
@@ -139,4 +161,9 @@ func (c *Container) GetEmailService() service.EmailService {
 // GetUserRepository returns the user repository
 func (c *Container) GetUserRepository() repository.UserRepository {
 	return c.UserRepository
+}
+
+// GetPaymentRepository returns the payment repository
+func (c *Container) GetPaymentRepository() repository.PaymentRepository {
+	return c.PaymentRepository
 }

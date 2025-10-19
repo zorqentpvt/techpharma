@@ -19,6 +19,7 @@ type Config struct {
 	App      AppConfig
 	CORS     Cors        // Added CORS configuration
 	Email    EmailConfig // ✅ add this
+	Payment  Payment
 }
 
 type Cors struct {
@@ -90,6 +91,10 @@ type EmailConfig struct {
 	TemplatePath     string        // Path to template files
 	DevBaseUrl       string
 }
+type Payment struct {
+	RazorpayKey    string
+	RazorpaySecret string
+}
 
 // LoadConfig loads configuration from environment variables and .env files
 func LoadConfig() *Config {
@@ -150,12 +155,16 @@ func LoadConfig() *Config {
 		},
 
 		CORS: Cors{
-			AllowedOrigins:   getStringSliceEnv("CORS_ALLOWED_ORIGINS", []string{"http://localhost:3000", "http://localhost:5500", "http://localhost:5173", "http://localhost:8080"}),
+			AllowedOrigins:   getStringSliceEnv("CORS_ALLOWED_ORIGINS", []string{"http://localhost:3000", "http://localhost:5500", "http://localhost:5173", "http://localhost:8080", "http://127.0.0.1:5500"}),
 			AllowedMethods:   getStringSliceEnv("CORS_ALLOWED_METHODS", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
 			AllowedHeaders:   getStringSliceEnv("CORS_ALLOWED_HEADERS", []string{"Origin", "Content-Length", "Content-Type", "Authorization"}),
 			AllowCredentials: getBoolEnv("CORS_ALLOW_CREDENTIALS", true),
 			MaxAge:           getIntEnv("CORS_MAX_AGE", 86400), // Default 1 day
 			ExposedHeaders:   getStringSliceEnv("CORS_EXPOSED_HEADERS", []string{"Content-Length", "Content-Type", "Authorization"}),
+		},
+		Payment: Payment{
+			RazorpayKey:    getEnv("RAZORPAY_KEY", "rzp_test_RVStDFGuG7R1H7"),
+			RazorpaySecret: getEnv("RAZORPAY_SECRET", "Sc12luS2VZkhXgEg85GyGhO0"),
 		},
 	}
 }

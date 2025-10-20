@@ -45,6 +45,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 	)
 	orderHandler := NewOrderHandlerClean(
 		container.OrderUsecase,
+		container.PaymentUseCase,
 	)
 	paymentHandler := NewPaymentHandlerClean(
 		container.PaymentUseCase,
@@ -73,15 +74,24 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			patientRoutes.GET("/medicines", medicineHanler.GetMedicines)
 			patientRoutes.POST("/doctors", doctorHanler.GetDoctors)
 			patientRoutes.POST("/medicines", medicineHanler.GetMedicines)
+			patientRoutes.PUT("/update-cart", orderHandler.UpdateCart)
 			patientRoutes.POST("/add-cart", orderHandler.AddToCart)
 			patientRoutes.GET("/view-cart", orderHandler.GetCart)
 			patientRoutes.DELETE("/remove-cart", orderHandler.RemoveFromCart)
 
-			patientRoutes.GET("/profile", userHandler.GetUserProfile)          // Get current user's profile
-			patientRoutes.PUT("/profile", userHandler.UpdateUserProfile)       // Update current user's profile
-			patientRoutes.POST("/change-password", authHandler.ChangePassword) // Change password (moved here for better organization)
+			patientRoutes.GET("/profile", userHandler.GetUserProfile)
+			patientRoutes.PUT("/profile", userHandler.UpdateUserProfile)
+			patientRoutes.POST("/change-password", authHandler.ChangePassword)
 
+			// Option 1: Orders under /user/orders
+			orderRoutes := patientRoutes.Group("/orders")
+			{
+				orderRoutes.GET("", orderHandler.GetUserOrders)    // /user/orders
+				orderRoutes.GET("/:id", orderHandler.GetOrderByID) // /user/orders/:id
+			}
 		}
+		//User Order Routed
+
 		pharmacyRoutes := protectedRoutes.Group("/pharmacy")
 		{
 			pharmacyRoutes.POST("/add-medicine", medicineHanler.AddMedicine)
@@ -90,6 +100,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			pharmacyRoutes.DELETE("/delete-medicine/:id", medicineHanler.DeleteMedicine)
 
 		}
+
 		paymentRoutes := protectedRoutes.Group("/payment")
 		{
 			paymentRoutes.POST("/create-order", paymentHandler.CreateOrder)

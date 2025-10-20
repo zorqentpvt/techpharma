@@ -103,6 +103,7 @@ func (c *Container) initUseCases() {
 	)
 	c.OrderUsecase = usecase.NewOrderUseCase(
 		c.OrderRepository,
+		c.MedicineRepository,
 	)
 	// ✅ CRITICAL FIX: Don't dereference the pointer
 	c.PaymentUseCase = usecase.NewPaymentUseCase(

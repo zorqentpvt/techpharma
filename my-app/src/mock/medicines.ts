@@ -3,6 +3,7 @@ export interface Medicine {
   pharmacy: string;
   stock: number;
   contents: string;
+  price:number;
 }
 
 export const medicines: Medicine[] = [

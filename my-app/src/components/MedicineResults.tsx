@@ -46,6 +46,7 @@ export function MedicineResults({ results, userRole, handleBuy, cart }: Medicine
             {med.quantity > 0 ? `In Stock: ${med.quantity}` : "Out of Stock"}
           </span>
           <p className="text-sm text-gray-500">{med.contents}</p>
+          <p className="text-sm text-gray-500">Price : ₹{med.price}</p>
 
           {userRole === "normal" && med.quantity > 0 && (
             <div className="mt-auto flex gap-2">

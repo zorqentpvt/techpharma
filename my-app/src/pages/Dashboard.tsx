@@ -85,6 +85,7 @@ export default function Dashboard() {
     { key: "appointments", label: "Appointments", roles: ["doctor"] },
     { key: "logout", label: "logout", roles: ["normal", "doctor", "pharmacy"] },
     { key: "cart", label: "cart", roles: [] },
+    { key: "pay", label: "pay", roles: [] },
 
   ];
 
@@ -93,13 +94,13 @@ export default function Dashboard() {
       case "Profile":
         return <ProfilePage />;
         case "cart":
-          return <Cart/>;
+          return <Cart setActiveTab={setActiveTab}/>;
       case "home":
         return <Home />;
       case "doctor":
         return user.role === "normal" ? <Doctors /> : <div>Access Denied</div>;
       case "pay":
-        return user.role === "normal" ? <Pay /> : <div>Access Denied</div>;
+        return user.role === "normal" ? <Pay  /> : <div>Access Denied</div>;
       case "chatbot":
         return user.role === "normal" ? <ChatbotInterface /> : <div>Access Denied</div>;
       case "Medicine":

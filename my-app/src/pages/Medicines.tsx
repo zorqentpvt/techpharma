@@ -85,7 +85,7 @@ export default function Medicines({ setActiveTab }: MedicinesProps) {
   
   const handleBuy = (med: Medicine) => {
     localStorage.setItem("transaction", JSON.stringify(med));
-    setActiveTab("cart");
+    setActiveTab("pay");
   };
 
   const addToCart = (med: Medicine) => {

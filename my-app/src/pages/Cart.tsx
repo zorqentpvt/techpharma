@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import CartItems from "../components/CartItems";
 import { cartdata } from "../api/medapir";
-
 import { useNavigate } from "react-router-dom";
 
 type Product = {
@@ -20,25 +19,28 @@ type OrderSummary = {
   totalcost: number;
 };
 
-  // const navigate = useNavigate();
+type CartProps = {
+  setActiveTab: (tab: string) => void;
+  userId: string;
+};
 
-const Cart: React.FC<{ userId: string }> = ({ userId }) => {
+const Cart: React.FC<CartProps> = ({ setActiveTab, userId }) => {
   const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  // const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const response: any = await cartdata(userId);
-
         if (response.success && response.data) {
           const medicines: Product[] = response.data.medicines.map((item: any) => ({
             id: item.id,
             name: item.medicine.name,
             description: item.medicine.description,
             price: item.medicine.price,
-            image: "", // no image in API, can add URL if available
+            image: "",
             quantity: item.quantity,
           }));
 
@@ -54,12 +56,18 @@ const Cart: React.FC<{ userId: string }> = ({ userId }) => {
       } catch (error) {
         console.error(error);
         setOrderSummary({ products: [], shipping: 0, taxes: 0, totalcost: 0 });
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchData();
   }, [userId]);
+
+  const handleBuy = (products: Product[]) => {
+    localStorage.setItem("transaction", JSON.stringify(products));
+    setActiveTab("pay");
+  };
 
   const handleQuantityChange = (productId: string, quantity: number) => {
     if (!orderSummary) return;
@@ -75,20 +83,16 @@ const Cart: React.FC<{ userId: string }> = ({ userId }) => {
     setOrderSummary({ ...orderSummary, products: updatedProducts });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[100dvh]">Loading...</div>
-    );
-  }
+  if (loading)
+    return <div className="flex items-center justify-center h-[100dvh]">Loading...</div>;
 
-  if (!orderSummary || orderSummary.products.length === 0) {
+  if (!orderSummary || orderSummary.products.length === 0)
     return (
       <div className="flex flex-col items-center justify-center h-[100dvh] text-gray-700">
         <h2 className="text-2xl font-semibold mb-4">Your shopping cart is empty</h2>
         <p>Add some products to see them here.</p>
       </div>
     );
-  }
 
   const { products, shipping, taxes } = orderSummary;
   const productsTotal = products.reduce((sum, p) => sum + p.price * p.quantity, 0);
@@ -100,7 +104,6 @@ const Cart: React.FC<{ userId: string }> = ({ userId }) => {
         <main className="grow">
           <div className="px-4 sm:px-6 lg:px-8 py-8 w-full">
             <div className="max-w-5xl mx-auto flex flex-col lg:flex-row lg:space-x-8 xl:space-x-16">
-
               {/* Cart Items */}
               <div className="mb-6 lg:mb-0 flex-1">
                 <header className="mb-4">
@@ -118,9 +121,7 @@ const Cart: React.FC<{ userId: string }> = ({ userId }) => {
               {/* Order Summary */}
               <div className="lg:w-72 xl:w-80">
                 <div className="bg-white p-5 mt-6 shadow rounded-xl border">
-                  <h2 className="text-blue-800 text-xl font-semibold mb-4">
-                    Order Summary
-                  </h2>
+                  <h2 className="text-blue-800 text-xl font-semibold mb-4">Order Summary</h2>
                   <ul className="mb-6">
                     <li className="flex justify-between py-2 border-b">
                       <span>Products & Subscriptions</span>
@@ -139,26 +140,14 @@ const Cart: React.FC<{ userId: string }> = ({ userId }) => {
                       <span>${totalDue.toFixed(2)}</span>
                     </li>
                   </ul>
-                  <button onClick={() => {
-                    setIsSignIn(!isSignIn);
-                    try {
-                      // Pass form data to /signup-form
-                      navigate("/Pay", {
-                        
-                      });
-                    } catch (err: any) {
-                      setError(err.message || "❌ Something went wrong");
-                    } finally {
-                      setLoading(false);
-                    }
-                    setError(""); setSuccess("");
-                  }}
-                   className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700">
+                  <button
+                    onClick={() => handleBuy(products)}
+                    className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
                     Buy Now - ${totalDue.toFixed(2)}
                   </button>
                 </div>
               </div>
-
             </div>
           </div>
         </main>

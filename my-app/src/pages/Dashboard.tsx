@@ -9,6 +9,7 @@ import Orders from "./Orders";
 import Medicines from "./Medicines";
 import Consultings from "./Consultings";
 import Cart from "./Cart";
+import Pay from "./Pay";
 import ChatbotInterface from "./ChatbotInterface";
 import ProfilePage from "./Profile";
 import {
@@ -97,6 +98,8 @@ export default function Dashboard() {
         return <Home />;
       case "doctor":
         return user.role === "normal" ? <Doctors /> : <div>Access Denied</div>;
+      case "pay":
+        return user.role === "normal" ? <Pay /> : <div>Access Denied</div>;
       case "chatbot":
         return user.role === "normal" ? <ChatbotInterface /> : <div>Access Denied</div>;
       case "Medicine":

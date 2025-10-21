@@ -90,16 +90,9 @@ func (r *OrderRepository) GetCartByUserID(ctx context.Context, userID uuid.UUID)
 func (r *OrderRepository) RemoveFromCart(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Find the user's cart
-		var cart entity.Cart
-		if err := tx.Where("user_id = ?", userID).First(&cart).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return errors.New("cart not found")
-			}
-			return err
-		}
 
 		// Delete the cart medicine item
-		result := tx.Where("cart_id = ? AND medicine_id = ?", cart.ID, medicineID).
+		result := tx.Where("id = ? ", medicineID).
 			Delete(&entity.CartMedicine{})
 
 		if result.Error != nil {

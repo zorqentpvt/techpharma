@@ -57,6 +57,7 @@ func (s *Server) SetupRoutes() {
 	} else {
 		log.Fatal("No container configured for server")
 	}
+	s.router.Static("/uploads", "./uploads")
 
 	// As the application grows, you can add more route setup functions:
 	// http.SetupProductRoutes(s.router, s.container.ProductUseCase)

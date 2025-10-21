@@ -20,6 +20,7 @@ type MedicineUseCase interface {
 	ListMedicines(ctx context.Context, filters types.MedicineFilters) ([]*entity.Medicine, int64, error)
 	GetMedicineByID(ctx context.Context, medicineID uuid.UUID) (*entity.Medicine, error)
 	DeleteMedicine(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID) (string, error)
+	UpdateMedicine(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID, updatedMedicine *entity.Medicine) (*entity.Medicine, error)
 }
 
 // medicineUseCase implements the MedicineUseCase interface
@@ -100,4 +101,38 @@ func (u *medicineUseCase) DeleteMedicine(ctx context.Context, userID uuid.UUID, 
 	}
 
 	return imageURL, nil
+}
+func (u *medicineUseCase) UpdateMedicine(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID, updatedMedicine *entity.Medicine) (*entity.Medicine, error) {
+	// Get medicine to check ownership
+	medicine, err := u.medicineRepo.GetMedicineByID(ctx, medicineID)
+	if err != nil {
+		return nil, err
+	}
+	if medicine == nil {
+		return nil, errors.New("medicine not found")
+	}
+
+	// Get user with pharmacy
+	user, err := u.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil || user.Pharmacy == nil {
+		return nil, errors.New("unauthorized to update this medicine")
+	}
+
+	// Check if medicine belongs to user's pharmacy
+	if medicine.PharmacyID != user.Pharmacy.ID {
+		return nil, errors.New("unauthorized to update this medicine")
+	}
+
+	// Update medicine
+	if err := u.medicineRepo.UpdateMedicine(ctx, userID, medicineID, updatedMedicine); err != nil {
+		return nil, err
+	}
+	updatedMedicineData, err := u.medicineRepo.GetMedicineByID(ctx, medicineID)
+	if err != nil {
+		return nil, err
+	}
+	return updatedMedicineData, nil
 }

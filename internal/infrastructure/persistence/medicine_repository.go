@@ -130,3 +130,15 @@ func (r *MedicineRepository) DeleteMedicine(ctx context.Context, medicineID uuid
 	}
 	return nil
 }
+func (r *MedicineRepository) UpdateMedicine(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID, updatedMedicine *entity.Medicine) error {
+	result := r.db.WithContext(ctx).Model(&entity.Medicine{}).
+		Where("id = ? AND pharmacy_id IN (SELECT id FROM pharmacies WHERE user_id = ?)", medicineID, userID).
+		Updates(updatedMedicine)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("medicine not found or unauthorized to update")
+	}
+	return nil
+}

@@ -96,6 +96,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 		{
 			pharmacyRoutes.POST("/add-medicine", medicineHanler.AddMedicine)
 			pharmacyRoutes.GET("/list-medicine", medicineHanler.ListMedicines)
+			pharmacyRoutes.PUT("/update-medicine/:id", medicineHanler.UpdateMedicine)
 			pharmacyRoutes.GET("/get-medicine/:id", medicineHanler.GetMedicineByID)
 			pharmacyRoutes.DELETE("/delete-medicine/:id", medicineHanler.DeleteMedicine)
 

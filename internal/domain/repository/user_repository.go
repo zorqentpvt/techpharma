@@ -40,6 +40,7 @@ type MedicineRepository interface {
 	ListMedicines(ctx context.Context, filters types.MedicineFilters) ([]*entity.Medicine, int64, error)
 	GetMedicineByID(ctx context.Context, medicineID uuid.UUID) (*entity.Medicine, error)
 	DeleteMedicine(ctx context.Context, medicineID uuid.UUID) error
+	UpdateMedicine(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID, updatedMedicine *entity.Medicine) error
 }
 type DoctorRepository interface {
 	GetDoctors(ctx context.Context, searchQuery string) ([]*entity.Doctor, error)

@@ -439,3 +439,195 @@ func (h *MedicineHandlerClean) DeleteMedicine(c *gin.Context) {
 		Message: "Medicine deleted successfully",
 	})
 }
+func (h *MedicineHandlerClean) UpdateMedicine(c *gin.Context) {
+	// Extract user ID from context
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "User ID not found in context",
+		})
+		return
+	}
+
+	// Parse user ID
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid User ID",
+			Message: "User ID format is invalid",
+		})
+		return
+	}
+
+	// Parse medicine ID from URL parameter
+	medicineIDStr := c.Param("id")
+	medicineID, err := uuid.Parse(medicineIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Medicine ID",
+			Message: "Medicine ID format is invalid",
+		})
+		return
+	}
+
+	// Get existing medicine first (to get old image URL if needed)
+	existingMedicine, err := h.medicineUseCase.GetMedicineByID(c.Request.Context(), medicineID)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		if err.Error() == "medicine not found" {
+			statusCode = http.StatusNotFound
+		}
+		c.JSON(statusCode, types.ErrorResponse{
+			Error:   "Failed to retrieve medicine",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// Try to parse as multipart form first
+	var medicine entity.Medicine
+	var newImageURL string
+	var oldImageURL string
+
+	contentType := c.ContentType()
+
+	if strings.Contains(contentType, "multipart/form-data") {
+		// Parse multipart form (32MB default)
+		if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
+			c.JSON(http.StatusBadRequest, types.ErrorResponse{
+				Error:   "Form Error",
+				Message: "Failed to parse form data",
+			})
+			return
+		}
+
+		// Manually parse form fields
+		if name := c.PostForm("name"); name != "" {
+			medicine.Name = name
+		}
+		if content := c.PostForm("content"); content != "" {
+			medicine.Content = &content
+		}
+		if description := c.PostForm("description"); description != "" {
+			medicine.Description = &description
+		}
+		if manufacturer := c.PostForm("manufacturer"); manufacturer != "" {
+			medicine.Manufacturer = &manufacturer
+		}
+		if batchNumber := c.PostForm("batch_number"); batchNumber != "" {
+			medicine.BatchNumber = &batchNumber
+		}
+		if expiryDate := c.PostForm("expiry_date"); expiryDate != "" {
+			if parsedDate, err := time.Parse("2006-01-02", expiryDate); err == nil {
+				medicine.ExpiryDate = &parsedDate
+			}
+		}
+		if priceStr := c.PostForm("price"); priceStr != "" {
+			if price, err := strconv.ParseFloat(priceStr, 64); err == nil {
+				medicine.Price = price
+			}
+		}
+		if quantityStr := c.PostForm("quantity"); quantityStr != "" {
+			if quantity, err := strconv.Atoi(quantityStr); err == nil {
+				medicine.Quantity = quantity
+			}
+		}
+		if prescriptionRequiredStr := c.PostForm("prescription_required"); prescriptionRequiredStr != "" {
+			if prescriptionRequired, err := strconv.ParseBool(prescriptionRequiredStr); err == nil {
+				medicine.PrescriptionRequired = prescriptionRequired
+			}
+		}
+		if isActiveStr := c.PostForm("is_active"); isActiveStr != "" {
+			if isActive, err := strconv.ParseBool(isActiveStr); err == nil {
+				medicine.IsActive = isActive
+			}
+		}
+
+		// Handle image upload if provided
+		file, header, err := c.Request.FormFile("image")
+		if err == nil {
+			defer file.Close()
+
+			// Validate file type
+			if !isValidImageType(header.Filename) {
+				c.JSON(http.StatusBadRequest, types.ErrorResponse{
+					Error:   "Invalid File Type",
+					Message: "Only JPG, JPEG, PNG, and WEBP images are allowed",
+				})
+				return
+			}
+
+			// Generate unique filename
+			ext := filepath.Ext(header.Filename)
+			filename := fmt.Sprintf("%s_%d%s", uuid.New().String(), time.Now().Unix(), ext)
+			filePath := filepath.Join(UploadDir, filename)
+
+			// Save file
+			if err := c.SaveUploadedFile(header, filePath); err != nil {
+				c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+					Error:   "Upload Failed",
+					Message: "Failed to save image file",
+				})
+				return
+			}
+
+			// Set new image URL
+			newImageURL = "/" + filePath
+			medicine.ImageURL = &newImageURL
+
+			// Store old image URL for deletion after successful update
+			if existingMedicine.ImageURL != nil {
+				oldImageURL = *existingMedicine.ImageURL
+			}
+		} else if err != http.ErrMissingFile {
+			// Error other than missing file
+			c.JSON(http.StatusBadRequest, types.ErrorResponse{
+				Error:   "File Upload Error",
+				Message: err.Error(),
+			})
+			return
+		}
+	} else {
+		// Handle JSON request
+		if err := c.ShouldBindJSON(&medicine); err != nil {
+			c.JSON(http.StatusBadRequest, types.ErrorResponse{
+				Error:   "Invalid Request",
+				Message: err.Error(),
+			})
+			return
+		}
+	}
+
+	// Update medicine
+	medicinedata, err := h.medicineUseCase.UpdateMedicine(c.Request.Context(), userID, medicineID, &medicine)
+	if err != nil {
+		// Clean up newly uploaded file if update fails
+		if newImageURL != "" {
+			os.Remove(strings.TrimPrefix(newImageURL, "/"))
+		}
+
+		statusCode := http.StatusInternalServerError
+		if err.Error() == "medicine not found or unauthorized to update" {
+			statusCode = http.StatusForbidden
+		}
+
+		c.JSON(statusCode, types.ErrorResponse{
+			Error:   "Failed to update medicine",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// Delete old image file if new image was uploaded successfully
+	if newImageURL != "" && oldImageURL != "" {
+		filePath := strings.TrimPrefix(oldImageURL, "/")
+		os.Remove(filePath)
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Message: "Medicine updated successfully",
+		Data:    medicinedata,
+	})
+}

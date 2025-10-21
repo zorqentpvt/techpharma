@@ -45,7 +45,26 @@ type DoctorRepository interface {
 	GetDoctors(ctx context.Context, searchQuery string) ([]*entity.Doctor, error)
 }
 type OrderRepository interface {
+	//User Cart Managment
 	AddToCart(ctx context.Context, cart *entity.Cart) error
 	GetCartByUserID(ctx context.Context, userID uuid.UUID) (*entity.Cart, error)
+	UpdateCart(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID, quantity int) (*entity.Cart, error)
+	GetCartByID(ctx context.Context, cartID uuid.UUID) (*entity.Cart, error)
+
 	RemoveFromCart(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID) error
+	CreateOrderFromCart(ctx context.Context, cart *entity.Cart, paymentID uuid.UUID, deliveryAddress string) (*entity.Order, error)
+	ClearCart(ctx context.Context, userID uuid.UUID) error
+	GetOrderByID(ctx context.Context, orderID uuid.UUID) (*entity.Order, error)
+	GetUserOrders(ctx context.Context, userID uuid.UUID, page, limit int) ([]*entity.Order, int64, error)
+	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error
+}
+type PaymentRepository interface {
+	Create(ctx context.Context, payment *entity.Payment) error
+	GetByOrderID(ctx context.Context, orderID string) (*entity.Payment, error)
+	GetByRazorpayOrderID(ctx context.Context, razorpayOrderID string) (*entity.Payment, error)
+	UpdateStatus(ctx context.Context, orderID string, status string, razorpayPaymentID, razorpaySignature, paymentMethod, failureReason string) error
+	GetUserPayments(ctx context.Context, userID uuid.UUID, page, limit int) ([]*entity.Payment, int64, error)
+
+	//User Order Management
+
 }

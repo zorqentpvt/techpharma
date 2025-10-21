@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -12,12 +13,14 @@ import (
 )
 
 type OrderHandlerClean struct {
-	orderUseCase usecase.OrderUseCase
+	orderUseCase   usecase.OrderUseCase
+	paymentUseCase *usecase.PaymentUseCase
 }
 
-func NewOrderHandlerClean(orderUseCase usecase.OrderUseCase) *OrderHandlerClean {
+func NewOrderHandlerClean(orderUseCase usecase.OrderUseCase, paymentUseCase *usecase.PaymentUseCase) *OrderHandlerClean {
 	return &OrderHandlerClean{
-		orderUseCase: orderUseCase,
+		orderUseCase:   orderUseCase,
+		paymentUseCase: paymentUseCase,
 	}
 }
 
@@ -200,5 +203,219 @@ func (o *OrderHandlerClean) RemoveFromCart(c *gin.Context) {
 		"success": true,
 		"message": "item removed from cart successfully",
 		"data":    cart,
+	})
+}
+func (o *OrderHandlerClean) UpdateCart(c *gin.Context) {
+	// Get user ID from context (set by auth middleware)
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"success": false,
+			"message": "Unauthorized",
+		})
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		MedicineID string `json:"medicine_id" binding:"required"`
+		Quantity   int    `json:"quantity" binding:"required,min=0"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid request body",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Parse UUIDs
+	userUUID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid user ID",
+		})
+		return
+	}
+
+	medicineUUID, err := uuid.Parse(req.MedicineID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid medicine ID",
+		})
+		return
+	}
+
+	// Call use case
+	cart, err := o.orderUseCase.UpdateCart(c.Request.Context(), userUUID, medicineUUID, req.Quantity)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		message := err.Error()
+
+		// Map specific errors to appropriate status codes
+		switch message {
+		case "cart not found":
+			statusCode = http.StatusNotFound
+		case "item not found in cart":
+			statusCode = http.StatusNotFound
+		case "medicine not found":
+			statusCode = http.StatusNotFound
+		case "medicine is not active":
+			statusCode = http.StatusBadRequest
+		case "quantity cannot be negative":
+			statusCode = http.StatusBadRequest
+		default:
+			if len(message) > 4 && message[:4] == "only" {
+				// "only X units available" error
+				statusCode = http.StatusBadRequest
+			}
+		}
+
+		c.JSON(statusCode, gin.H{
+			"success": false,
+			"message": message,
+		})
+		return
+	}
+
+	// Determine success message
+	message := "Cart updated successfully"
+	if req.Quantity == 0 {
+		message = "Item removed from cart successfully"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": message,
+		"data":    cart,
+	})
+}
+func (o *OrderHandlerClean) GetUserOrders(c *gin.Context) {
+	// Get user ID from context
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "UNAUTHORIZED",
+				Message: "User ID not found in context",
+			},
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_USER_ID",
+				Message: "Invalid user ID format",
+			},
+		})
+		return
+	}
+
+	// Parse pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	// Get orders
+	orders, total, err := o.paymentUseCase.GetUserOrders(c.Request.Context(), userID, page, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "FETCH_ERROR",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	// Return paginated response
+	response.Paginated(c, orders, page, limit, int(total), "Orders retrieved successfully")
+}
+
+// GetOrderByID retrieves a specific order by ID
+func (o *OrderHandlerClean) GetOrderByID(c *gin.Context) {
+	// Get user ID from context for authorization
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "UNAUTHORIZED",
+				Message: "User ID not found in context",
+			},
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_USER_ID",
+				Message: "Invalid user ID format",
+			},
+		})
+		return
+	}
+
+	// Parse order ID from URL
+	orderIDStr := c.Param("id")
+	orderID, err := uuid.Parse(orderIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_ORDER_ID",
+				Message: "Invalid order ID format",
+			},
+		})
+		return
+	}
+
+	// Get order
+	order, err := o.paymentUseCase.GetOrderByID(c.Request.Context(), orderID)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		if err.Error() == "order not found" {
+			statusCode = http.StatusNotFound
+		}
+
+		c.JSON(statusCode, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "FETCH_ERROR",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	// Check if order belongs to user
+	if order.UserID != userID {
+		c.JSON(http.StatusForbidden, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "FORBIDDEN",
+				Message: "You don't have permission to view this order",
+			},
+		})
+		return
+	}
+
+	// Return order
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Message: "Order retrieved successfully",
+		Data:    order,
 	})
 }

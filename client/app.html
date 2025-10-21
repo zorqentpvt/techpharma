@@ -27,11 +27,55 @@
             text-align: center;
             color: white;
             margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content {
+            flex: 1;
+            text-align: center;
         }
 
         .header h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
+        }
+
+        .cart-button {
+            position: relative;
+            padding: 12px 24px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cart-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff5252;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
         }
 
         .search-box {
@@ -102,6 +146,28 @@
             border-radius: 10px;
             margin-bottom: 20px;
             text-align: center;
+            animation: slideDown 0.3s ease;
+        }
+
+        .success-message {
+            background: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .results-container {
@@ -222,6 +288,68 @@
             color: white;
         }
 
+        .cart-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .quantity-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .quantity-display {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .add-to-cart-btn {
+            flex: 1;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-to-cart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .add-to-cart-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .no-results {
             text-align: center;
             color: white;
@@ -233,8 +361,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏥 Medicine Search</h1>
-            <p>Search for medicines and find pharmacy details</p>
+            <div style="width: 150px;"></div>
+            <div class="header-content">
+                <h1>🏥 Medicine Search</h1>
+                <p>Search for medicines and add them to your cart</p>
+            </div>
+            <a href="cart.html" class="cart-button">
+                🛒 Cart
+                <span class="cart-badge" id="cartBadge">0</span>
+            </a>
         </div>
 
         <div class="search-box">
@@ -250,19 +385,30 @@
         </div>
 
         <div id="errorContainer"></div>
+        <div id="successContainer"></div>
         <div id="loadingContainer"></div>
         <div id="resultsContainer" class="results-container"></div>
     </div>
 
     <script>
         const API_BASE_URL = 'http://localhost:8080/api/user/medicines';
-        const AUTH_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjIwMWM2NmMtZDIxNC00NmU2LWI4ZmEtZmMwNjc4NTY3YTVmIiwiZW1haWwiOiJlYmluYmVubnk3NzdAZ21haWwuY29tIiwicm9sZSI6ImFkbWluIiwiZmlyc3RfbmFtZSI6ImViaW4iLCJsYXN0X25hbWUiOiJiZW5ueSIsImxhdGl0dWRlIjo5Ljg5NTgsImxvbmdpdHVkZSI6OC41NjgsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJpc3MiOiJ0ZWNocGhhcm1hIiwic3ViIjoiMjIwMWM2NmMtZDIxNC00NmU2LWI4ZmEtZmMwNjc4NTY3YTVmIiwiZXhwIjoxNzU5Njc5MDQ0LCJuYmYiOjE3NTk1OTI2NDQsImlhdCI6MTc1OTU5MjY0NCwianRpIjoiOWVjM2VhNTAtY2FhYy00YWMxLWI1MGEtZWZlNjNiOTM5NTRkIn0.W_V-wzPWV74d_MsV57EhAF793zV0qFETMaawqb0W4SA';
+        const ADD_TO_CART_URL = 'http://localhost:8080/api/user/add-cart';
+        const VIEW_CART_URL = 'http://localhost:8080/api/user/view-cart';
+        const AUTH_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYzhiM2MyMmMtY2JjOC00YmU0LWE1MzQtM2UwMzZkYjQxZGM5IiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJwYXRpZW50IiwiZmlyc3RfbmFtZSI6IkpvaG4iLCJsYXN0X25hbWUiOiJEb2UiLCJsYXRpdHVkZSI6MCwibG9uZ2l0dWRlIjowLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiaXNzIjoidGVjaHBoYXJtYSIsInN1YiI6ImM4YjNjMjJjLWNiYzgtNGJlNC1hNTM0LTNlMDM2ZGI0MWRjOSIsImV4cCI6MTc2MTEzMjMyMSwibmJmIjoxNzYxMDQ1OTIxLCJpYXQiOjE3NjEwNDU5MjEsImp0aSI6IjA3NGMxNWRhLWQ5YzctNDAwNS05Y2QwLTM2NjU3YjlmZWFkZSJ9.s678A0_S6koeU8f6O2K7EGXmrYMOklhgBJ3tvawLD5A';
 
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
         const errorContainer = document.getElementById('errorContainer');
+        const successContainer = document.getElementById('successContainer');
         const loadingContainer = document.getElementById('loadingContainer');
         const resultsContainer = document.getElementById('resultsContainer');
+        const cartBadge = document.getElementById('cartBadge');
+
+        // Store quantities for each medicine
+        const quantities = {};
+
+        // Load cart count on page load
+        loadCartCount();
 
         async function searchMedicines(query) {
             try {
@@ -300,33 +446,39 @@
         }
 
         function displayResults(medicines) {
-            resultsContainer.innerHTML = medicines.map(medicine => `
+            medicines.forEach(medicine => {
+                quantities[medicine.id] = 1;
+            });
+
+            resultsContainer.innerHTML = medicines.map(medicine => {
+                const pharmacy = medicine.pharmacy || {};
+                return `
                 <div class="medicine-card">
                     <div class="medicine-header">
-                        <div class="medicine-name">${medicine.name}</div>
-                        <div class="medicine-content">${medicine.content}</div>
+                        <div class="medicine-name">${medicine.name || 'N/A'}</div>
+                        <div class="medicine-content">${medicine.content || ''}</div>
                     </div>
                     
-                    <div class="medicine-description">${medicine.description}</div>
+                    <div class="medicine-description">${medicine.description || 'No description available'}</div>
                     
-                    <div class="price-tag">₹${medicine.price}</div>
+                    <div class="price-tag">₹${medicine.price || 0}</div>
                     
                     <div class="medicine-details">
                         <div class="detail-item">
                             <div class="detail-label">Manufacturer</div>
-                            <div class="detail-value">${medicine.manufacturer}</div>
+                            <div class="detail-value">${medicine.manufacturer || 'N/A'}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Batch Number</div>
-                            <div class="detail-value">${medicine.batchNumber}</div>
+                            <div class="detail-value">${medicine.batchNumber || 'N/A'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">Quantity</div>
-                            <div class="detail-value">${medicine.quantity} units</div>
+                            <div class="detail-label">Available</div>
+                            <div class="detail-value">${medicine.quantity || 0} units</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Expiry Date</div>
-                            <div class="detail-value">${formatDate(medicine.expiryDate)}</div>
+                            <div class="detail-value">${medicine.expiryDate ? formatDate(medicine.expiryDate) : 'N/A'}</div>
                         </div>
                     </div>
                     
@@ -335,15 +487,99 @@
                         : '<span class="badge badge-no-prescription">✓ No Prescription Needed</span>'
                     }
                     
+                    ${pharmacy.name ? `
                     <div class="pharmacy-info">
-                        <div class="pharmacy-name">📍 ${medicine.pharmacy.name}</div>
-                        <div class="pharmacy-detail">📧 ${medicine.pharmacy.email}</div>
-                        <div class="pharmacy-detail">📞 ${medicine.pharmacy.phoneNumber}</div>
-                        <div class="pharmacy-detail">🏠 ${medicine.pharmacy.address}, ${medicine.pharmacy.city}</div>
-                        <div class="pharmacy-detail">📮 ${medicine.pharmacy.postalCode}, ${medicine.pharmacy.state}, ${medicine.pharmacy.country}</div>
+                        <div class="pharmacy-name">📍 ${pharmacy.name}</div>
+                        ${pharmacy.email ? `<div class="pharmacy-detail">📧 ${pharmacy.email}</div>` : ''}
+                        ${pharmacy.phoneNumber ? `<div class="pharmacy-detail">📞 ${pharmacy.phoneNumber}</div>` : ''}
+                        ${pharmacy.address ? `<div class="pharmacy-detail">🏠 ${pharmacy.address}${pharmacy.city ? ', ' + pharmacy.city : ''}</div>` : ''}
+                        ${pharmacy.postalCode || pharmacy.state || pharmacy.country ? `<div class="pharmacy-detail">📮 ${pharmacy.postalCode || ''} ${pharmacy.state || ''} ${pharmacy.country || ''}</div>` : ''}
+                    </div>
+                    ` : ''}
+
+                    <div class="cart-controls">
+                        <div class="quantity-selector">
+                            <button class="quantity-btn" onclick="decreaseQuantity('${medicine.id}')">-</button>
+                            <span class="quantity-display" id="qty-${medicine.id}">1</span>
+                            <button class="quantity-btn" onclick="increaseQuantity('${medicine.id}')">+</button>
+                        </div>
+                        <button class="add-to-cart-btn" onclick="addToCart('${medicine.id}')">
+                            🛒 Add to Cart
+                        </button>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
+        }
+
+        function increaseQuantity(medicineId) {
+            quantities[medicineId] = (quantities[medicineId] || 1) + 1;
+            document.getElementById(`qty-${medicineId}`).textContent = quantities[medicineId];
+        }
+
+        function decreaseQuantity(medicineId) {
+            if (quantities[medicineId] > 1) {
+                quantities[medicineId]--;
+                document.getElementById(`qty-${medicineId}`).textContent = quantities[medicineId];
+            }
+        }
+
+        async function addToCart(medicineId) {
+            try {
+                clearError();
+                const quantity = quantities[medicineId] || 1;
+
+                const response = await fetch(ADD_TO_CART_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': AUTH_TOKEN
+                    },
+                    body: JSON.stringify({
+                        medicine_id: medicineId,
+                        quantity: quantity
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                }
+
+                if (data.cart || data.message.includes('successfully')) {
+                    showSuccess(`Added ${quantity} item(s) to cart successfully!`);
+                    loadCartCount();
+                } else {
+                    throw new Error(data.message || 'Failed to add to cart');
+                }
+            } catch (error) {
+                showError(`Failed to add to cart: ${error.message}`);
+            }
+        }
+
+        async function loadCartCount() {
+            try {
+                const response = await fetch(VIEW_CART_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': AUTH_TOKEN
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data && data.data.medicines) {
+                        const validItems = data.data.medicines.filter(item => 
+                            item.medicine.id !== "00000000-0000-0000-0000-000000000000"
+                        );
+                        const totalItems = validItems.reduce((sum, item) => sum + item.quantity, 0);
+                        cartBadge.textContent = totalItems;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load cart count:', error);
+            }
         }
 
         function formatDate(dateString) {
@@ -363,10 +599,20 @@
 
         function showError(message) {
             errorContainer.innerHTML = `<div class="error">❌ ${message}</div>`;
+            setTimeout(() => clearError(), 5000);
         }
 
         function clearError() {
             errorContainer.innerHTML = '';
+        }
+
+        function showSuccess(message) {
+            successContainer.innerHTML = `<div class="success-message">✓ ${message}</div>`;
+            setTimeout(() => clearSuccess(), 3000);
+        }
+
+        function clearSuccess() {
+            successContainer.innerHTML = '';
         }
 
         function clearResults() {

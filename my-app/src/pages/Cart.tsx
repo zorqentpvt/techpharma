@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import CartItems from "../components/CartItems";
-import { cartdata } from "../api/medapir";
+import { cartdata,removecart } from "../api/medapir";
 import { useNavigate } from "react-router-dom";
 
 type Product = {
@@ -77,10 +77,16 @@ const Cart: React.FC<CartProps> = ({ setActiveTab, userId }) => {
     setOrderSummary({ ...orderSummary, products: updatedProducts });
   };
 
-  const handleRemove = (productId: string) => {
-    if (!orderSummary) return;
-    const updatedProducts = orderSummary.products.filter((p) => p.id !== productId);
-    setOrderSummary({ ...orderSummary, products: updatedProducts });
+  const handleRemove = async (productId: string) => {
+    try {
+     const res= await removecart(productId);
+     console.log(res)
+     if(res.success)
+      {console.log(`Product ${productId} removed from cart`);}
+      // Optionally refresh UI or update state here
+    } catch (error) {
+      console.error('Error removing product:', error);
+    }
   };
 
   if (loading)

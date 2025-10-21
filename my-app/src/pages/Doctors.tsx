@@ -233,7 +233,7 @@ export default function Doctors() {
 
                 <PatientAppointment
                   doctorId={selectedDoctorId}
-                  patientId="mock-patient-id"
+                  
                   bookedSlots={DoctorAppointments}
                   onSubmit={(data) => {
                     console.log("Submitted appointment:", data);

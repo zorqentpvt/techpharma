@@ -126,3 +126,30 @@ export async function addtocart(medicine_id: string) {
     return { success: false, message: error.response?.data?.message || error.message };
   }
 }
+export async function removecart(medicineId: string) {
+  // Basic validation
+  if (!medicineId) {
+    return { success: false, message: "Medicine ID is required" };
+  }
+
+  // Payload must match Go struct exactly
+  const payload = { medicine_id: medicineId };
+  console.log("API Payload (removedata):", payload);
+
+  try {
+    const response = await api.delete(`api/user/remove-cart`, {
+      data: payload,
+      headers: { "Content-Type": "application/json" }, // ensure JSON is sent
+    });
+
+    console.log("API Response (removedata):", response.data);
+    return response.data; // expected { success, message, data }
+
+  } catch (error: any) {
+    console.error("API Error (removedata):", error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message,
+    };
+  }
+}

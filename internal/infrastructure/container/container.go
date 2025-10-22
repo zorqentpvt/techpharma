@@ -71,7 +71,9 @@ func (c *Container) initRepositories() {
 	c.MedicineRepository = persistence.NewMedicineRepository(c.Database.DB)
 	c.DoctorRepository = persistence.NewDoctorRepository(c.Database.DB)
 	c.OrderRepository = persistence.NewOrderRepository(c.Database.DB)
-	c.PaymentRepository = persistence.NewPaymentRepository(c.Database.DB) // ✅ Initialize Payment Repository
+	c.PaymentRepository = persistence.NewPaymentRepository(c.Database.DB)       // ✅ Initialize Payment Repository
+	c.AppoinmentRepository = persistence.NewAppoinmentRepository(c.Database.DB) // ✅ ADD THIS LINE
+
 }
 
 // initDomainServices initializes domain services

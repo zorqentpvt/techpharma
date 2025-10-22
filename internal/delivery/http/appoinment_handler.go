@@ -27,16 +27,21 @@ func NewAppoinmentHandlerClean(appointmentUseCase usecase.AppoinmentUseCase, use
 }
 func (h *AppointmentHandlerClean) BookAppointment(c *gin.Context) {
 	// Extract patient ID from context
-	patientID, exists := c.Get("userid")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "User ID not found in context",
+		})
 		return
 	}
 
-	// Type assertion for patientID
-	userID, ok := patientID.(uuid.UUID)
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid User ID",
+			Message: "User ID format is invalid",
+		})
 		return
 	}
 

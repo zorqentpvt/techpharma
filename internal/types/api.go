@@ -412,7 +412,7 @@ type PaymentStatusResponse struct {
 	PaymentMethod     string  `json:"paymentMethod"`
 }
 type AppointmentRequest struct {
-	PatientID     uuid.UUID                `json:"patientId" binding:"required"`
+	PatientID     uuid.UUID                `json:"patientId" `
 	DoctorID      uuid.UUID                `json:"doctorId" binding:"required"`
 	Reason        string                   `json:"reason" binding:"required"`
 	Mode          entity.AppointmentMode   `json:"mode" binding:"required"`

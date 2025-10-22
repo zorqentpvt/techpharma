@@ -221,7 +221,7 @@ export async function getDoctorSchedule(): Promise<ApiResponse> {
   console.log("API Payload (getDoctorSchedule):");
 
   try {
-    const response = {
+    const responseg = {
       success: true,
       message: "Fetched schedule successfully",
       data: [
@@ -274,7 +274,7 @@ export async function getDoctorSchedule(): Promise<ApiResponse> {
         }
       ]
     };
-    //await api.get(`api/doctor/${doctorId}/schedule`);
+    const response =await api.get(`api/doctor/schedule`);
     console.log("API Response (getDoctorSchedule):", response);
     return response;
   } catch (error: any) {

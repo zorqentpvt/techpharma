@@ -64,7 +64,10 @@ const Cart: React.FC<CartProps> = ({ userId }) => {
   }, [userId]);
 
   const handleBuy = (products: Product[]) => {
-    localStorage.setItem("transaction", JSON.stringify(products));
+    localStorage.setItem(
+    "transaction",
+    JSON.stringify({ products, price: productsTotal })
+  );
     navigate("/dashboard/pay"); // navigate to pay page
   };
 

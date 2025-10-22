@@ -2,9 +2,11 @@ package persistence
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/skryfon/collex/internal/domain/entity"
 	"github.com/skryfon/collex/internal/domain/repository"
 	"gorm.io/gorm"
@@ -58,4 +60,17 @@ func (r *DoctorRepository) GetDoctors(ctx context.Context, searchQuery string) (
 	}
 
 	return doctors, nil
+}
+func (r *DoctorRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Doctor, error) {
+	var doctor entity.Doctor
+	if err := r.db.WithContext(ctx).
+		Preload("User").
+		Where("doctors.id = ? AND doctors.is_active = ?", id, true).
+		First(&doctor).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("doctor with ID %s not found", id)
+		}
+		return nil, fmt.Errorf("failed to fetch doctor: %w", err)
+	}
+	return &doctor, nil
 }

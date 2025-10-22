@@ -74,8 +74,8 @@ export default function Consultings() {
   }, []);
 
   const handleJoinCall = (consultationId: string) => {
-    alert(`Joining video consultation for ID: ${consultationId}...`);
-    // navigate(`/video-call/${consultationId}`);
+    // alert(`Joining video consultation for ID: ${consultationId}...`);
+    navigate(`/videocall`);
   };
 
   const handleViewOpChart = (consultation?: Consultation, isUpcoming = false) => {

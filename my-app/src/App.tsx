@@ -18,6 +18,7 @@ import Doctors from "./pages/Doctors";
 import Schedule from "./pages/Schedule";
 import Appointments from "./pages/Appointments";
 import ProfilePage from "./pages/Profile";
+import VideoCall from "./pages/VideoCall";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         {/* Auth routes */}
         <Route path="/" element={<SignIn />} />
         <Route path="/signup-form" element={<SignupForm />} />
+        <Route path="/videocall" element={<VideoCall />} />
 
         {/* Dashboard with nested routes */}
         <Route path="/dashboard" element={<Dashboard />}>

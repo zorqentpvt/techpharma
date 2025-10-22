@@ -221,6 +221,7 @@ export async function getDoctorSchedule(): Promise<ApiResponse> {
   console.log("API Payload (getDoctorSchedule):");
 
   try {
+<<<<<<< HEAD
     const responseg = {
       success: true,
       message: "Fetched schedule successfully",
@@ -275,6 +276,9 @@ export async function getDoctorSchedule(): Promise<ApiResponse> {
       ]
     };
     const response =await api.get(`api/doctor/schedule`);
+=======
+    const response = await api.get(`api/doctor/schedule`);
+>>>>>>> 71e9c3067a3b080ccf36f4bdfec65738d9fa87d7
     console.log("API Response (getDoctorSchedule):", response);
     return response;
   } catch (error: any) {

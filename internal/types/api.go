@@ -425,9 +425,10 @@ type Slot struct {
 }
 
 type ScheduleAppointmentRequest struct {
-	DoctorID uuid.UUID `json:"-"`
-	Date     string    `json:"date" binding:"required"`        // Format: "YYYY-MM-DD"
-	Slots    []string  `json:"slots" binding:"required,min=1"` // e.g., ["09:00", "10:00"]
+	DoctorID  uuid.UUID `json:"-"`
+	PatientID uuid.UUID `json:"patientId" `
+	Date      string    `json:"date" binding:"required"`        // Format: "YYYY-MM-DD"
+	Slots     []string  `json:"slots" binding:"required,min=1"` // e.g., ["09:00", "10:00"]
 }
 
 type DoctorScheduleResponse struct {

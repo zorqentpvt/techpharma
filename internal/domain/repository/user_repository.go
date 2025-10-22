@@ -74,4 +74,10 @@ type PaymentRepository interface {
 type AppoinmentRepository interface {
 	BookAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error)
 	IsSlotBooked(ctx context.Context, doctorID uuid.UUID, appointmentDate time.Time, appointmentTime string) (bool, error)
+	GetDoctorAppointments(ctx context.Context, doctorID uuid.UUID, status entity.AppointmentStatus) ([]*entity.Appointment, error)
+	GetUpcomingAppointments(ctx context.Context, doctorID uuid.UUID) ([]*entity.Appointment, error)
+	GetAppointmentHistory(ctx context.Context, doctorID uuid.UUID) ([]*entity.Appointment, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*entity.Appointment, error)
+	Update(ctx context.Context, appointment *entity.Appointment) error
+	GetAllByDoctorID(ctx context.Context, doctorID uuid.UUID) ([]*entity.Appointment, error)
 }

@@ -115,7 +115,12 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			paymentRoutes.GET("/status/:orderId", paymentHandler.GetPaymentStatus)
 			paymentRoutes.GET("/history", paymentHandler.GetUserPayments)
 		}
-
+		doctorRoutes := protectedRoutes.Group("/doctor")
+		{
+			doctorRoutes.GET("/schedule", appoinmentHandler.GetDoctorSchedule)
+			doctorRoutes.POST("/schedule-appointment", appoinmentHandler.ScheduleAppointment)
+			//doctorRoutes.GET("/consultations", appoinmentHandler.FetchConsultations)
+		}
 		// Admin routes (require authentication + admin role)
 		adminRoutes := protectedRoutes.Group("/admin")
 		//	adminRoutes.Use(middleware.RoleBasedAccess(string(shared.UserRoleAdmin), string(shared.UserRoleSuperAdmin)))

@@ -26,7 +26,6 @@ func NewAppoinmentHandlerClean(appointmentUseCase usecase.AppoinmentUseCase, use
 	}
 }
 func (h *AppointmentHandlerClean) BookAppointment(c *gin.Context) {
-	// Extract patient ID from context
 	userIDStr := c.GetString("userID")
 	if userIDStr == "" {
 		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
@@ -45,71 +44,203 @@ func (h *AppointmentHandlerClean) BookAppointment(c *gin.Context) {
 		return
 	}
 
-	// Bind and validate request body
 	var req types.AppointmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request payload",
+			"success": false,
+			"message": "Invalid request payload",
 			"details": err.Error(),
 		})
 		return
 	}
 
-	// Set patient ID from authenticated user
 	req.PatientID = userID
 
-	// Additional validation for selected slots
 	if len(req.SelectedSlots) < 1 || len(req.SelectedSlots) > 5 {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Selected slots must be between 1 and 5",
+			"success": false,
+			"message": "Selected slots must be between 1 and 5",
 		})
 		return
 	}
 
-	// Validate appointment mode
 	if req.Mode != entity.AppointmentModeOnline && req.Mode != entity.AppointmentModeInPerson {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid appointment mode. Must be 'online' or 'in_person'",
+			"success": false,
+			"message": "Invalid appointment mode. Must be 'online' or 'in_person'",
 		})
 		return
 	}
 
-	// Call use case
-	appointment, err := h.appointmentUseCase.BookAppointment(c.Request.Context(), &req)
+	appointments, err := h.appointmentUseCase.BookAppointment(c.Request.Context(), &req)
 	if err != nil {
 		h.handleError(c, err)
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Appointment booked successfully",
-		"data":    appointment,
+		"success": true,
+		"message": "Appointments booked successfully",
+		"data":    appointments,
 	})
 }
 
-// handleError maps domain errors to HTTP responses
+// GetDoctorSchedule handles GET /api/doctor/schedule (for doctors)
+func (h *AppointmentHandlerClean) GetDoctorSchedule(c *gin.Context) {
+	doctorIDStr := c.GetString("userID")
+	if doctorIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "Doctor ID not found in context",
+		})
+		return
+	}
+
+	doctorID, err := uuid.Parse(doctorIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Doctor ID",
+			Message: "Doctor ID format is invalid",
+		})
+		return
+	}
+
+	appointments, err := h.appointmentUseCase.GetDoctorSchedule(c.Request.Context(), doctorID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Fetched schedule successfully",
+		"data":    appointments,
+	})
+}
+
+// FetchConsultations handles GET /api/consultations (for doctors)
+
+// CancelAppointment handles DELETE /api/user/cancel-appointment
+func (h *AppointmentHandlerClean) CancelAppointment(c *gin.Context) {
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "User ID not found in context",
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid User ID",
+			Message: "User ID format is invalid",
+		})
+		return
+	}
+
+	var req struct {
+		AppointmentID string `json:"appointment_id" binding:"required"`
+		Reason        string `json:"reason"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid request payload",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	appointmentID, err := uuid.Parse(req.AppointmentID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid appointment ID format",
+		})
+		return
+	}
+
+	err = h.appointmentUseCase.CancelAppointment(c.Request.Context(), appointmentID, userID, req.Reason)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Appointment cancelled successfully",
+	})
+}
+
+// ScheduleAppointment handles POST /api/doctor/schedule-appointment (doctor setting available slots)
+func (h *AppointmentHandlerClean) ScheduleAppointment(c *gin.Context) {
+	doctorIDStr := c.GetString("userID")
+	if doctorIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "Doctor ID not found in context",
+		})
+		return
+	}
+
+	doctorID, err := uuid.Parse(doctorIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Doctor ID",
+			Message: "Doctor ID format is invalid",
+		})
+		return
+	}
+
+	var req types.ScheduleAppointmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid request payload",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	req.DoctorID = doctorID
+
+	err = h.appointmentUseCase.ScheduleAppointment(c.Request.Context(), &req)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"message": "Schedule created successfully",
+	})
+}
+
 func (h *AppointmentHandlerClean) handleError(c *gin.Context, err error) {
 	switch {
 	case errors.IsNotFound(err):
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": err.Error()})
 	case errors.IsAlreadyExists(err):
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		c.JSON(http.StatusConflict, gin.H{"success": false, "message": err.Error()})
 	case errors.IsInvalidInput(err):
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 	case errors.IsUnauthorized(err):
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": err.Error()})
 	case errors.IsForbidden(err):
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "message": err.Error()})
 	default:
-		// Check if it's a DomainError for more specific handling
 		var domainErr *errors.DomainError
 		if errors.As(err, &domainErr) {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": domainErr.Message,
-				"code":  domainErr.Code,
+				"success": false,
+				"message": domainErr.Message,
+				"code":    domainErr.Code,
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to book appointment"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Internal server error"})
 	}
 }

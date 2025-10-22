@@ -418,3 +418,41 @@ type AppointmentRequest struct {
 	Mode          entity.AppointmentMode   `json:"mode" binding:"required"`
 	SelectedSlots []entity.AppointmentSlot `json:"selectedSlots" binding:"required,min=1,max=5"`
 }
+
+type Slot struct {
+	Date string `json:"date" binding:"required"` // Format: "YYYY-MM-DD"
+	Time string `json:"time" binding:"required"` // Format: "HH:MM"
+}
+
+type ScheduleAppointmentRequest struct {
+	DoctorID uuid.UUID `json:"-"`
+	Date     string    `json:"date" binding:"required"`        // Format: "YYYY-MM-DD"
+	Slots    []string  `json:"slots" binding:"required,min=1"` // e.g., ["09:00", "10:00"]
+}
+
+type DoctorScheduleResponse struct {
+	ID            string `json:"id"`
+	Patient       string `json:"patient"`
+	Reason        string `json:"reason"`
+	Mode          string `json:"mode"`
+	Status        string `json:"status"`
+	SelectedSlots []Slot `json:"selectedSlots"`
+}
+
+type ConsultationResponse struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Time         string `json:"time"`
+	Date         string `json:"date"`
+	Status       string `json:"status"`
+	Mode         string `json:"mode,omitempty"`
+	Reason       string `json:"reason,omitempty"`
+	Diagnosis    string `json:"diagnosis,omitempty"`
+	Prescription string `json:"prescription,omitempty"`
+	Notes        string `json:"notes,omitempty"`
+}
+
+type ConsultationsResponse struct {
+	Upcoming []ConsultationResponse `json:"upcoming"`
+	History  []ConsultationResponse `json:"history"`
+}

@@ -1,4 +1,10 @@
 import React, { useEffect, useState } from "react";
+import {
+  createOrder,
+  verifyPayment,
+  OrderData,
+  RazorpayResponse,
+} from "../api/pyapi";
 
 declare global {
   interface Window {
@@ -6,37 +12,12 @@ declare global {
   }
 }
 
-interface OrderData {
-  orderId: string;
-  razorpayKeyId: string;
-  razorpayOrderId: string;
-  amount: number;
-  currency: string;
-  notes?: Record<string, any>;
-}
-
-interface RazorpayResponse {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  message?: string;
-  data: T;
-}
-
 export default function RazorpayPayment() {
-  // Update this with your API & token
-  const API_BASE_URL = "http://localhost:8080/api";
-  const JWT_TOKEN = "YOUR_JWT_TOKEN_HERE";
-
-  const [amount, setAmount] = useState<number>(100);
-  const [description, setDescription] = useState("Test Payment");
-  const [customerName, setCustomerName] = useState("John Doe");
-  const [email, setEmail] = useState("john@example.com");
-  const [phone, setPhone] = useState("+919876543210");
+  const [amount, setAmount] = useState<number>(0);
+  const [description, setDescription] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [status, setStatus] = useState<{ type: string; message: string }>({
     type: "",
     message: "",
@@ -44,37 +25,33 @@ export default function RazorpayPayment() {
   const [details, setDetails] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
+  // ✅ Load user and transaction data
+  useEffect(() => {
+    try {
+      const userRaw = localStorage.getItem("userdata");
+      const transactionRaw = localStorage.getItem("transaction");
+
+      if (userRaw) {
+        const user = JSON.parse(userRaw);
+        const fullName = user.displayName || `${user.firstName} ${user.lastName}`.trim();
+        setCustomerName(fullName);
+        setEmail(user.email || "");
+        setPhone(user.phoneNumber || "");
+      }
+
+      if (transactionRaw) {
+        const trx = JSON.parse(transactionRaw);
+        setAmount(trx.price || 0);
+        setDescription(trx.description || trx.name || "Payment");
+      }
+    } catch (err) {
+      console.error("Failed to load data from localStorage", err);
+    }
+  }, []);
+
   const showStatus = (message: string, type: "info" | "error" | "success") => {
     setStatus({ type, message });
   };
-
-  async function createOrder(orderData: any): Promise<ApiResponse<OrderData>> {
-    const response = await fetch(`${API_BASE_URL}/payment/create-order`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${JWT_TOKEN}`,
-      },
-      body: JSON.stringify(orderData),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Failed to create order");
-    return data;
-  }
-
-  async function verifyPayment(verificationData: any): Promise<ApiResponse<any>> {
-    const response = await fetch(`${API_BASE_URL}/payment/verify`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${JWT_TOKEN}`,
-      },
-      body: JSON.stringify(verificationData),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Verification failed");
-    return data;
-  }
 
   const initializeRazorpay = (orderData: OrderData) => {
     if (!window.Razorpay) {
@@ -130,6 +107,7 @@ export default function RazorpayPayment() {
     e.preventDefault();
     setLoading(true);
     setDetails(null);
+
     try {
       showStatus("Creating order...", "info");
       const orderPayload = {
@@ -138,6 +116,7 @@ export default function RazorpayPayment() {
         description,
         notes: { customerName, email, phone },
       };
+
       const response = await createOrder(orderPayload);
       if (response.success) {
         showStatus("Opening Razorpay...", "info");

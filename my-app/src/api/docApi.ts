@@ -51,6 +51,7 @@ export interface BookAppointmentPayload {
 }
 
 export interface ScheduleAppointmentPayload {
+  patientID:string;
   doctorId: string;
   date: string;
   slots: string[]; // e.g., ["09:00", "10:00"]

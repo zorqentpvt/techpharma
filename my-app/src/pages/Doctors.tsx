@@ -37,7 +37,7 @@ function DoctorCard({
 
         <div className="mt-auto pt-3">
           <button
-            onClick={() => onAppointment(doctor.id)}
+            onClick={() => onAppointment(doctor.userId)}
             className="flex-1 px-4 py-1.5 rounded-md text-sm font-medium text-white bg-[#002E6E] hover:bg-[#0043A4] transition"
           >
             Book Appointment
@@ -143,6 +143,7 @@ export default function Doctors() {
 
   const handleAppointment = async (id: string) => {
     try {
+      console.log(id)
       // Call your API helper function
       const appointments = await docAppointments(id);
   
@@ -153,6 +154,7 @@ export default function Doctors() {
       }
  // Update state
       setSelectedDoctorId(id);
+      console.log(id)
       setDoctorAppointments(appointments); // assuming you have this state
     } catch (error) {
       console.error("Unexpected error:", error);

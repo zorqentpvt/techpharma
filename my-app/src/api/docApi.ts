@@ -221,64 +221,7 @@ export async function getDoctorSchedule(): Promise<ApiResponse> {
   console.log("API Payload (getDoctorSchedule):");
 
   try {
-<<<<<<< HEAD
-    const responseg = {
-      success: true,
-      message: "Fetched schedule successfully",
-      data: [
-        {
-          id: "appt1",
-          patient: "Alice Johnson",
-          reason: "General Checkup",
-          mode: "online",
-          status: "pending",
-          selectedSlots: [
-            { date: "2025-10-29", time: "09:00" }
-          ]
-        },
-        {
-          id: "appt2",
-          patient: "Bob Smith",
-          reason: "Follow-up",
-          mode: "offline",
-          status: "pending",
-          selectedSlots: [
-            { date: "2025-10-29", time: "10:00" },
-            { date: "2025-10-30", time: "11:00" },
-            { date: "2025-11-01", time: "14:00" }
-          ]
-        },
-        {
-          id: "appt3",
-          patient: "Catherine Lee",
-          reason: "Dermatology Consultation",
-          mode: "online",
-          status: "pending",
-          selectedSlots: [
-            { date: "2025-10-29", time: "08:00" },
-            { date: "2025-10-29", time: "12:00" },
-            { date: "2025-10-30", time: "09:30" },
-            { date: "2025-10-30", time: "15:00" },
-            { date: "2025-11-01", time: "10:00" }
-          ]
-        },
-        {
-          id: "appt4",
-          patient: "David Kim",
-          reason: "Eye Checkup",
-          mode: "offline",
-          status: "pending",
-          selectedSlots: [
-            { date: "2025-10-30", time: "13:00" },
-            { date: "2025-10-31", time: "09:00" }
-          ]
-        }
-      ]
-    };
-    const response =await api.get(`api/doctor/schedule`);
-=======
     const response = await api.get(`api/doctor/schedule`);
->>>>>>> 71e9c3067a3b080ccf36f4bdfec65738d9fa87d7
     console.log("API Response (getDoctorSchedule):", response);
     return response;
   } catch (error: any) {

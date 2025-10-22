@@ -1,4 +1,5 @@
 // docApi.ts
+import { data } from "react-router-dom";
 import api from "./api"; // your Axios instance
 
 export interface ApiResponse<T = any> {
@@ -222,8 +223,8 @@ export async function getDoctorSchedule(): Promise<ApiResponse> {
 
   try {
     const response = await api.get(`api/doctor/schedule`);
-    console.log("API Response (getDoctorSchedule):", response);
-    return response;
+    console.log("API Response (getDoctorSchedule):", response.data);
+    return response.data;
   } catch (error: any) {
     console.error("API Error (getDoctorSchedule):", error.response?.data || error.message);
     return {

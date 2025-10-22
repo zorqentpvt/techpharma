@@ -73,10 +73,19 @@ export default function Consultings() {
     loadConsultations();
   }, []);
 
-  const handleJoinCall = (consultationId: string) => {
-    // alert(`Joining video consultation for ID: ${consultationId}...`);
-    navigate(`/videocall`);
-  };
+const handleJoinCall = (consultationId: string) => {
+  const width = 1000;
+  const height = 700;
+  const left = window.screenX + (window.outerWidth - width) / 2;
+  const top = window.screenY + (window.outerHeight - height) / 2;
+
+  window.open(
+    `/videocall`,
+    "VideoCallWindow",
+    `width=${width},height=${height},left=${left},top=${top},resizable,scrollbars`
+  );
+};
+
 
   const handleViewOpChart = (consultation?: Consultation, isUpcoming = false) => {
     if (isUpcoming) {

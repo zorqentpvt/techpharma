@@ -63,14 +63,17 @@ func (r *DoctorRepository) GetDoctors(ctx context.Context, searchQuery string) (
 }
 func (r *DoctorRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Doctor, error) {
 	var doctor entity.Doctor
+
+	// Query the users table directly
 	if err := r.db.WithContext(ctx).
-		Preload("User").
-		Where("doctors.id = ? AND doctors.is_active = ?", id, true).
+		Table("users").
+		Where("id = ? AND is_active = ?", id, true).
 		First(&doctor).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("doctor with ID %s not found", id)
 		}
 		return nil, fmt.Errorf("failed to fetch doctor: %w", err)
 	}
+
 	return &doctor, nil
 }

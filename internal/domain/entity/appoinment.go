@@ -11,7 +11,7 @@ type AppointmentMode string
 
 const (
 	AppointmentModeOnline   AppointmentMode = "online"
-	AppointmentModeInPerson AppointmentMode = "in_person"
+	AppointmentModeInPerson AppointmentMode = "offline"
 )
 
 // AppointmentStatus represents the status of an appointment

@@ -20,13 +20,14 @@ type Container struct {
 	Database *database.Database
 
 	// Repository Layer (Infrastructure -> Domain)
-	UserRepository     repository.UserRepository
-	AuditLogRepository repository.AuditLogRepository
-	SecurityRepository repository.SecurityEventRepository
-	MedicineRepository repository.MedicineRepository
-	DoctorRepository   repository.DoctorRepository
-	OrderRepository    repository.OrderRepository
-	PaymentRepository  repository.PaymentRepository // ✅ Keep as interface
+	UserRepository       repository.UserRepository
+	AuditLogRepository   repository.AuditLogRepository
+	SecurityRepository   repository.SecurityEventRepository
+	MedicineRepository   repository.MedicineRepository
+	DoctorRepository     repository.DoctorRepository
+	OrderRepository      repository.OrderRepository
+	PaymentRepository    repository.PaymentRepository // ✅ Keep as interface
+	AppoinmentRepository repository.AppoinmentRepository
 
 	// Domain Services
 	AuthService  service.AuthService
@@ -34,12 +35,13 @@ type Container struct {
 	EmailService service.EmailService
 
 	// Use Cases (Application Layer)
-	AuthUseCase     usecase.AuthUseCase
-	UserUseCase     usecase.UserUseCase
-	MedicineUseCase usecase.MedicineUseCase
-	DoctorUseCase   usecase.DoctorUseCase
-	OrderUsecase    usecase.OrderUseCase
-	PaymentUseCase  *usecase.PaymentUseCase // ✅ Keep as pointer
+	AuthUseCase       usecase.AuthUseCase
+	UserUseCase       usecase.UserUseCase
+	MedicineUseCase   usecase.MedicineUseCase
+	DoctorUseCase     usecase.DoctorUseCase
+	OrderUsecase      usecase.OrderUseCase
+	PaymentUseCase    *usecase.PaymentUseCase // ✅ Keep as pointer
+	AppoinmentUseCase usecase.AppoinmentUseCase
 }
 
 // NewContainer creates a new dependency injection container
@@ -112,11 +114,18 @@ func (c *Container) initUseCases() {
 		c.Config.Payment.RazorpayKey,
 		c.Config.Payment.RazorpaySecret,
 	)
+	c.AppoinmentUseCase = usecase.NewAppoinmentUseCase(
+		c.AppoinmentRepository,
+		c.DoctorRepository,
+	)
 }
 
 // GetPaymentUseCase returns the payment use case
 func (c *Container) GetPaymentUseCase() *usecase.PaymentUseCase {
 	return c.PaymentUseCase
+}
+func (c *Container) GetAppoinmentUseCase() usecase.AppoinmentUseCase {
+	return c.AppoinmentUseCase
 }
 
 // GetAuthUseCase returns the authentication use case

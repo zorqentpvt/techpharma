@@ -411,3 +411,10 @@ type PaymentStatusResponse struct {
 	Currency          string  `json:"currency"`
 	PaymentMethod     string  `json:"paymentMethod"`
 }
+type AppointmentRequest struct {
+	PatientID     uuid.UUID                `json:"patientId" binding:"required"`
+	DoctorID      uuid.UUID                `json:"doctorId" binding:"required"`
+	Reason        string                   `json:"reason" binding:"required"`
+	Mode          entity.AppointmentMode   `json:"mode" binding:"required"`
+	SelectedSlots []entity.AppointmentSlot `json:"selectedSlots" binding:"required,min=1,max=5"`
+}

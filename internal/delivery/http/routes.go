@@ -51,6 +51,10 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 		container.PaymentUseCase,
 		container.UserRepository,
 	)
+	appoinmentHandler := NewAppoinmentHandlerClean(
+		container.AppoinmentUseCase,
+		container.UserRepository,
+	)
 
 	// Authentication routes (public)
 	authRoutes := api.Group("/auth")
@@ -78,6 +82,8 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			patientRoutes.POST("/add-cart", orderHandler.AddToCart)
 			patientRoutes.GET("/view-cart", orderHandler.GetCart)
 			patientRoutes.DELETE("/remove-cart", orderHandler.RemoveFromCart)
+
+			patientRoutes.POST("/book-appointment", appoinmentHandler.BookAppointment)
 
 			patientRoutes.GET("/profile", userHandler.GetUserProfile)
 			patientRoutes.PUT("/profile", userHandler.UpdateUserProfile)

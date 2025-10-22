@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/skryfon/collex/internal/domain/entity"
@@ -44,6 +45,7 @@ type MedicineRepository interface {
 }
 type DoctorRepository interface {
 	GetDoctors(ctx context.Context, searchQuery string) ([]*entity.Doctor, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*entity.Doctor, error)
 }
 type OrderRepository interface {
 	//User Cart Managment
@@ -68,4 +70,8 @@ type PaymentRepository interface {
 
 	//User Order Management
 
+}
+type AppoinmentRepository interface {
+	BookAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error)
+	IsSlotBooked(ctx context.Context, doctorID uuid.UUID, appointmentDate time.Time, appointmentTime string) (bool, error)
 }

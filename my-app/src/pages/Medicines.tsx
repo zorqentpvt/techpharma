@@ -5,20 +5,18 @@ import { HiShoppingCart } from "react-icons/hi";
 import { X, Search } from "lucide-react";
 import React from "react";
 import { getUserRole } from "../api/authapir";
+import { useNavigate } from "react-router-dom";
 
 interface User {
   username: string;
   role: string;
 }
 
-interface MedicinesProps {
-  setActiveTab: (tab: string) => void;
-}
-
-export default function Medicines({ setActiveTab }: MedicinesProps) {
+export default function Medicines() {
+  const navigate = useNavigate();
   const user: User = JSON.parse(localStorage.getItem("user") || "{}");
- const role=getUserRole()
- console.log(role)
+  const role = getUserRole();
+
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Medicine[]>([]);
   const [location, setLocation] = useState<string>("");
@@ -62,35 +60,30 @@ export default function Medicines({ setActiveTab }: MedicinesProps) {
     if (!search.trim()) return;
     setIsSearching(true);
     setNoResults(false);
-  
-    // ✅ Only send coords if nearby is ON
+
     const coordsToSend = nearby ? coords : null;
-  
     const res = await searchMedicine(search, coordsToSend);
-    console.log(res.data)
     const medicines: any[] = Array.isArray(res.data) ? res.data : [];
-  console.log(medicines)
+
     if (medicines.length === 0) setNoResults(true);
-  if(nearby){
-    console.log("sorting")
-    const sorted = sortMedicinesByLocation(medicines, nearby); 
-    setResults(sorted);
-  }
-  else{
-    console.log("No sorting")
-    setResults(medicines);
-  }
+
+    if (nearby) {
+      setResults(sortMedicinesByLocation(medicines, nearby));
+    } else {
+      setResults(medicines);
+    }
+
     setIsSearching(false);
   };
-  
+
   const handleBuy = (med: Medicine) => {
     localStorage.setItem("transaction", JSON.stringify(med));
-    setActiveTab("pay");
+    navigate("/dashboard/pay"); // Navigate to pay page
   };
 
   const addToCart = (med: Medicine) => {
     localStorage.setItem("transaction", JSON.stringify(med));
-    setActiveTab("cart");
+    navigate("/dashboard/cart"); // Navigate to cart page
   };
 
   const sortMedicinesByLocation = (list: Medicine[], nearbyEnabled: boolean) => {
@@ -114,7 +107,7 @@ export default function Medicines({ setActiveTab }: MedicinesProps) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
-console.log(results)
+
   return (
     <div className="min-h-screen bg-gray-50 relative">
       {/* Top Bar */}
@@ -178,7 +171,7 @@ console.log(results)
 
       {user.role === "normal" && (
         <button
-          onClick={() => setActiveTab("cart")}
+          onClick={() => navigate("/dashboard/cart")} // navigate to cart page
           className="fixed bottom-6 right-6 flex items-center justify-center gap-2 px-6 py-4 rounded-full bg-[#002E6E] text-[#f0f4ff] font-semibold border border-[#002E6E] shadow-lg hover:bg-[#f0f4ff] hover:text-[#002E6E] transition transform hover:scale-105 z-50"
         >
           <HiShoppingCart className="w-5 h-5" />

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Notification from "../components/Notification";
 import Button from "../components/Button";
-import { login, signup } from "../api/authapi";
 import React from "react";
 import { signin } from "../api/authapir";
 

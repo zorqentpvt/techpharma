@@ -33,12 +33,14 @@ export async function signin(payload: { username: string; password: string }) {
     const response = await api.post("api/auth/login", payload);
     console.log("API Response (signin):", response.data);
 
-    // Save token & user info in localStorage if returned
-    if (response.data.token) {
-      localStorage.setItem("token", response.data.token);
+    // Save access token separately
+    if (response.data.data?.accessToken) {
+      localStorage.setItem("token", response.data.data.accessToken);
     }
-    if (response.data.user) {
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+
+    // Save user data separately
+    if (response.data.data?.user) {
+      localStorage.setItem("userdata", JSON.stringify(response.data.data.user));
     }
 
     return response.data;
@@ -47,6 +49,7 @@ export async function signin(payload: { username: string; password: string }) {
     return { success: false, message: error.response?.data?.message || error.message };
   }
 }
+
 
 // SIGNUP
 export async function signup(payload: any) {

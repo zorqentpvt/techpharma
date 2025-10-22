@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import CartItems from "../components/CartItems";
-import { cartdata,removecart } from "../api/medapir";
+import { cartdata, removecart } from "../api/medapir";
 import { useNavigate } from "react-router-dom";
 
 type Product = {
@@ -20,14 +20,13 @@ type OrderSummary = {
 };
 
 type CartProps = {
-  setActiveTab: (tab: string) => void;
   userId: string;
 };
 
-const Cart: React.FC<CartProps> = ({ setActiveTab, userId }) => {
+const Cart: React.FC<CartProps> = ({ userId }) => {
   const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,7 +65,7 @@ const Cart: React.FC<CartProps> = ({ setActiveTab, userId }) => {
 
   const handleBuy = (products: Product[]) => {
     localStorage.setItem("transaction", JSON.stringify(products));
-    setActiveTab("pay");
+    navigate("/dashboard/pay"); // navigate to pay page
   };
 
   const handleQuantityChange = (productId: string, quantity: number) => {
@@ -79,13 +78,12 @@ const Cart: React.FC<CartProps> = ({ setActiveTab, userId }) => {
 
   const handleRemove = async (productId: string) => {
     try {
-     const res= await removecart(productId);
-     console.log(res)
-     if(res.success)
-      {console.log(`Product ${productId} removed from cart`);}
+      const res = await removecart(productId);
+      console.log(res);
+      if (res.success) console.log(`Product ${productId} removed from cart`);
       // Optionally refresh UI or update state here
     } catch (error) {
-      console.error('Error removing product:', error);
+      console.error("Error removing product:", error);
     }
   };
 

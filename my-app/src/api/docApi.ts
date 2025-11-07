@@ -71,8 +71,8 @@ export async function fetchConsultations(): Promise<ApiResponse<ConsultationsRes
           {
             id: "1",
             name: "John Doe",
-            time: "16:00",        // 4:00 PM -> 16:00
-            date: "2025-10-22",   // example today
+            time: "20:45",        // 4:00 PM -> 16:00
+            date: "2025-11-07",   // example today
             status: "confirmed",
             mode: "online",
             reason: "General Checkup"
@@ -80,17 +80,17 @@ export async function fetchConsultations(): Promise<ApiResponse<ConsultationsRes
           {
             id: "2",
             name: "Sarah Lee",
-            time: "10:30",
-            date: "2025-10-23",   // example tomorrow
-            status: "cancelled",
-            mode: "offline",
+            time: "20:30",
+           date: "2025-11-07",
+             status: "confirmed",
+            mode: "online",
             reason: "Dermatology Consultation"
           },
           {
             id: "3",
             name: "Michael Smith",
-            time: "14:15",
-            date: "2025-10-23",
+            time: "20:25", 
+            date: "2025-11-07",
             status: "confirmed",
             mode: "online",
             reason: "Follow-up"

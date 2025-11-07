@@ -1,220 +1,176 @@
-import React, { useEffect, useRef, useState } from "react";
-import io, { Socket } from "socket.io-client";
-import { Phone, Video, Mic, MicOff, VideoOff, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
 
-const SERVER_URL = "http://localhost:8080"; // ✅ Signaling server URL
+const VideoCall = () => {
+  const params = new URLSearchParams(window.location.search);
 
-const VideoCall: React.FC = () => {
-  const navigate = useNavigate();
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const peerConnection = useRef<RTCPeerConnection | null>(null);
-  const socketRef = useRef<Socket | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  // ✅ Pull everything from URL params
+  const user = { name: params.get("user") || "Unknown" };
+  const otherUser = { name: params.get("otherUser") || "Unknown" };
+  const callDate = params.get("callDate") || "";
+  const callTime = params.get("callTime") || "";
+  const role = params.get("role") || "guest";
 
-  const [callStarted, setCallStarted] = useState(false);
-  const [isMicOn, setIsMicOn] = useState(true);
-  const [isCamOn, setIsCamOn] = useState(true);
-  const [status, setStatus] = useState("Waiting to start call...");
+  // ✅ Assign roles properly
+  const patient = role === "patient" ? user : otherUser;
+  const doctor = role === "doctor" ? user : otherUser;
 
-  const roomId = "doctor-patient-room";
+  const [now, setNow] = useState(new Date());
+  const [canJoin, setCanJoin] = useState(false);
 
-  // 🛰️ Setup Socket.io
+  // Live clock
   useEffect(() => {
-    const socket = io(SERVER_URL, { transports: ["websocket"], reconnection: true });
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      console.log("Connected to signaling server");
-      socket.emit("join", roomId);
-    });
-
-    socket.on("offer", async (offer) => {
-      console.log("Received offer");
-      if (!peerConnection.current) createPeerConnection();
-
-      await peerConnection.current!.setRemoteDescription(new RTCSessionDescription(offer));
-      const answer = await peerConnection.current!.createAnswer();
-      await peerConnection.current!.setLocalDescription(answer);
-
-      socket.emit("answer", { answer, roomId });
-      setStatus("Connected to peer");
-    });
-
-    socket.on("answer", async (answer) => {
-      console.log("Received answer");
-      await peerConnection.current?.setRemoteDescription(new RTCSessionDescription(answer));
-    });
-
-    socket.on("candidate", async (candidate) => {
-      try {
-        await peerConnection.current?.addIceCandidate(new RTCIceCandidate(candidate));
-      } catch (err) {
-        console.error("Error adding ICE candidate:", err);
-      }
-    });
-
-    socket.on("disconnect", () => {
-      console.warn("Disconnected from server");
-      setStatus("Disconnected. Please refresh.");
-    });
-
-    return () => {
-      socket.disconnect();
-    };
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  // 🎥 Create Peer Connection
-  const createPeerConnection = () => {
-    peerConnection.current = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-    });
+  // Scheduled datetime
+  const scheduled = useMemo(() => {
+    if (!callDate || !callTime) return null;
+    const timeString = callTime.length === 5 ? `${callTime}:00` : callTime;
+    return new Date(`${callDate}T${timeString}`);
+  }, [callDate, callTime]);
 
-    peerConnection.current.onicecandidate = (event) => {
-      if (event.candidate && socketRef.current) {
-        socketRef.current.emit("candidate", { candidate: event.candidate, roomId });
-      }
-    };
+  // Diff in minutes
+  const diffMinutes = useMemo(() => {
+    if (!scheduled) return null;
+    return (scheduled.getTime() - now.getTime()) / (1000 * 60);
+  }, [scheduled, now]);
 
-    peerConnection.current.ontrack = (event) => {
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = event.streams[0];
-      }
-    };
-  };
-
-  // 🚀 Start Call
-  const startCall = async () => {
-    try {
-      setCallStarted(true);
-      setStatus("Requesting camera & microphone...");
-
-      createPeerConnection();
-
-      const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      setStream(localStream);
-      if (localVideoRef.current) localVideoRef.current.srcObject = localStream;
-
-      localStream.getTracks().forEach((track) =>
-        peerConnection.current?.addTrack(track, localStream)
-      );
-
-      const offer = await peerConnection.current!.createOffer();
-      await peerConnection.current!.setLocalDescription(offer);
-
-      socketRef.current?.emit("offer", { offer, roomId });
-      setStatus("Calling...");
-    } catch (error) {
-      console.error("Error starting call:", error);
-      setStatus("Failed to start call — check permissions.");
-      setCallStarted(false);
+  // Auto switch when join window opens
+  useEffect(() => {
+    if (diffMinutes !== null) {
+      const allowed = diffMinutes <= 5 && diffMinutes >= -120;
+      if (allowed !== canJoin) setCanJoin(allowed);
     }
+  }, [diffMinutes, canJoin]);
+
+  // ✅ Room name (16-char unique)
+  const roomName = useMemo(() => {
+    if (!patient?.name || !doctor?.name || !callDate || !callTime) return "";
+
+    const raw = `${patient.name}-${doctor.name}-${callDate}-${callTime}`.toLowerCase();
+
+    const hash = Math.abs(
+      Array.from(raw).reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) | 0, 0)
+    )
+      .toString(36)
+      .slice(0, 16);
+
+    return hash;
+  }, [patient?.name, doctor?.name, callDate, callTime]);
+
+  console.log("Role:", role);
+  console.log("Patient:", patient);
+  console.log("Doctor:", doctor);
+  console.log("Room Name:", roomName);
+
+  // Countdown
+  const formatCountdown = () => {
+    if (!scheduled) return "";
+    const diffMs = scheduled.getTime() - now.getTime();
+    if (diffMs <= 0) return "Starting now...";
+    const mins = Math.floor(diffMs / 60000);
+    const secs = Math.floor((diffMs % 60000) / 1000);
+    return `${mins}m ${secs}s`;
   };
 
-  // 🔚 End Call
-  const endCall = () => {
-    stream?.getTracks().forEach((track) => track.stop());
-    peerConnection.current?.close();
-    peerConnection.current = null;
-    setCallStarted(false);
-    setStatus("Call ended.");
-  };
-
-  // 🎙️ Toggle mic
-  const toggleMic = () => {
-    if (!stream) return;
-    const enabled = !isMicOn;
-    stream.getAudioTracks().forEach((track) => (track.enabled = enabled));
-    setIsMicOn(enabled);
-  };
-
-  // 📷 Toggle camera
-  const toggleCam = () => {
-    if (!stream) return;
-    const enabled = !isCamOn;
-    stream.getVideoTracks().forEach((track) => (track.enabled = enabled));
-    setIsCamOn(enabled);
+  // Leave
+  const handleLeave = () => {
+    window.location.href = "/dashboard";
   };
 
   return (
-    <div className="relative w-full h-screen bg-gray-950 text-white flex flex-col items-center justify-center">
-      {/* 🔙 Back Button */}
-      <button
-        onClick={() => navigate("/dashboard")}
-        className="absolute top-4 left-4 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-md transition"
-      >
-        <ArrowLeft size={18} /> Back to Dashboard
-      </button>
+    <div className="w-full h-screen flex bg-gray-900 text-white">
+      {!canJoin ? (
+        <div className="m-auto text-center px-6">
+          <h1 className="text-2xl font-bold mb-4">Not Time Yet</h1>
 
-      {/* Header */}
-      <h1 className="absolute top-4 left-1/2 -translate-x-1/2 text-2xl font-semibold text-center">
-        Doctor–Patient Video Call
-      </h1>
-      <p className="absolute top-14 text-gray-400">{status}</p>
+          {scheduled && (
+            <>
+              <p className="text-gray-300 mb-1">
+                Scheduled for: {callDate} at {callTime}
+              </p>
+              <p className="text-gray-400 mb-2">
+                Current time:{" "}
+                {now.toLocaleString(undefined, {
+                  dateStyle: "short",
+                  timeStyle: "medium",
+                })}
+              </p>
 
-      {/* Video Area */}
-      <div className="relative w-full max-w-6xl h-[75vh] bg-black rounded-2xl overflow-hidden shadow-2xl">
-        {/* Remote Video */}
-        <video
-          ref={remoteVideoRef}
-          autoPlay
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover rounded-2xl"
-        />
+              {diffMinutes > 5 ? (
+                <p className="text-green-400 font-semibold">
+                  Starts in {formatCountdown()}
+                </p>
+              ) : diffMinutes < -120 ? (
+                <p className="text-red-400 font-semibold">
+                  Session expired (over 2 hours ago)
+                </p>
+              ) : (
+                <p className="text-yellow-400 font-semibold">
+                  Starting soon...
+                </p>
+              )}
+            </>
+          )}
 
-        {/* Local Video */}
-        <video
-          ref={localVideoRef}
-          autoPlay
-          playsInline
-          muted
-          className="absolute bottom-4 right-4 w-48 h-32 rounded-xl border-2 border-white shadow-lg object-cover"
-        />
-      </div>
+          <p className="text-gray-500 mt-4 text-sm">
+            You can join 5 minutes early and up to 2 hours after start time.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Video Call */}
+          <div className="flex-1 bg-black h-full">
+            <iframe
+              allow="camera; microphone; fullscreen; display-capture; autoplay"
+              src={`https://meet.jit.si/${roomName}`}
+              style={{ height: "100%", width: "100%", border: 0 }}
+              title="Jitsi Video Call"
+            ></iframe>
+          </div>
 
-      {/* Controls */}
-      <div className="absolute bottom-10 flex items-center gap-6 bg-gray-800 bg-opacity-60 px-6 py-3 rounded-full shadow-lg transition-all">
-        {callStarted ? (
-          <>
+          {/* Info Panel */}
+          <div className="w-96 bg-gray-800 h-full p-6 shadow-xl overflow-y-auto space-y-6">
+            <div className="bg-gray-700 p-4 rounded-xl shadow-md">
+              <h3 className="text-xl font-semibold mb-3">You are meeting</h3>
+              <div className="flex items-center gap-4">
+                <img
+                  src={"https://via.placeholder.com/80"}
+                  alt="profile"
+                  className="w-20 h-20 rounded-full border"
+                />
+                <div>
+                  <p className="text-lg font-bold">
+                    {role === "patient" ? doctor.name : patient.name}
+                  </p>
+                  <p className="text-gray-300 text-sm">
+                    Role: {role === "patient" ? "Doctor" : "Patient"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-700 p-3 rounded-lg text-center text-sm text-gray-300">
+              <p>
+                Current time:{" "}
+                {now.toLocaleTimeString(undefined, { hour12: false })}
+              </p>
+              <p>
+                Meeting time: {callTime} ({callDate})
+              </p>
+              <p className="mt-1 text-gray-400">Your Role: {role}</p>
+            </div>
+
             <button
-              onClick={toggleMic}
-              title="Toggle microphone"
-              className={`p-3 rounded-full transition ${
-                isMicOn ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
-              }`}
+              onClick={handleLeave}
+              className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-semibold transition"
             >
-              {isMicOn ? <Mic size={20} /> : <MicOff size={20} />}
+              Leave Call
             </button>
-
-            <button
-              onClick={toggleCam}
-              title="Toggle camera"
-              className={`p-3 rounded-full transition ${
-                isCamOn ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
-              }`}
-            >
-              {isCamOn ? <Video size={20} /> : <VideoOff size={20} />}
-            </button>
-
-            <button
-              onClick={endCall}
-              title="End call"
-              className="bg-red-700 hover:bg-red-800 px-6 py-3 rounded-full font-semibold flex items-center gap-2 shadow-lg transition"
-            >
-              <Phone size={20} /> End
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={startCall}
-            title="Start call"
-            className="bg-green-600 hover:bg-green-700 px-8 py-3 rounded-full font-semibold flex items-center gap-2 shadow-lg transition"
-          >
-            <Video size={20} /> Start Call
-          </button>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

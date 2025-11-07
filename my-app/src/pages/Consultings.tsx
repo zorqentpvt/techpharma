@@ -73,18 +73,28 @@ export default function Consultings() {
     loadConsultations();
   }, []);
 
-const handleJoinCall = (consultationId: string) => {
+const handleJoinCall = (consultation) => {
   const width = 1000;
   const height = 700;
   const left = window.screenX + (window.outerWidth - width) / 2;
   const top = window.screenY + (window.outerHeight - height) / 2;
 
+  const query = new URLSearchParams({
+    user: consultation.name,
+    otherUser: "babu",
+    callDate: consultation.date,
+    callTime: consultation.time,
+    role: "Doctor",
+  });
+  console.log(query.toString());
+
   window.open(
-    `/videocall`,
+    `/videocall?${query.toString()}`,
     "VideoCallWindow",
     `width=${width},height=${height},left=${left},top=${top},resizable,scrollbars`
   );
 };
+
 
 
   const handleViewOpChart = (consultation?: Consultation, isUpcoming = false) => {
@@ -138,7 +148,7 @@ const handleJoinCall = (consultationId: string) => {
           <div className="flex gap-2">
             {isUpcoming && c.status === "confirmed" && c.mode === "online" && (
               <button
-                onClick={() => handleJoinCall(c.id)}
+                onClick={() => handleJoinCall(c)}
                 className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-[#002E6E] hover:bg-[#0043A4] transition"
               >
                 Join Call

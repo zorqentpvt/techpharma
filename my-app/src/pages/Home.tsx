@@ -1,8 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import Box from '@mui/material/Box';
+import Fab from '@mui/material/Fab';
+import AddIcon from '@mui/icons-material/Add';
+import FormControlLabel from "@mui/material/FormControlLabel";
+
 import AnalyticsComponent from "../components/AnalyticsComponent";
+import "../styles/home.css"
+
 import "../index.css";
 import { motion, AnimatePresence } from "framer-motion";
+
+import Checkbox from '@mui/material/Checkbox';
+
+const label = { slotProps: { input: { 'aria-label': 'Checkbox demo' } } };
 
 interface User {
   username: string;
@@ -63,6 +75,14 @@ export default function Home() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [repeatDays, setRepeatDays] = useState<string[]>([]);
+
+  const [addtab,setaddtab] = useState(false)
+  const [lastOrder,setlastOrder] = useState(false)
+  const [ActiveP,setActiveP] = useState(false)
+  const [Htips,setHtips] = useState(true)
+  const [Well,setWell] = useState(false)
+
+
 
   // Schedule Notifications
   const scheduleNotification = (reminder: Reminder) => {
@@ -172,6 +192,45 @@ export default function Home() {
         {user.role === "normal" && (
   <div className="space-y-10 max-w-4xl mx-auto">
 
+
+          {/* mui */}
+          <Box sx={{ '& > :not(style)': { m: 1 } }}>
+      <Fab color="primary"  aria-label="add">
+        <AddIcon 
+        sx={{cursor:"pointer" }}
+
+        onClick={()=>setaddtab((prev) => !prev)}
+
+        />
+      </Fab>
+
+    </Box>
+
+    {addtab && (
+        <div className=" mt-1 " >
+          
+          <FormControlLabel className=" text-[#0f4c81] "
+            control={<Checkbox checked ={Htips}  size="small" onChange={()=>setHtips((prev)=>!prev)} />}
+            label="Daily Health Tip"
+            
+          />
+          <FormControlLabel className=" text-[#0f4c81]"
+            control={<Checkbox checked ={lastOrder}  size="small" onChange={()=>setlastOrder((prev)=>!prev)}/>}
+            label="Last Order"
+          />
+
+          <FormControlLabel className=" text-[#0f4c81]"
+            control={<Checkbox checked ={ActiveP}  size="small" onChange={()=>setActiveP((prev)=>!prev)}/>}
+            label="Active Prescriptions"
+          />
+
+          <FormControlLabel className=" text-[#0f4c81]"
+            control={<Checkbox checked ={Well}  size="small" onChange={()=>setWell((prev)=>!prev)}/>}
+            label="Wellness Goals"
+          />
+        </div>
+      )}
+
           {/* --- 🔔 Notifications --- */}
         <div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8  flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <div className="flex items-start gap-3">
@@ -191,37 +250,37 @@ export default function Home() {
 
 
         {/* --- 💡 Health Tip Section --- */}
-    <div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex flex-col sm:flex-row items-center justify-between">
-      <div className="flex-1">
-        <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
-          💡 Daily Health Tip
-        </h2>
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={currentTipIndex}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-gray-700 leading-relaxed text-lg"
-          >
-            {tips[currentTipIndex]}
-          </motion.p>
-        </AnimatePresence>
-        <p className="text-sm text-gray-500 mt-2">
-          Source: World Health Organization
-        </p>
-      </div>
-      <img
-        src="https://cdn-icons-png.flaticon.com/512/2966/2966481.png"
-        alt="Health tip"
-        className="w-28 h-28 mt-6 sm:mt-0"
-      />
-    </div>
+  { Htips &&  (<div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex flex-col sm:flex-row items-center justify-between">
+        <div className="flex-1">
+          <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
+            💡 Daily Health Tip
+          </h2>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={currentTipIndex}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-gray-700 leading-relaxed text-lg"
+            >
+              {tips[currentTipIndex]}
+            </motion.p>
+          </AnimatePresence>
+          <p className="text-sm text-gray-500 mt-2">
+            Source: World Health Organization
+          </p>
+        </div>
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/2966/2966481.png"
+          alt="Health tip"
+          className="w-28 h-28 mt-6 sm:mt-0"
+        />
+      </div>)}
 
 
     {/* --- 📦 Last Order Section --- */}
-    <div className="w-full bg-white/90 backdrop-blur-sm rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+    { lastOrder &&  (<div className="w-full bg-white/90 backdrop-blur-sm rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
       <div>
         <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
           📦 Last Order
@@ -241,12 +300,12 @@ export default function Home() {
           View Invoice →
         </button>
       </div>
-    </div>
+    </div>)}
 
     
 
     {/* --- 💊 Active Prescriptions --- */}
-      <div className="w-full bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10  flex flex-col sm:flex-row justify-between items-start sm:items-center">
+      { ActiveP && (<div className="w-full bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10  flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div className="flex items-start gap-3">
           <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
             💊
@@ -262,7 +321,7 @@ export default function Home() {
         <button className="text-[#0f4c81] font-semibold hover:underline mt-4 sm:mt-0">
           Manage →
         </button>
-      </div>
+      </div>)}
 
           {/* --- 🏥 Nearby Pharmacies ---
           <div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 border-l-4 border-[#0f4c81] flex flex-col sm:flex-row justify-between items-start sm:items-center">
@@ -284,7 +343,7 @@ export default function Home() {
           </div> */}
 
           {/* --- 🧘 Wellness Goals --- */}
-        <div className="w-full bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10  flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        {Well &&(<div className="w-full bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10  flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <div className="flex items-start gap-3">
             <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
               🧘
@@ -298,7 +357,7 @@ export default function Home() {
           <button className="text-[#0f4c81] font-semibold hover:underline mt-4 sm:mt-0">
             Update Goals →
           </button>
-        </div>
+        </div>)}
 
           
 
@@ -318,12 +377,14 @@ export default function Home() {
         />
         <input
           type="date"
+          placeholder="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
           className="border border-blue-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
         />
         <input
           type="time"
+          placeholder="time"
           value={time}
           onChange={(e) => setTime(e.target.value)}
           className="border border-blue-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"

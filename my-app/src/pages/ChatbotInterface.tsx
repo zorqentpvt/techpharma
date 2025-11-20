@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
+import { medicalChatbot } from "./Botresponse"
+
 // ChatbotInterface.tsx
 // Single-file React + TypeScript component ready for Tailwind projects.
 // - Default export is the ChatbotInterface component
@@ -60,10 +62,11 @@ export default function ChatbotInterface() {
 
     // simulate bot typing and reply
     setIsTyping(true);
-    setTimeout(() => {
+    setTimeout(async () => {
+      const replyText = await generateBotReply(text);
       const botReply: Message = {
         id: uid("b"),
-        text: generateBotReply(text),
+        text: replyText,
         role: "bot",
         time: formatTime(),
       };
@@ -72,13 +75,12 @@ export default function ChatbotInterface() {
     }, 700 + Math.random() * 1200);
   }
 
-  function generateBotReply(userText: string) {
+  async function  generateBotReply(userText: string) {
     // Lightweight simulated reply. Replace with real API call as needed.
     const short = userText.slice(0, 200);
-    if (/hello|hi|hey/i.test(userText)) return `Hey! How can I help you today?`;
-    if (/explain|what is|define/i.test(userText)) return `Here's a short explanation about: "${short}"\n\n(Replace this with your real bot response or API call.)`;
-    if (/code|js|javascript|python/i.test(userText)) return `I see code-related question about "${short}" — I can help with examples, debugging tips, or step-by-step explanations.`;
-    return `Thanks — you said: "${short}". This is a simulated reply. Hook this component to your backend to generate real responses.`;
+    // Call the imported function (not a JSX component) and return its string result.
+    const response = await medicalChatbot(short)
+    return response;
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -101,7 +103,7 @@ export default function ChatbotInterface() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-200 flex items-center justify-center p-4">
       <div className="w-full max-w-7xl h-[100vh] bg-white rounded-2xl shadow-2xl grid grid-rows-[auto_1fr_auto] overflow-hidden">
         {/* Header */}
         <div className="px-4 py-3 border-b-2 border-b-blue-300 flex items-center gap-3">
@@ -114,7 +116,7 @@ export default function ChatbotInterface() {
         </div>
 
         {/* Messages */}
-        <div className="p-4 overflow-y-auto" style={{ background: "linear-gradient(180deg, #fbfdff 0%, #ffffff 100%)" }}>
+        <div className="p-4 overflow-y-auto   " >
           <div className="flex flex-col gap-4">
             {messages.map((m) => (
               <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>

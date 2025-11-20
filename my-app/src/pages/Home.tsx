@@ -7,9 +7,7 @@ import AddIcon from '@mui/icons-material/Add';
 import FormControlLabel from "@mui/material/FormControlLabel";
 
 import AnalyticsComponent from "../components/AnalyticsComponent";
-import "../styles/home.css"
 
-import "../index.css";
 import { motion, AnimatePresence } from "framer-motion";
 
 import Checkbox from '@mui/material/Checkbox';
@@ -195,12 +193,10 @@ export default function Home() {
 
           {/* mui */}
           <Box sx={{ '& > :not(style)': { m: 1 } }}>
-      <Fab color="primary"  aria-label="add">
+      <Fab color="primary"  aria-label="add" onClick={()=>setaddtab((prev) => !prev)}>
         <AddIcon 
-        sx={{cursor:"pointer" }}
-
-        onClick={()=>setaddtab((prev) => !prev)}
-
+        sx={{cursor:"pointer", }}
+        
         />
       </Fab>
 

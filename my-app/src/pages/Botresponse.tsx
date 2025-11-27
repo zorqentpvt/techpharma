@@ -14,13 +14,10 @@ Do NOT give unsafe or harmful advice.`;
 let conversationHistory: Message[] = [];
 
 export const medicalChatbot = async (prompt: string): Promise<string> => {
-  const API_KEY = "";
+  const API_KEY = "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";
   const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-  if (API_KEY === "") {
-    
-    return "Error: API_KEY not found. "
-  }
+
 
   // Add system prompt only once
   if (conversationHistory.length === 0) {

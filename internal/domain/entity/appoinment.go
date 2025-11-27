@@ -22,6 +22,7 @@ const (
 	AppointmentStatusConfirmed AppointmentStatus = "confirmed"
 	AppointmentStatusCancelled AppointmentStatus = "cancelled"
 	AppointmentStatusCompleted AppointmentStatus = "completed"
+	AppointmentStatusConsulted AppointmentStatus = "consulted"
 	AppointmentStatusNoShow    AppointmentStatus = "no_show"
 )
 

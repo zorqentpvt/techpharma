@@ -168,6 +168,7 @@ func (d *Database) Migrate() error {
 		&entity.OrderItem{},
 		&entity.Appointment{},
 		&entity.AppointmentSlot{},
+		//&entity.AppointmentScheduled{},
 	}
 
 	// Run migrations

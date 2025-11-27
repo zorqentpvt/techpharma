@@ -22,6 +22,8 @@ type AppoinmentUseCase interface {
 	GetDoctorSchedule(ctx context.Context, doctorID uuid.UUID) ([]types.DoctorScheduleResponse, error)
 	CancelAppointment(ctx context.Context, appointmentID, userID uuid.UUID, reason string) error
 	ScheduleAppointment(ctx context.Context, req *types.ScheduleAppointmentRequest) error
+	FetchConsultations(ctx context.Context, doctorID uuid.UUID) (*types.ConsultationsResponse, error)
+	FetchPatientConsultations(ctx context.Context, patientID uuid.UUID) (*types.ConsultationsResponse, error)
 }
 
 // orderUseCase implements the OrderUseCase interface
@@ -132,6 +134,11 @@ func (u *appoinmentUseCase) GetDoctorSchedule(ctx context.Context, doctorID uuid
 			continue
 		}
 
+		// Skip confirmed appointments
+		if apt.Status == entity.AppointmentStatusConfirmed || apt.Status == entity.AppointmentStatusCancelled || apt.Status == entity.AppointmentStatusCompleted || apt.Status == entity.AppointmentStatusConsulted {
+			continue
+		}
+
 		// Create group key using created time
 		key := groupKey{
 			patientID: apt.PatientID,
@@ -158,7 +165,7 @@ func (u *appoinmentUseCase) GetDoctorSchedule(ctx context.Context, doctorID uuid
 			}
 
 			appointmentMap[key] = &types.DoctorScheduleResponse{
-				ID:            apt.ID.String(), // Use first appointment ID
+				ID:            apt.PatientID.String(), // Use first appointment ID
 				Patient:       patientName,
 				Reason:        apt.Reason,
 				Mode:          string(apt.Mode),
@@ -196,6 +203,7 @@ func (u *appoinmentUseCase) GetDoctorSchedule(ctx context.Context, doctorID uuid
 	})
 
 	return result, nil
+
 }
 func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uuid.UUID) (*types.ConsultationsResponse, error) {
 	upcomingAppts, err := u.appoinmentRepo.GetUpcomingAppointments(ctx, doctorID)
@@ -286,32 +294,118 @@ func (u *appoinmentUseCase) CancelAppointment(ctx context.Context, appointmentID
 }
 
 func (u *appoinmentUseCase) ScheduleAppointment(ctx context.Context, req *types.ScheduleAppointmentRequest) error {
+	// 1. Fetch and validate the doctor
 	doctor, err := u.doctorRepo.GetByID(ctx, req.DoctorID)
 	if err != nil {
 		return errors.NewDomainError("DOCTOR_NOT_FOUND", "Doctor not found", errors.ErrDoctorNotFound)
 	}
 	if !doctor.IsActive {
-		return errors.NewDomainError("DOCTOR_INACTIVE", "Doctor account is not active", errors.ErrForbidden)
+		return errors.NewDomainError("DOCTOR_INACTIVE", "Doctor is not accepting appointments", errors.ErrForbidden)
 	}
 
-	appointmentDate, err := time.Parse("2006-01-02", req.Date)
-	if err != nil {
-		return errors.NewDomainError("INVALID_DATE", "Invalid date format", errors.ErrInvalidInput)
-	}
+	var confirmedAtLeastOne bool
 
-	for _, timeSlot := range req.Slots {
-		isBooked, err := u.appoinmentRepo.IsSlotBooked(ctx, req.DoctorID, appointmentDate, timeSlot)
+	// 2. Iterate through each requested slot to validate and create appointments
+	for _, slot := range req.Slots {
+		appointmentDate, err := time.Parse("2006-01-02", slot.Date)
+		if err != nil {
+			return errors.NewDomainError("INVALID_DATE", fmt.Sprintf("Invalid date format for slot: %s", slot.Date), errors.ErrInvalidInput)
+		}
+
+		// Check if the slot is in the past
+		slotDateTime := time.Date(appointmentDate.Year(), appointmentDate.Month(), appointmentDate.Day(), parseHour(slot.Time), parseMinute(slot.Time), 0, 0, time.UTC)
+		if slotDateTime.Before(time.Now()) {
+			return errors.NewDomainError("PAST_SLOT", "Cannot book an appointment in the past", errors.ErrInvalidInput)
+		}
+
+		// Check if the slot is already booked
+		isBooked, err := u.appoinmentRepo.IsSlotBooked(ctx, req.DoctorID, appointmentDate, slot.Time)
 		if err != nil {
 			return errors.NewDomainError("SLOT_CHECK_FAILED", "Failed to check slot availability", err)
 		}
 		if isBooked {
-			return errors.NewDomainError("SLOT_ALREADY_EXISTS",
-				fmt.Sprintf("Time slot %s on %s already exists", timeSlot, req.Date),
-				errors.ErrAlreadyExists)
+			return errors.NewDomainError("SLOT_UNAVAILABLE", fmt.Sprintf("Time slot %s on %s is already booked", slot.Time, slot.Date), errors.ErrSlotNotAvailable)
+		}
+
+		// 3. Create the appointment entity
+		appointment := &entity.Appointment{
+			PatientID:       req.PatientID,
+			DoctorID:        req.DoctorID,
+			Mode:            entity.AppointmentMode(slot.Mode),
+			Status:          entity.AppointmentStatusConfirmed,
+			AppointmentDate: appointmentDate,
+			AppointmentTime: slot.Time,
+			ConsultationFee: doctor.ConsultationFee,
+		}
+
+		// 4. Save the appointment to the database
+		if _, err := u.appoinmentRepo.ScheduleAppointment(ctx, appointment); err != nil {
+			return errors.NewDomainError("CREATE_FAILED", "Failed to create appointment", err)
+		}
+		confirmedAtLeastOne = true
+	}
+
+	// If at least one appointment was confirmed, cancel all other pending appointments for this patient with this doctor.
+	if confirmedAtLeastOne {
+		err = u.appoinmentRepo.CancelPendingAppointments(ctx, req.PatientID, req.DoctorID)
+		if err != nil {
+			// This is a non-critical error, so we can log it without failing the whole operation.
+			// In a real-world app, you'd use a structured logger.
+			fmt.Printf("Warning: Failed to cancel other pending appointments for patient %s: %v\n", req.PatientID, err)
 		}
 	}
 
 	return nil
+}
+
+func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patientID uuid.UUID) (*types.ConsultationsResponse, error) {
+	upcomingAppts, err := u.appoinmentRepo.GetUpcomingAppointmentsByPatient(ctx, patientID)
+	if err != nil {
+		return nil, errors.NewDomainError("FETCH_FAILED", "Failed to fetch upcoming consultations", err)
+	}
+	fmt.Printf("the upcoming data is %+v\n", upcomingAppts)
+	historyAppts, err := u.appoinmentRepo.GetAppointmentHistoryByPatient(ctx, patientID)
+	if err != nil {
+		return nil, errors.NewDomainError("FETCH_FAILED", "Failed to fetch consultation history", err)
+	}
+
+	upcoming := make([]types.ConsultationResponse, 0, len(upcomingAppts))
+	for _, appt := range upcomingAppts {
+		upcoming = append(upcoming, types.ConsultationResponse{
+			ID:     appt.ID.String(),
+			Name:   getDoctorName(appt),
+			Time:   appt.AppointmentTime,
+			Date:   appt.AppointmentDate.Format("2006-01-02"),
+			Status: string(appt.Status),
+			Mode:   string(appt.Mode),
+			Reason: appt.Reason,
+		})
+	}
+
+	history := make([]types.ConsultationResponse, 0, len(historyAppts))
+	for _, appt := range historyAppts {
+		history = append(history, types.ConsultationResponse{
+			ID:           appt.ID.String(),
+			Name:         getDoctorName(appt),
+			Time:         appt.AppointmentTime,
+			Date:         appt.AppointmentDate.Format("2006-01-02"),
+			Status:       string(appt.Status),
+			Mode:         string(appt.Mode),
+			Reason:       appt.Reason,
+			Diagnosis:    appt.Notes,
+			Prescription: "", // Assuming prescription is not stored directly
+			Notes:        appt.Notes,
+		})
+	}
+
+	return &types.ConsultationsResponse{Upcoming: upcoming, History: history}, nil
+}
+
+func getDoctorName(appt *entity.Appointment) string {
+	if appt != nil && appt.Doctor != nil && appt.Doctor.User != nil {
+		return "Dr. " + appt.Doctor.User.FirstName + " " + appt.Doctor.User.LastName
+	}
+	return ""
 }
 
 func parseHour(timeStr string) int {

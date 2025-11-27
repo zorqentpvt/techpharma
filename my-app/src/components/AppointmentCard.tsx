@@ -25,7 +25,7 @@ export default function AppointmentCard({ appt, selectedSlot, setSelectedSlot, o
     }
     try {
       const res: ApiResponse = await scheduleAppointment({
-        patientID:appt.id,
+        patientID: appt.id,
         slots: [slot],
       });
       if (res.success) {

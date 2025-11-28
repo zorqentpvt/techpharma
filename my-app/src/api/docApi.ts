@@ -62,117 +62,17 @@ export interface ScheduleAppointmentPayload {
 export async function fetchConsultations(): Promise<ApiResponse<ConsultationsResponse>> {
   console.log("API Call: fetchConsultations");
 
-  try {
-    const response = {
+  try {    
+    // The backend handler returns the data directly, which Axios places in `response.data`.
+    const response = await api.get<ConsultationsResponse>("api/doctor/consultations");
+    console.log("API Response (fetchConsultations):", response.data);
+    
+    // We wrap the data in the standard ApiResponse format for consistency in the frontend.
+    return {
       success: true,
       message: "Consultations fetched successfully",
-      data: {
-        upcoming: [
-          {
-            id: "1",
-            name: "John Doe",
-            time: "20:45",        // 4:00 PM -> 16:00
-            date: "2025-11-07",   // example today
-            status: "confirmed",
-            mode: "online",
-            reason: "General Checkup"
-          },
-          {
-            id: "2",
-            name: "Sarah Lee",
-            time: "20:30",
-           date: "2025-11-07",
-             status: "confirmed",
-            mode: "online",
-            reason: "Dermatology Consultation"
-          },
-          {
-            id: "3",
-            name: "Michael Smith",
-            time: "20:25", 
-            date: "2025-11-07",
-            status: "confirmed",
-            mode: "online",
-            reason: "Follow-up"
-          },
-          {
-            id: "4",
-            name: "Aisha Khan",
-            time: "11:00",
-            date: "2025-10-24",
-            status: "cancelled",
-            mode: "offline",
-            reason: "Routine Blood Test"
-          },
-          {
-            id: "5",
-            name: "David Johnson",
-            time: "15:45",
-            date: "2025-10-25",
-            status: "confirmed",
-            mode: "online",
-            reason: "Physiotherapy"
-          }
-        ],
-        history: [
-          {
-            id: "6",
-            name: "Emily Davis",
-            time: "15:00",
-            date: "2025-10-10",
-            status: "consulted",
-            diagnosis: "Migraine",
-            prescription: "Sumatriptan 50mg",
-            notes: "Follow up in 1 week."
-          },
-          {
-            id: "7",
-            name: "Robert Brown",
-            time: "13:15",
-            date: "2025-10-12",
-            status: "consulted",
-            diagnosis: "Hypertension",
-            prescription: "Amlodipine 5mg",
-            notes: "Monitor BP daily."
-          },
-          {
-            id: "8",
-            name: "Linda Wilson",
-            time: "10:00",
-            date: "2025-10-15",
-            status: "consulted",
-            diagnosis: "Seasonal Flu",
-            prescription: "Oseltamivir 75mg",
-            notes: "Rest and hydrate."
-          },
-          {
-            id: "9",
-            name: "James Taylor",
-            time: "14:30",
-            date: "2025-10-17",
-            status: "consulted",
-            diagnosis: "Back Pain",
-            prescription: "Ibuprofen 400mg",
-            notes: "Physiotherapy recommended."
-          },
-          {
-            id: "10",
-            name: "Sophia Martinez",
-            time: "11:45",
-            date: "2025-10-19",
-            status: "cancelled",
-            diagnosis: "Allergy",
-            prescription: "Cetirizine 10mg",
-            notes: "Avoid allergens and follow up in 2 weeks."
-          }
-        ]
-      }
+      data: response.data,
     };
-
-    // Simulate API call
-    // await api.get("api/consultations");
-    console.log("API Response (fetchConsultations):", response.data);
-    return response.data;
   } catch (error: any) {
     console.error("API Error (fetchConsultations):", error.response?.data || error.message);
     return {
@@ -182,6 +82,28 @@ export async function fetchConsultations(): Promise<ApiResponse<ConsultationsRes
   }
 }
 
+// FETCH PATIENT CONSULTATIONS (for patient page)
+export async function fetchPatientConsultations(): Promise<ApiResponse<ConsultationsResponse>> {
+  console.log("API Call: fetchPatientConsultations");
+
+  try {
+    // The backend handler will get patientID from the token
+    const response = await api.get<ConsultationsResponse>("api/user/consultations");
+    console.log("API Response (fetchPatientConsultations):", response.data);
+    
+    return {
+      success: true,
+      message: "Consultations fetched successfully",
+      data: response.data,
+    };
+  } catch (error: any) {
+    console.error("API Error (fetchPatientConsultations):", error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message,
+    };
+  }
+}
 
 // BOOK APPOINTMENT (patient side)
 export async function bookAppointment(payload: BookAppointmentPayload): Promise<ApiResponse> {

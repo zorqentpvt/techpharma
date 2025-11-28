@@ -118,7 +118,63 @@ func (h *AppointmentHandlerClean) GetDoctorSchedule(c *gin.Context) {
 	})
 }
 
-// FetchConsultations handles GET /api/consultations (for doctors)
+// FetchConsultations handles GET /api/doctor/consultations (for doctors)
+func (h *AppointmentHandlerClean) FetchConsultations(c *gin.Context) {
+	doctorIDStr := c.GetString("userID")
+	if doctorIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "Doctor ID not found in context",
+		})
+		return
+	}
+
+	doctorID, err := uuid.Parse(doctorIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Doctor ID",
+			Message: "Doctor ID format is invalid",
+		})
+		return
+	}
+
+	consultations, err := h.appointmentUseCase.FetchConsultations(c.Request.Context(), doctorID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, consultations)
+}
+
+// FetchPatientConsultations handles GET /api/user/consultations (for patients)
+func (h *AppointmentHandlerClean) FetchPatientConsultations(c *gin.Context) {
+	patientIDStr := c.GetString("userID")
+	if patientIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "Patient ID not found in context",
+		})
+		return
+	}
+
+	patientID, err := uuid.Parse(patientIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Patient ID",
+			Message: "Patient ID format is invalid",
+		})
+		return
+	}
+
+	consultations, err := h.appointmentUseCase.FetchPatientConsultations(c.Request.Context(), patientID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, consultations)
+}
 
 // CancelAppointment handles DELETE /api/user/cancel-appointment
 func (h *AppointmentHandlerClean) CancelAppointment(c *gin.Context) {

@@ -424,11 +424,17 @@ type Slot struct {
 	Time string `json:"time" binding:"required"` // Format: "HH:MM"
 }
 
+// ScheduleSlotRequest represents a single slot in the schedule request from the frontend.
+type ScheduleSlotRequest struct {
+	Date string `json:"date" binding:"required"` // Format: "YYYY-MM-DD"
+	Time string `json:"time" binding:"required"` // Format: "HH:MM"
+	Mode string `json:"mode" binding:"required"`
+}
+
 type ScheduleAppointmentRequest struct {
-	DoctorID  uuid.UUID `json:"-"`
-	PatientID uuid.UUID `json:"patientId" `
-	Date      string    `json:"date" binding:"required"`        // Format: "YYYY-MM-DD"
-	Slots     []string  `json:"slots" binding:"required,min=1"` // e.g., ["09:00", "10:00"]
+	DoctorID     uuid.UUID             `json:"-"`
+	PatientID    uuid.UUID             `json:"patientID"`
+	Slots        []ScheduleSlotRequest `json:"slots" binding:"required,min=1"`
 }
 
 type DoctorScheduleResponse struct {
@@ -438,6 +444,15 @@ type DoctorScheduleResponse struct {
 	Mode          string `json:"mode"`
 	Status        string `json:"status"`
 	SelectedSlots []Slot `json:"selectedSlots"`
+}
+
+// tygo:emit
+type UpdateAppointmentStatusRequest struct {
+	DoctorID  uuid.UUID                `json:"doctorId" binding:"required"`
+	PatientID uuid.UUID                `json:"patientId" binding:"required"`
+	Date      string                   `json:"date" binding:"required"` // Format: "YYYY-MM-DD"
+	Time      string                   `json:"time" binding:"required"` // Format: "HH:MM"
+	Status    entity.AppointmentStatus `json:"status" binding:"required"`
 }
 
 type ConsultationResponse struct {

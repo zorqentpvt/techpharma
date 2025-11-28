@@ -1,8 +1,8 @@
 // Consultings.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import OpChart, { OpChartData } from "../components/OpChart";
-import { fetchConsultations, Consultation } from "../api/docApi";
+import OpChart, { OpChartData } from "../components/OpChart"; // Assuming OpChart is in components
+import { fetchConsultations, fetchPatientConsultations, Consultation } from "../api/docApi";
 
 interface User {
   username: string;
@@ -28,17 +28,23 @@ export default function Consultings() {
         setLoading(true);
         setError(null);
 
-        const response = await fetchConsultations();
+        let response;
+        if (user.role === "normal") {
+          response = await fetchPatientConsultations();
+        } else {
+          response = await fetchConsultations();
+        }
+
         console.log("API Response:", response);
 
-        if (response) {
+        if (response.success && response.data) {
           const now = new Date();
 
           const upcoming: Consultation[] = [];
           const history: Consultation[] = [];
 
           // Process upcoming consultations
-          (response.upcoming || []).forEach((c) => {
+          (response.data.upcoming || []).forEach((c) => {
             const consultationDateTime = new Date(`${c.date}T${c.time}`);
             const diffHours = (now.getTime() - consultationDateTime.getTime()) / (1000 * 60 * 60);
 
@@ -51,7 +57,7 @@ export default function Consultings() {
           });
 
           // Process history consultations
-          (response.history || []).forEach((c) => {
+          (response.data.history || []).forEach((c) => {
             if (c.status !== "confirmed") {
               history.push(c);
             }

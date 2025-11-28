@@ -14,7 +14,7 @@ Do NOT give unsafe or harmful advice.`;
 let conversationHistory: Message[] = [];
 
 export const medicalChatbot = async (prompt: string): Promise<string> => {
-  const API_KEY = "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";
+  const API_KEY = "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";
   const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 

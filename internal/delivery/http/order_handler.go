@@ -419,3 +419,53 @@ func (o *OrderHandlerClean) GetOrderByID(c *gin.Context) {
 		Data:    order,
 	})
 }
+
+/*
+// GetPharmacyOrders retrieves all orders for a specific pharmacy.
+func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
+	// Get pharmacy ID from context (set by auth middleware)
+	pharmacyIDStr := c.GetString("userID")
+	if pharmacyIDStr == "" {
+		c.JSON(http.StatusUnauthorized, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "UNAUTHORIZED",
+				Message: "Pharmacy ID not found in context. Access denied.",
+			},
+		})
+		return
+	}
+
+	pharmacyID, err := uuid.Parse(pharmacyIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_PHARMACY_ID",
+				Message: "Invalid pharmacy ID format.",
+			},
+		})
+		return
+	}
+
+	// Parse pagination parameters from query string
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	// Call the use case to get orders for the pharmacy
+	orders, total, err := o.paymentUseCase.GetPharmacyOrders(c.Request.Context(), pharmacyID, page, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "FETCH_ERROR",
+				Message: "Failed to retrieve pharmacy orders: " + err.Error(),
+			},
+		})
+		return
+	}
+
+	// Return a paginated response
+	response.Paginated(c, orders, page, limit, int(total), "Pharmacy orders retrieved successfully")
+}
+*/

@@ -42,7 +42,7 @@ type Appointment struct {
 	Status AppointmentStatus `gorm:"type:varchar(20);not null;default:'pending';index" json:"status"`
 
 	// Scheduling
-	AppointmentDate time.Time `gorm:"not null;index" json:"appointmentDate"`
+	AppointmentDate time.Time `gorm:"type:date;not null;index" json:"appointmentDate"`
 	AppointmentTime string    `gorm:"type:varchar(5);not null" json:"appointmentTime"` // Format: "HH:MM"
 	Duration        int       `gorm:"default:30" json:"duration"`                      // in minutes
 

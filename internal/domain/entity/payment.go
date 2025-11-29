@@ -21,6 +21,8 @@ type Payment struct {
 	CartID *uuid.UUID `json:"cartId,omitempty" gorm:"type:uuid"`
 	Cart   *Cart      `json:"cart,omitempty" gorm:"foreignKey:CartID"`
 
+	PharmacyID uuid.UUID `json:"pharmacyId,omitempty" gorm:"type:uuid"`
+
 	// Razorpay details
 	RazorpayOrderID   string `json:"razorpayOrderId" gorm:"uniqueIndex"`
 	RazorpayPaymentID string `json:"razorpayPaymentId" gorm:"index"`

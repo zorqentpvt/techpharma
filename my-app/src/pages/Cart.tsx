@@ -9,10 +9,12 @@ type Product = {
   description: string;
   price: number;
   image: string;
+  pharmacyId: string;
   quantity: number;
 };
 
 type OrderSummary = {
+  id: string | null;
   products: Product[];
   shipping: number;
   taxes: number;
@@ -40,21 +42,23 @@ const Cart: React.FC<CartProps> = ({ userId }) => {
             description: item.medicine.description,
             price: item.medicine.price,
             image: "",
+            pharmacyId: item.medicine.pharmacyId,
             quantity: item.quantity,
           }));
 
           setOrderSummary({
+            id: response.data.id,
             products: medicines,
             shipping: 0,
             taxes: 0,
             totalcost: response.data.total_amount,
           });
         } else {
-          setOrderSummary({ products: [], shipping: 0, taxes: 0, totalcost: 0 });
+          setOrderSummary({ id: null, products: [], shipping: 0, taxes: 0, totalcost: 0 });
         }
       } catch (error) {
         console.error(error);
-        setOrderSummary({ products: [], shipping: 0, taxes: 0, totalcost: 0 });
+        setOrderSummary({ id: null, products: [], shipping: 0, taxes: 0, totalcost: 0 });
       } finally {
         setLoading(false);
       }
@@ -66,7 +70,7 @@ const Cart: React.FC<CartProps> = ({ userId }) => {
   const handleBuy = (products: Product[]) => {
     localStorage.setItem(
     "transaction",
-    JSON.stringify({ products, price: productsTotal })
+    JSON.stringify({ products, price: productsTotal, cartId: orderSummary?.id })
   );
     navigate("/dashboard/pay"); // navigate to pay page
   };

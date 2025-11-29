@@ -18,6 +18,7 @@ export default function RazorpayPayment() {
   const [customerName, setCustomerName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [cartId, setCartId] = useState<string | null>(null);
   const [status, setStatus] = useState<{ type: string; message: string }>({
     type: "",
     message: "",
@@ -43,6 +44,7 @@ export default function RazorpayPayment() {
         const trx = JSON.parse(transactionRaw);
         setAmount(trx.price || 0);
         setDescription(trx.description || trx.name || "Payment");
+        setCartId(trx.cartId || null);
       }
     } catch (err) {
       console.error("Failed to load data from localStorage", err);
@@ -114,6 +116,7 @@ export default function RazorpayPayment() {
         amount,
         currency: "INR",
         description,
+        cartId,
         notes: { customerName, email, phone },
       };
 

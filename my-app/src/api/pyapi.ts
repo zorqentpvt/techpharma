@@ -3,6 +3,8 @@ import api from "./api";
 
 export interface OrderData {
   orderId: string;
+  cartId: string;
+  userId: string;
   razorpayKeyId: string;
   razorpayOrderId: string;
   amount: number;
@@ -22,15 +24,23 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+export interface CreateOrderPayload {
+  amount: number;
+  currency: string;
+  description: string;
+  cartId: string | null;
+  notes: Record<string, any>;
+}
+
 /**
  * Create Razorpay order
  */
-export async function createOrder(orderData: any): Promise<ApiResponse<OrderData>> {
+export async function createOrder(orderData: CreateOrderPayload): Promise<ApiResponse<OrderData>> {
   const token = localStorage.getItem("token");
   console.log("JWT Token:", token);
 
   try {
-    const response = await api.post<ApiResponse<OrderData>>("/api/payment/create-order", orderData);
+    const response = await api.post<ApiResponse<OrderData>>("/api/payment/create-order", orderData, { headers: { Authorization: `Bearer ${token}` } });
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || "Failed to create order");

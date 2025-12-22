@@ -432,9 +432,9 @@ type ScheduleSlotRequest struct {
 }
 
 type ScheduleAppointmentRequest struct {
-	DoctorID     uuid.UUID             `json:"-"`
-	PatientID    uuid.UUID             `json:"patientID"`
-	Slots        []ScheduleSlotRequest `json:"slots" binding:"required,min=1"`
+	DoctorID  uuid.UUID             `json:"-"`
+	PatientID uuid.UUID             `json:"patientID"`
+	Slots     []ScheduleSlotRequest `json:"slots" binding:"required,min=1"`
 }
 
 type DoctorScheduleResponse struct {
@@ -471,4 +471,10 @@ type ConsultationResponse struct {
 type ConsultationsResponse struct {
 	Upcoming []ConsultationResponse `json:"upcoming"`
 	History  []ConsultationResponse `json:"history"`
+}
+type ListPharmacyOrders struct {
+	Status string `json:"status" binding:"omitempty"`
+
+	Page  int `json:"page"`
+	Limit int `json:"limit"`
 }

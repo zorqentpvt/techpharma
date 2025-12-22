@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/skryfon/collex/internal/domain/entity"
 	"github.com/skryfon/collex/internal/domain/repository"
+	"github.com/skryfon/collex/internal/types"
 	"gorm.io/gorm"
 )
 
@@ -310,4 +311,52 @@ func (r *OrderRepository) GetCartByID(ctx context.Context, cartID uuid.UUID) (*e
 		return nil, err
 	}
 	return &cart, nil
+}
+
+// GetPharmacyByUserID retrieves a pharmacy by user ID
+func (r *OrderRepository) GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (*entity.Pharmacy, error) {
+	var pharmacy entity.Pharmacy
+	err := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		First(&pharmacy).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &pharmacy, nil
+}
+
+// GetPharmacyOrders retrieves orders for a specific pharmacy
+func (r *OrderRepository) GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, filter types.ListPharmacyOrders) ([]*entity.Order, int64, error) {
+	var orders []*entity.Order
+	var total int64
+
+	baseQuery := r.db.WithContext(ctx).
+		Model(&entity.Order{}).
+		Joins("JOIN order_items ON order_items.order_id = orders.id").
+		Joins("JOIN medicines ON medicines.id = order_items.medicine_id").
+		Where("medicines.pharmacy_id = ?", pharmacyID)
+
+	if filter.Status != "" {
+		baseQuery = baseQuery.Where("orders.status = ?", filter.Status)
+	}
+
+	if err := baseQuery.Session(&gorm.Session{}).Distinct("orders.id").Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := baseQuery.
+		Group("orders.id").
+		Preload("OrderItems.Medicine").
+		Preload("User").
+		Preload("Payment").
+		Order("orders.created_at DESC").
+		Offset((filter.Page - 1) * filter.Limit).
+		Limit(filter.Limit).
+		Find(&orders).Error
+
+	return orders, total, err
 }

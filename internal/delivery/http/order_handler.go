@@ -420,52 +420,88 @@ func (o *OrderHandlerClean) GetOrderByID(c *gin.Context) {
 	})
 }
 
-/*
-// GetPharmacyOrders retrieves all orders for a specific pharmacy.
+// GetPharmacyOrders retrieves orders for a specific pharmacy
 func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
-	// Get pharmacy ID from context (set by auth middleware)
-	pharmacyIDStr := c.GetString("userID")
-	if pharmacyIDStr == "" {
+	// Get user ID from context
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
 		c.JSON(http.StatusUnauthorized, response.Response{
 			Success: false,
 			Error: &response.ErrorInfo{
 				Code:    "UNAUTHORIZED",
-				Message: "Pharmacy ID not found in context. Access denied.",
+				Message: "User ID not found in context",
 			},
 		})
 		return
 	}
 
-	pharmacyID, err := uuid.Parse(pharmacyIDStr)
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Response{
 			Success: false,
 			Error: &response.ErrorInfo{
-				Code:    "INVALID_PHARMACY_ID",
-				Message: "Invalid pharmacy ID format.",
+				Code:    "INVALID_USER_ID",
+				Message: "Invalid user ID format",
 			},
 		})
 		return
 	}
 
-	// Parse pagination parameters from query string
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	pharmacy, err := o.orderUseCase.GetPharmacyByUserID(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "PHARMACY_NOT_FOUND",
+				Message: "Pharmacy not found for this user",
+			},
+		})
+		return
+	}
 
-	// Call the use case to get orders for the pharmacy
-	orders, total, err := o.paymentUseCase.GetPharmacyOrders(c.Request.Context(), pharmacyID, page, limit)
+	// ADD THIS CHECK
+	if pharmacy == nil {
+		c.JSON(http.StatusNotFound, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "PHARMACY_NOT_FOUND",
+				Message: "No pharmacy associated with this user",
+			},
+		})
+		return
+	}
+
+	var filters types.ListPharmacyOrders
+	if err := c.ShouldBindQuery(&filters); err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_PARAMETERS",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+	if filters.Page < 1 {
+		filters.Page = 1
+	}
+	if filters.Limit < 1 {
+		filters.Limit = 10
+	}
+
+	// Get orders
+	orders, total, err := o.orderUseCase.GetPharmacyOrders(c.Request.Context(), pharmacy.ID, filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{
 			Success: false,
 			Error: &response.ErrorInfo{
 				Code:    "FETCH_ERROR",
-				Message: "Failed to retrieve pharmacy orders: " + err.Error(),
+				Message: err.Error(),
 			},
 		})
 		return
 	}
 
-	// Return a paginated response
-	response.Paginated(c, orders, page, limit, int(total), "Pharmacy orders retrieved successfully")
+	// Return paginated response
+	response.Paginated(c, orders, filters.Page, filters.Limit, int(total), "Pharmacy orders retrieved successfully")
 }
-*/

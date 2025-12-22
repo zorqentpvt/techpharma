@@ -60,6 +60,10 @@ type OrderRepository interface {
 	GetOrderByID(ctx context.Context, orderID uuid.UUID) (*entity.Order, error)
 	GetUserOrders(ctx context.Context, userID uuid.UUID, page, limit int) ([]*entity.Order, int64, error)
 	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error
+
+	GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (*entity.Pharmacy, error)
+
+	GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, filter types.ListPharmacyOrders) ([]*entity.Order, int64, error)
 }
 type PaymentRepository interface {
 	Create(ctx context.Context, payment *entity.Payment) error

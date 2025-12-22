@@ -45,7 +45,7 @@ func (r *AppoinmentRepository) GetByID(ctx context.Context, id uuid.UUID) (*enti
 	err := r.db.WithContext(ctx).
 		Preload("Doctor").
 		Preload("Patient").
-		Where("id = ?", id).
+		Where("patient_id = ?", id).
 		First(&appointment).Error
 	if err != nil {
 		return nil, err

@@ -98,3 +98,31 @@ func (r *PaymentRepository) GetUserPayments(ctx context.Context, userID uuid.UUI
 
 	return payments, total, err
 }
+
+// GetPharmacyOrders retrieves all orders containing items from a specific pharmacy
+func (r *PaymentRepository) GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, page, limit int) ([]*entity.Order, int64, error) {
+	var orders []*entity.Order
+	var total int64
+
+	subQuery := r.db.Model(&entity.OrderItem{}).
+		Select("DISTINCT(order_id)").
+		Joins("JOIN medicines ON medicines.id = order_items.medicine_id").
+		Where("medicines.pharmacy_id = ?", pharmacyID)
+
+	query := r.db.WithContext(ctx).Model(&entity.Order{}).Where("id IN (?)", subQuery)
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * limit
+	err := query.Order("created_at DESC").
+		Offset(offset).
+		Limit(limit).
+		Preload("OrderItems.Medicine").
+		Preload("User").
+		Preload("Payment").
+		Find(&orders).Error
+
+	return orders, total, err
+}

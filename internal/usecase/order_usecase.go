@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/skryfon/collex/internal/domain/entity"
 	"github.com/skryfon/collex/internal/domain/repository"
+	"github.com/skryfon/collex/internal/types"
 )
 
 // UserUseCase defines the interface for user-related operations
@@ -18,6 +19,10 @@ type OrderUseCase interface {
 	GetCart(ctx context.Context, userID uuid.UUID) (*entity.Cart, error)
 	RemoveFromCart(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID) error
 	UpdateCart(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID, quantity int) (*entity.Cart, error)
+	GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (*entity.Pharmacy, error)
+
+	GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, filter types.ListPharmacyOrders) ([]*entity.Order, int64, error)
+
 	//Order Managemenet Methods
 
 }
@@ -75,4 +80,21 @@ func (uc *orderUseCase) UpdateCart(ctx context.Context, userID uuid.UUID, medici
 
 	// Update cart item
 	return uc.orderRepo.UpdateCart(ctx, userID, medicineID, quantity)
+}
+func (uc *orderUseCase) GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (*entity.Pharmacy, error) {
+	pharmacy, err := uc.orderRepo.GetPharmacyByUserID(ctx, userID)
+	if err != nil {
+		return nil, errors.New("pharmacy not found")
+	}
+	return pharmacy, nil
+}
+func (u *orderUseCase) GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, filter types.ListPharmacyOrders) ([]*entity.Order, int64, error) {
+	if filter.Page < 1 {
+		filter.Page = 1
+	}
+	if filter.Limit < 1 || filter.Limit > 100 {
+		filter.Limit = 10
+	}
+
+	return u.orderRepo.GetPharmacyOrders(ctx, pharmacyID, filter)
 }

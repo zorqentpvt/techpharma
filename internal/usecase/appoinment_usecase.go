@@ -262,7 +262,7 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 }
 
 func (u *appoinmentUseCase) CancelAppointment(ctx context.Context, appointmentID, userID uuid.UUID, reason string) error {
-	appointment, err := u.appoinmentRepo.GetByID(ctx, appointmentID)
+	appointment, err := u.appoinmentRepo.GetByID(ctx, userID)
 	if err != nil {
 		return errors.NewDomainError("APPOINTMENT_NOT_FOUND", "Appointment not found", errors.ErrNotFound)
 	}

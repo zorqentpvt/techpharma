@@ -85,7 +85,7 @@ type AppoinmentRepository interface {
 	Update(ctx context.Context, appointment *entity.Appointment) error
 	ScheduleAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error)
 	GetAllByDoctorID(ctx context.Context, doctorID uuid.UUID) ([]*entity.Appointment, error)
-	CancelPendingAppointments(ctx context.Context, patientID uuid.UUID, doctorID uuid.UUID) error
 	GetUpcomingAppointmentsByPatient(ctx context.Context, patientID uuid.UUID) ([]*entity.Appointment, error)
 	GetAppointmentHistoryByPatient(ctx context.Context, patientID uuid.UUID) ([]*entity.Appointment, error)
+	DeletePendingAppointments(ctx context.Context, patientID uuid.UUID, doctorID uuid.UUID) error
 }

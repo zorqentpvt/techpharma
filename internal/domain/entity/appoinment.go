@@ -41,6 +41,8 @@ type Appointment struct {
 	Mode   AppointmentMode   `gorm:"type:varchar(20);not null;default:'online'" json:"mode"`
 	Status AppointmentStatus `gorm:"type:varchar(20);not null;default:'pending';index" json:"status"`
 
+	JitsiID string `gorm:"type:varchar(50)" json:"jitsiID,omitempty"`
+
 	// Scheduling
 	AppointmentDate time.Time `gorm:"type:date;not null;index" json:"appointmentDate"`
 	AppointmentTime string    `gorm:"type:varchar(5);not null" json:"appointmentTime"` // Format: "HH:MM"

@@ -153,16 +153,14 @@ func (r *AppoinmentRepository) ScheduleAppointment(ctx context.Context, appointm
 	return appointment, nil
 }
 
-func (r *AppoinmentRepository) CancelPendingAppointments(ctx context.Context, patientID, doctorID uuid.UUID) error {
-	result := r.db.WithContext(ctx).Model(&entity.Appointment{}).
+func (r *AppoinmentRepository) DeletePendingAppointments(ctx context.Context, patientID, doctorID uuid.UUID) error {
+	result := r.db.WithContext(ctx).
 		Where("patient_id = ? AND doctor_id = ? AND status = ?",
 			patientID, doctorID, entity.AppointmentStatusPending).
-		Updates(map[string]interface{}{
-			"status": entity.AppointmentStatusCancelled,
-		})
+		Delete(&entity.Appointment{})
 
 	// Debugging log to check the number of rows affected.
-	fmt.Printf("[DEBUG] CancelPendingAppointments for patient %s: %d other pending slots were cancelled.\n", patientID, result.RowsAffected)
+	fmt.Printf("[DEBUG] DeletePendingAppointments for patient %s: %d other pending slots were deleted.\n", patientID, result.RowsAffected)
 
 	return result.Error
 }

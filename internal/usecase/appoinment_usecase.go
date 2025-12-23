@@ -303,56 +303,39 @@ func (u *appoinmentUseCase) ScheduleAppointment(ctx context.Context, req *types.
 		return errors.NewDomainError("DOCTOR_INACTIVE", "Doctor is not accepting appointments", errors.ErrForbidden)
 	}
 
-	var confirmedAtLeastOne bool
-
-	// 2. Iterate through each requested slot to validate and create appointments
-	for _, slot := range req.Slots {
-		appointmentDate, err := time.Parse("2006-01-02", slot.Date)
-		if err != nil {
-			return errors.NewDomainError("INVALID_DATE", fmt.Sprintf("Invalid date format for slot: %s", slot.Date), errors.ErrInvalidInput)
-		}
-
-		// Check if the slot is in the past
-		slotDateTime := time.Date(appointmentDate.Year(), appointmentDate.Month(), appointmentDate.Day(), parseHour(slot.Time), parseMinute(slot.Time), 0, 0, time.UTC)
-		if slotDateTime.Before(time.Now()) {
-			return errors.NewDomainError("PAST_SLOT", "Cannot book an appointment in the past", errors.ErrInvalidInput)
-		}
-
-		// Check if the slot is already booked
-		isBooked, err := u.appoinmentRepo.IsSlotBooked(ctx, req.DoctorID, appointmentDate, slot.Time)
-		if err != nil {
-			return errors.NewDomainError("SLOT_CHECK_FAILED", "Failed to check slot availability", err)
-		}
-		if isBooked {
-			return errors.NewDomainError("SLOT_UNAVAILABLE", fmt.Sprintf("Time slot %s on %s is already booked", slot.Time, slot.Date), errors.ErrSlotNotAvailable)
-		}
-
-		// 3. Create the appointment entity
-		appointment := &entity.Appointment{
-			PatientID:       req.PatientID,
-			DoctorID:        req.DoctorID,
-			Mode:            entity.AppointmentMode(slot.Mode),
-			Status:          entity.AppointmentStatusConfirmed,
-			AppointmentDate: appointmentDate,
-			AppointmentTime: slot.Time,
-			ConsultationFee: doctor.ConsultationFee,
-		}
-
-		// 4. Save the appointment to the database
-		if _, err := u.appoinmentRepo.ScheduleAppointment(ctx, appointment); err != nil {
-			return errors.NewDomainError("CREATE_FAILED", "Failed to create appointment", err)
-		}
-		confirmedAtLeastOne = true
+	// 2. Fetch the appointment
+	appointment, err := u.appoinmentRepo.GetByID(ctx, req.AppointmentID)
+	if err != nil {
+		return errors.NewDomainError("APPOINTMENT_NOT_FOUND", "Appointment not found", errors.ErrNotFound)
 	}
 
-	// If at least one appointment was confirmed, cancel all other pending appointments for this patient with this doctor.
-	if confirmedAtLeastOne {
-		err = u.appoinmentRepo.CancelPendingAppointments(ctx, req.PatientID, req.DoctorID)
-		if err != nil {
-			// This is a non-critical error, so we can log it without failing the whole operation.
-			// In a real-world app, you'd use a structured logger.
-			fmt.Printf("Warning: Failed to cancel other pending appointments for patient %s: %v\n", req.PatientID, err)
-		}
+	// 3. Validate ownership
+	if appointment.DoctorID != req.DoctorID {
+		return errors.NewDomainError("UNAUTHORIZED", "Appointment does not belong to this doctor", errors.ErrUnauthorized)
+	}
+	if appointment.PatientID != req.PatientID {
+		return errors.NewDomainError("INVALID_PATIENT", "Appointment does not belong to this patient", errors.ErrInvalidInput)
+	}
+
+	// 4. Check status
+	if appointment.Status != entity.AppointmentStatusPending {
+		return errors.NewDomainError("INVALID_STATUS", fmt.Sprintf("Appointment is in %s status, cannot schedule", appointment.Status), errors.ErrInvalidInput)
+	}
+
+	// 5. Update status to Confirmed
+	appointment.Status = entity.AppointmentStatusConfirmed
+	appointment.JitsiID = req.JitsiID
+
+	if err := u.appoinmentRepo.Update(ctx, appointment); err != nil {
+		return errors.NewDomainError("UPDATE_FAILED", "Failed to confirm appointment", err)
+	}
+
+	// 6. Delete all other pending appointments for this patient with this doctor.
+	err = u.appoinmentRepo.DeletePendingAppointments(ctx, req.PatientID, req.DoctorID)
+	if err != nil {
+		// This is a non-critical error, so we can log it without failing the whole operation.
+		// In a real-world app, you'd use a structured logger.
+		fmt.Printf("Warning: Failed to delete other pending appointments for patient %s: %v\n", req.PatientID, err)
 	}
 
 	return nil

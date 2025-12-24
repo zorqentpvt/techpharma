@@ -110,7 +110,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			pharmacyRoutes.DELETE("/delete-medicine/:id", medicineHanler.DeleteMedicine)
 
 			pharmacyRoutes.GET("/orders", orderHandler.GetPharmacyOrders)
-
+pharmacyRoutes.PUT("/orders/:id", orderHandler.UpdateOrderStatus)
 			/*
 				pharmacyRoutes.GET("/orders/:id", orderHandler.GetOrderByID)
 				pharmacyRoutes.PUT("/orders/:id", orderHandler.UpdateOrderStatus)*/

@@ -20,10 +20,10 @@ type OrderUseCase interface {
 	RemoveFromCart(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID) error
 	UpdateCart(ctx context.Context, userID uuid.UUID, medicineID uuid.UUID, quantity int) (*entity.Cart, error)
 	GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (*entity.Pharmacy, error)
-
+	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string, userID uuid.UUID) error
 	GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, filter types.ListPharmacyOrders) ([]*entity.Order, int64, error)
 
-	//Order Managemenet Methods
+	//Order Managem	enet Methods
 
 }
 
@@ -97,4 +97,33 @@ func (u *orderUseCase) GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UU
 	}
 
 	return u.orderRepo.GetPharmacyOrders(ctx, pharmacyID, filter)
+}
+
+func (uc *orderUseCase) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string, userID uuid.UUID) error {
+	// Get pharmacy associated with the user
+	pharmacy, err := uc.orderRepo.GetPharmacyByUserID(ctx, userID)
+	if err != nil {
+		return errors.New("unauthorized")
+	}
+	if pharmacy == nil {
+		return errors.New("unauthorized")
+	}
+
+	// Get the order to verify ownership
+	order, err := uc.orderRepo.GetOrderByID(ctx, orderID)
+	if err != nil {
+		return errors.New("order not found")
+	}
+
+	// Verify that the order belongs to the user's pharmacy
+	if len(order.OrderItems) == 0 {
+		return errors.New("order has no items")
+	}
+
+	if order.OrderItems[0].Medicine.PharmacyID != pharmacy.ID {
+		return errors.New("unauthorized")
+	}
+
+	// Update the order status
+	return uc.orderRepo.UpdateOrderStatus(ctx, orderID, status)
 }

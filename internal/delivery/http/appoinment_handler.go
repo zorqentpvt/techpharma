@@ -197,7 +197,7 @@ func (h *AppointmentHandlerClean) CancelAppointment(c *gin.Context) {
 	}
 
 	var req struct {
-		AppointmentID string `json:"appointment_id" binding:"required"`
+		AppointmentID string `json:"appointmentId" binding:"required"`
 		Reason        string `json:"reason"`
 	}
 

@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -502,6 +503,134 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 		return
 	}
 
+	type MedicineResponse struct {
+		Name     string `json:"name"`
+		Quantity int    `json:"quantity"`
+	}
+
+	type OrderResponse struct {
+		ID            string             `json:"id"`
+		CustomerName  string             `json:"customerName"`
+		CustomerPhone string             `json:"customerPhone"`
+		Medicines     []MedicineResponse `json:"medicines"`
+		TotalAmount   float64            `json:"totalAmount"`
+		Status        string             `json:"status"`
+		OrderDate     time.Time          `json:"orderDate"`
+		Pharmacy      string             `json:"pharmacy"`
+	}
+
+	orderResponses := []OrderResponse{}
+	for _, order := range orders {
+		medicines := []MedicineResponse{}
+		for _, item := range order.OrderItems {
+			medicines = append(medicines, MedicineResponse{
+				Name:     item.Medicine.Name,
+				Quantity: item.Quantity,
+			})
+		}
+
+		orderResponses = append(orderResponses, OrderResponse{
+			ID:            order.ID.String(),
+			CustomerName:  order.User.FirstName + " " + order.User.LastName,
+			CustomerPhone: order.User.PhoneNumber,
+			Medicines:     medicines,
+			TotalAmount:   order.TotalAmount,
+			Status:        order.Status,
+			OrderDate:     order.CreatedAt,
+			Pharmacy:      pharmacy.Name,
+		})
+	}
+
 	// Return paginated response
-	response.Paginated(c, orders, filters.Page, filters.Limit, int(total), "Pharmacy orders retrieved successfully")
+	response.Paginated(c, orderResponses, filters.Page, filters.Limit, int(total), "Pharmacy orders retrieved successfully")
+}
+
+// UpdateOrderStatus updates the status of an order
+func (o *OrderHandlerClean) UpdateOrderStatus(c *gin.Context) {
+	// Get user ID from context
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "UNAUTHORIZED",
+				Message: "User ID not found in context",
+			},
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_USER_ID",
+				Message: "Invalid user ID format",
+			},
+		})
+		return
+	}
+
+	// Parse order ID from URL
+	orderIDStr := c.Param("id")
+	orderID, err := uuid.Parse(orderIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_ORDER_ID",
+				Message: "Invalid order ID format",
+			},
+		})
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		Status string `json:"status" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_PARAMETERS",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	// Call use case
+	if err := o.orderUseCase.UpdateOrderStatus(c.Request.Context(), orderID, req.Status, userID); err != nil {
+		statusCode := http.StatusInternalServerError
+		errorCode := "UPDATE_ERROR"
+
+		switch err.Error() {
+		case "order not found":
+			statusCode = http.StatusNotFound
+			errorCode = "ORDER_NOT_FOUND"
+		case "unauthorized":
+			statusCode = http.StatusForbidden
+			errorCode = "FORBIDDEN"
+		case "invalid status":
+			statusCode = http.StatusBadRequest
+			errorCode = "INVALID_STATUS"
+		}
+
+		c.JSON(statusCode, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    errorCode,
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Message: "Order status updated successfully",
+	})
 }

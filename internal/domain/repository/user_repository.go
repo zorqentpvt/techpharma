@@ -87,6 +87,6 @@ type AppoinmentRepository interface {
 	GetUpcomingAppointmentsByPatient(ctx context.Context, patientID uuid.UUID) ([]*entity.Appointment, error)
 	GetAppointmentHistoryByPatient(ctx context.Context, patientID uuid.UUID) ([]*entity.Appointment, error)
 	DeletePendingSlots(ctx context.Context, appointmentID uuid.UUID) error
-	GetConfirmedAppionmentSlot(ctx context.Context) ([]types.ConfirmedSlotResponse, error)
+	GetConfirmedAppionmentSlot(ctx context.Context, req *types.ConfirmedSlotRequest) ([]types.ConfirmedSlotResponse, error)
 	CancelBookedSlot(ctx context.Context, slotID uuid.UUID, reason string) error
 }

@@ -487,3 +487,6 @@ type ConfirmedSlotResponse struct {
 	AppointmentDate string `json:"appointment_date"`
 	AppointmentTime string `json:"appointment_time"`
 }
+type ConfirmedSlotRequest struct {
+	DocID uuid.UUID `json:"docId" binding:"required"`
+}

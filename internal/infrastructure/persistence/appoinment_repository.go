@@ -98,12 +98,14 @@ func (r *AppoinmentRepository) GetDoctorAppointments(ctx context.Context, doctor
 	return appointments, nil
 }
 
-func (r *AppoinmentRepository) GetConfirmedAppionmentSlot(ctx context.Context) ([]types.ConfirmedSlotResponse, error) {
+func (r *AppoinmentRepository) GetConfirmedAppionmentSlot(ctx context.Context, req *types.ConfirmedSlotRequest) ([]types.ConfirmedSlotResponse, error) {
 	var slots []types.ConfirmedSlotResponse
 	err := r.db.WithContext(ctx).
 		Model(&entity.BookedSlot{}).
-		Select("appointment_date, appointment_time").
-		Where("status = ?", entity.AppointmentStatusConfirmed).
+		Select("booked_slots.appointment_date, booked_slots.appointment_time").
+		Joins("JOIN appointments ON appointments.id = booked_slots.appointment_id").
+		Where("appointments.doctor_id = ?", req.DocID).
+		Where("booked_slots.status = ?", entity.AppointmentStatusConfirmed).
 		Scan(&slots).Error
 	if err != nil {
 		return nil, err

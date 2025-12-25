@@ -24,7 +24,7 @@ type AppoinmentUseCase interface {
 	ScheduleAppointment(ctx context.Context, req *types.ScheduleAppointmentRequest) error
 	FetchConsultations(ctx context.Context, doctorID uuid.UUID) (*types.ConsultationsResponse, error)
 	FetchPatientConsultations(ctx context.Context, patientID uuid.UUID) (*types.ConsultationsResponse, error)
-	GetConfirmedAppionmentSlot(ctx context.Context) ([]types.ConfirmedSlotResponse, error)
+	GetConfirmedAppionmentSlot(ctx context.Context, req *types.ConfirmedSlotRequest) ([]types.ConfirmedSlotResponse, error)
 }
 
 // orderUseCase implements the OrderUseCase interface
@@ -439,8 +439,8 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 	return &types.ConsultationsResponse{Upcoming: upcoming, History: history}, nil
 }
 
-func (u *appoinmentUseCase) GetConfirmedAppionmentSlot(ctx context.Context) ([]types.ConfirmedSlotResponse, error) {
-	return u.appoinmentRepo.GetConfirmedAppionmentSlot(ctx)
+func (u *appoinmentUseCase) GetConfirmedAppionmentSlot(ctx context.Context, req *types.ConfirmedSlotRequest) ([]types.ConfirmedSlotResponse, error) {
+	return u.appoinmentRepo.GetConfirmedAppionmentSlot(ctx, req)
 }
 
 func getDoctorName(appt *entity.Appointment) string {

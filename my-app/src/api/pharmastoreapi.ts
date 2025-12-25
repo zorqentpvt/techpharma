@@ -80,14 +80,32 @@ export async function deleteMedicine(id: string) {
 }
 
 // UPDATE ORDER STATUS
-export async function updateOrderStatus(orderId: string, status: "pending" | "completed" | "cancelled") {
+export async function updateOrderStatus(orderId: string,   status:
+    | "pending"
+    | "confirmed"
+    | "preparing"
+    | "ready"
+    | "completed"
+    | "cancelled"
+){
   console.log("API Payload (updateOrderStatus):", { orderId, status });
   try {
-    const response = await api.patch(`/orders/${orderId}/status`, { status });
+    const response = await api.put(`api/pharmacy/orders/${orderId}`, { status });
     console.log("API Response (updateOrderStatus):", response.data);
     return response.data;
   } catch (error: any) {
     console.log("API Error (updateOrderStatus):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}
+
+export async function fetchOrders() {
+  try {
+    const response = await api.get("api/pharmacy/orders");
+    console.log("API Response (fetchOrders):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.log("API Error (fetchOrders):", error.response?.data || error.message);
     return { success: false, message: error.response?.data?.message || error.message };
   }
 }

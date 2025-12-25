@@ -35,29 +35,49 @@ export interface CreateOrderPayload {
 /**
  * Create Razorpay order
  */
-export async function createOrder(orderData: CreateOrderPayload): Promise<ApiResponse<OrderData>> {
+export async function createOrder(
+  orderData: CreateOrderPayload
+): Promise<ApiResponse<OrderData>> {
   const token = localStorage.getItem("token");
-  console.log("JWT Token:", token);
 
   try {
-    const response = await api.post<ApiResponse<OrderData>>("/api/payment/create-order", orderData, { headers: { Authorization: `Bearer ${token}` } });
+    const response = await api.post<ApiResponse<OrderData>>(
+      "/api/payment/create-order",
+      orderData,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log("Create order SUCCESS:", response.data);
     return response.data;
   } catch (error: any) {
+    console.error(
+      "Create order FAILED:",
+      error.response?.data || error.message
+    );
     throw new Error(error.response?.data?.message || "Failed to create order");
   }
 }
 
-/**
- * Verify Razorpay payment
- */
-export async function verifyPayment(verificationData: any): Promise<ApiResponse<any>> {
+export async function verifyPayment(
+  verificationData: any
+): Promise<ApiResponse<any>> {
   const token = localStorage.getItem("token");
-  console.log("JWT Token:", token);
 
   try {
-    const response = await api.post<ApiResponse<any>>("/api/payment/verify", verificationData);
+    const response = await api.post<ApiResponse<any>>(
+      "/api/payment/verify",
+      verificationData,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log("Verify payment SUCCESS:", response.data);
     return response.data;
   } catch (error: any) {
+    console.error(
+      "Verify payment FAILED:",
+      error.response?.data || error.message
+    );
     throw new Error(error.response?.data?.message || "Verification failed");
   }
 }
+

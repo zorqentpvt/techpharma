@@ -62,7 +62,7 @@ type OrderRepository interface {
 	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error
 
 	GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (*entity.Pharmacy, error)
-
+	GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, error)
 	GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, filter types.ListPharmacyOrders) ([]*entity.Order, int64, error)
 }
 type PaymentRepository interface {
@@ -87,5 +87,7 @@ type AppoinmentRepository interface {
 	GetAllByDoctorID(ctx context.Context, doctorID uuid.UUID) ([]*entity.Appointment, error)
 	GetUpcomingAppointmentsByPatient(ctx context.Context, patientID uuid.UUID) ([]*entity.Appointment, error)
 	GetAppointmentHistoryByPatient(ctx context.Context, patientID uuid.UUID) ([]*entity.Appointment, error)
-	DeletePendingAppointments(ctx context.Context, patientID uuid.UUID, doctorID uuid.UUID) error
+	DeletePendingSlots(ctx context.Context, appointmentID uuid.UUID) error
+	GetConfirmedAppionmentSlot(ctx context.Context) ([]types.ConfirmedSlotResponse, error)
+	CancelBookedSlot(ctx context.Context, slotID uuid.UUID, reason string) error
 }

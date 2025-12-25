@@ -420,8 +420,10 @@ type AppointmentRequest struct {
 }
 
 type Slot struct {
-	Date string `json:"date" binding:"required"` // Format: "YYYY-MM-DD"
-	Time string `json:"time" binding:"required"` // Format: "HH:MM"
+	SlotID        string `json:"slotId"`        // <- Add this (BookedSlot.ID)
+	AppointmentID string `json:"appointmentId"` // Keep this too if needed
+	Date          string `json:"date"`
+	Time          string `json:"time"`
 }
 
 // ScheduleSlotRequest represents a single slot in the schedule request from the frontend.
@@ -435,6 +437,7 @@ type ScheduleAppointmentRequest struct {
 	DoctorID      uuid.UUID `json:"-"`
 	PatientID     uuid.UUID `json:"patientID"`
 	AppointmentID uuid.UUID `json:"appointmentID"`
+	SlotID        uuid.UUID `json:"slotID"`
 	JitsiID       string    `json:"jitsiID"`
 }
 
@@ -458,6 +461,7 @@ type UpdateAppointmentStatusRequest struct {
 
 type ConsultationResponse struct {
 	ID           string `json:"id"`
+	SlotID       string `json:"slotId"`
 	Name         string `json:"name"`
 	Time         string `json:"time"`
 	Date         string `json:"date"`
@@ -478,4 +482,8 @@ type ListPharmacyOrders struct {
 
 	Page  int `json:"page"`
 	Limit int `json:"limit"`
+}
+type ConfirmedSlotResponse struct {
+	AppointmentDate string `json:"appointment_date"`
+	AppointmentTime string `json:"appointment_time"`
 }

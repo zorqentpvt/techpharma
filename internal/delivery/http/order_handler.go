@@ -634,3 +634,63 @@ func (o *OrderHandlerClean) UpdateOrderStatus(c *gin.Context) {
 		Message: "Order status updated successfully",
 	})
 }
+
+// GetTotalRevenue retrieves the total revenue for the pharmacy
+func (o *OrderHandlerClean) GetTotalRevenue(c *gin.Context) {
+	// Get user ID from context
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "UNAUTHORIZED",
+				Message: "User ID not found in context",
+			},
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_USER_ID",
+				Message: "Invalid user ID format",
+			},
+		})
+		return
+	}
+
+	pharmacy, err := o.orderUseCase.GetPharmacyByUserID(c.Request.Context(), userID)
+	if err != nil || pharmacy == nil {
+		c.JSON(http.StatusNotFound, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "PHARMACY_NOT_FOUND",
+				Message: "Pharmacy not found for this user",
+			},
+		})
+		return
+	}
+
+	revenue, err := o.orderUseCase.GetTotalRevenue(c.Request.Context(), pharmacy.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "FETCH_ERROR",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Message: "Total revenue retrieved successfully",
+		Data: gin.H{
+			"totalRevenue": revenue,
+		},
+	})
+}

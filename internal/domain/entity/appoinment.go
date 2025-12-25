@@ -37,16 +37,10 @@ type Appointment struct {
 	Patient   *User     `gorm:"foreignKey:PatientID" json:"patient,omitempty"`
 
 	// Appointment details
-	Reason string            `gorm:"type:text;not null" json:"reason"`
-	Mode   AppointmentMode   `gorm:"type:varchar(20);not null;default:'online'" json:"mode"`
-	Status AppointmentStatus `gorm:"type:varchar(20);not null;default:'pending';index" json:"status"`
+	Reason string          `gorm:"type:text;not null" json:"reason"`
+	Mode   AppointmentMode `gorm:"type:varchar(20);not null;default:'online'" json:"mode"`
 
 	JitsiID string `gorm:"type:varchar(50)" json:"jitsiID,omitempty"`
-
-	// Scheduling
-	AppointmentDate time.Time `gorm:"type:date;not null;index" json:"appointmentDate"`
-	AppointmentTime string    `gorm:"type:varchar(5);not null" json:"appointmentTime"` // Format: "HH:MM"
-	Duration        int       `gorm:"default:30" json:"duration"`                      // in minutes
 
 	// Additional information
 	Notes           string  `gorm:"type:text" json:"notes,omitempty"`
@@ -62,13 +56,27 @@ type Appointment struct {
 
 	// Audit fields
 	ConfirmedAt *time.Time `json:"confirmedAt,omitempty"`
+
+	// One-to-many relationship with booked slots
+	BookedSlots []BookedSlot `gorm:"foreignKey:AppointmentID;constraint:OnDelete:CASCADE" json:"bookedSlots,omitempty"`
 }
 
 // AppointmentSlot represents available time slots for booking
 type AppointmentSlot struct {
-	Date string `json:"date"` // Format: "YYYY-MM-DD"
-	Time string `json:"time"` // Format: "HH:MM"
+	Date string `gorm:"type:date;not null;index" json:"date"` // Format: "YYYY-MM-DD"
+	Time string `gorm:"type:varchar(5);not null" json:"time"` // Format: "HH:MM"
 }
 
-// AppointmentRequest represents the request payload for creating an appointment
-// AppointmentRequest represents the request payload for creating an appointment
+// BookedSlot represents a specific time slot that has been booked
+type BookedSlot struct {
+	BaseModel
+	ID              uuid.UUID         `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	AppointmentID   uuid.UUID         `gorm:"type:uuid;not null;index" json:"appointmentId"`
+	AppointmentDate string            `gorm:"type:varchar(20);not null;index" json:"appointmentDate"`
+	AppointmentTime string            `gorm:"type:varchar(5);not null" json:"appointmentTime"` // Format: "HH:MM"
+	Duration        int               `gorm:"default:30" json:"duration"`                      // in minutes
+	Status          AppointmentStatus `gorm:"type:varchar(20);not null;default:'pending';index" json:"status"`
+
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}

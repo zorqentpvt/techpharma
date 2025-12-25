@@ -84,7 +84,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			patientRoutes.DELETE("/remove-cart", orderHandler.RemoveFromCart)
 
 			patientRoutes.POST("/book-appointment", appoinmentHandler.BookAppointment)
-			patientRoutes.DELETE("/cancel-appointment", appoinmentHandler.CancelAppointment)
+			patientRoutes.GET("/confirmed-appiontment-slot", appoinmentHandler.ConfirmedAppionmentSlot)
 
 			patientRoutes.GET("/consultations", appoinmentHandler.FetchPatientConsultations)
 
@@ -110,7 +110,9 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			pharmacyRoutes.DELETE("/delete-medicine/:id", medicineHanler.DeleteMedicine)
 
 			pharmacyRoutes.GET("/orders", orderHandler.GetPharmacyOrders)
-pharmacyRoutes.PUT("/orders/:id", orderHandler.UpdateOrderStatus)
+			pharmacyRoutes.PUT("/orders/:id", orderHandler.UpdateOrderStatus)
+			pharmacyRoutes.GET("/orders/revenue", orderHandler.GetTotalRevenue)
+
 			/*
 				pharmacyRoutes.GET("/orders/:id", orderHandler.GetOrderByID)
 				pharmacyRoutes.PUT("/orders/:id", orderHandler.UpdateOrderStatus)*/
@@ -129,6 +131,8 @@ pharmacyRoutes.PUT("/orders/:id", orderHandler.UpdateOrderStatus)
 			doctorRoutes.GET("/schedule", appoinmentHandler.GetDoctorSchedule)
 			doctorRoutes.POST("/schedule-appointment", appoinmentHandler.ScheduleAppointment)
 			doctorRoutes.GET("/consultations", appoinmentHandler.FetchConsultations)
+			doctorRoutes.DELETE("/cancel-appointment", appoinmentHandler.CancelAppointment)
+
 		}
 		// Admin routes (require authentication + admin role)
 		adminRoutes := protectedRoutes.Group("/admin")

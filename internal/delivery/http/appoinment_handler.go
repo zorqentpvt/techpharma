@@ -275,6 +275,21 @@ func (h *AppointmentHandlerClean) ScheduleAppointment(c *gin.Context) {
 	})
 }
 
+// ConfirmedAppionmentSlot handles GET /api/doctor/confirmed-slots
+func (h *AppointmentHandlerClean) ConfirmedAppionmentSlot(c *gin.Context) {
+	slots, err := h.appointmentUseCase.GetConfirmedAppionmentSlot(c.Request.Context())
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Fetched confirmed slots successfully",
+		"data":    slots,
+	})
+}
+
 func (h *AppointmentHandlerClean) handleError(c *gin.Context, err error) {
 	switch {
 	case errors.IsNotFound(err):

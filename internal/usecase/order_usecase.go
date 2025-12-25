@@ -24,7 +24,7 @@ type OrderUseCase interface {
 	GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, filter types.ListPharmacyOrders) ([]*entity.Order, int64, error)
 
 	//Order Managem	enet Methods
-
+	GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, error)
 }
 
 // orderUseCase implements the OrderUseCase interface
@@ -126,4 +126,8 @@ func (uc *orderUseCase) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID
 
 	// Update the order status
 	return uc.orderRepo.UpdateOrderStatus(ctx, orderID, status)
+}
+
+func (uc *orderUseCase) GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, error) {
+	return uc.orderRepo.GetTotalRevenue(ctx, pharmacyID)
 }

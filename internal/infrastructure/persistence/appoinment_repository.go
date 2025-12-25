@@ -28,7 +28,7 @@ func (r *AppoinmentRepository) BookAppointment(ctx context.Context, appointment 
 	return appointment, nil
 }
 
-func (r *AppoinmentRepository) IsSlotBooked(ctx context.Context, doctorID uuid.UUID, appointmentDate time.Time, appointmentTime string) (bool, error) {
+func (r *AppoinmentRepository) IsSlotBooked(ctx context.Context, doctorID uuid.UUID, appointmentDate string, appointmentTime string) (bool, error) {
 	var count int64
 
 	// Join booked_slots with appointments to check doctor_id and slot availability

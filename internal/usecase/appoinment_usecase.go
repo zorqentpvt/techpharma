@@ -53,7 +53,7 @@ func (u *appoinmentUseCase) BookAppointment(ctx context.Context, req *types.Appo
 
 	// 2. Validate all slots before creating anything
 	var parsedSlots []struct {
-		date time.Time
+		date string
 		time string
 	}
 
@@ -63,8 +63,8 @@ func (u *appoinmentUseCase) BookAppointment(ctx context.Context, req *types.Appo
 			return nil, errors.NewDomainError("INVALID_DATE", "Invalid date format", errors.ErrInvalidInput)
 		}
 
-		// Check if slot is already booked
-		isBooked, err := u.appoinmentRepo.IsSlotBooked(ctx, req.DoctorID, appointmentDate, slot.Time)
+		// Check if slot is already booked (pass string, not time.Time)
+		isBooked, err := u.appoinmentRepo.IsSlotBooked(ctx, req.DoctorID, slot.Date, slot.Time)
 		if err != nil {
 			return nil, errors.NewDomainError("SLOT_CHECK_FAILED", "Failed to check slot availability", err)
 		}
@@ -76,8 +76,12 @@ func (u *appoinmentUseCase) BookAppointment(ctx context.Context, req *types.Appo
 
 		// Check if slot is in the past
 		slotDateTime := time.Date(
-			appointmentDate.Year(), appointmentDate.Month(), appointmentDate.Day(),
-			parseHour(slot.Time), parseMinute(slot.Time), 0, 0, time.UTC,
+			appointmentDate.Year(),
+			appointmentDate.Month(),
+			appointmentDate.Day(),
+			parseHour(slot.Time),
+			parseMinute(slot.Time),
+			0, 0, time.Local,
 		)
 		if slotDateTime.Before(time.Now()) {
 			return nil, errors.NewDomainError("PAST_SLOT",
@@ -86,16 +90,16 @@ func (u *appoinmentUseCase) BookAppointment(ctx context.Context, req *types.Appo
 		}
 
 		parsedSlots = append(parsedSlots, struct {
-			date time.Time
+			date string
 			time string
-		}{appointmentDate, slot.Time})
+		}{slot.Date, slot.Time})
 	}
 
 	// 3. Build all booked slots
 	bookedSlots := make([]entity.BookedSlot, 0, len(parsedSlots))
 	for _, slot := range parsedSlots {
 		bookedSlots = append(bookedSlots, entity.BookedSlot{
-			AppointmentDate: slot.date.Format("2006-01-02"),
+			AppointmentDate: slot.date,
 			AppointmentTime: slot.time,
 			Duration:        30,
 			Status:          entity.AppointmentStatusPending,
@@ -120,6 +124,8 @@ func (u *appoinmentUseCase) BookAppointment(ctx context.Context, req *types.Appo
 
 	return createdAppointment, nil
 }
+
+// Helper functions for parsing time
 
 func (u *appoinmentUseCase) GetDoctorSchedule(ctx context.Context, doctorID uuid.UUID) ([]types.DoctorScheduleResponse, error) {
 	// Get all appointments for the doctor with preloaded relations

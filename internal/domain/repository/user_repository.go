@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/skryfon/collex/internal/domain/entity"
@@ -77,7 +76,7 @@ type PaymentRepository interface {
 }
 type AppoinmentRepository interface {
 	BookAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error)
-	IsSlotBooked(ctx context.Context, doctorID uuid.UUID, appointmentDate time.Time, appointmentTime string) (bool, error)
+	IsSlotBooked(ctx context.Context, doctorID uuid.UUID, appointmentDate string, appointmentTime string) (bool, error)
 	GetDoctorAppointments(ctx context.Context, doctorID uuid.UUID, status entity.AppointmentStatus) ([]*entity.Appointment, error)
 	GetUpcomingAppointments(ctx context.Context, doctorID uuid.UUID) ([]*entity.Appointment, error)
 	GetAppointmentHistory(ctx context.Context, doctorID uuid.UUID) ([]*entity.Appointment, error)

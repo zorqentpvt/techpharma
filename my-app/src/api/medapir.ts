@@ -62,39 +62,8 @@ export async function docAppointments(id: string) {
 
   try {
 
-    const response ={
-      "success": true,
-      "message": "Appointments fetched successfully",
-      "data": [
-        { "date": "2026-01-19", "time": "08:00" },
-        { "date": "2025-10-19", "time": "09:00" },
-        { "date": "2025-10-19", "time": "10:00" },
-        { "date": "2025-10-19", "time": "11:00" },
-        { "date": "2025-10-19", "time": "12:00" },
-        { "date": "2025-10-19", "time": "13:00" },
-        { "date": "2025-10-19", "time": "14:00" },
-        { "date": "2025-10-20", "time": "08:00" },
-        { "date": "2025-10-20", "time": "09:00" },
-        { "date": "2025-10-20", "time": "10:00" },
-        { "date": "2025-10-20", "time": "11:00" },
-        { "date": "2025-10-20", "time": "12:00" },
-        { "date": "2025-10-20", "time": "13:00" },
-        { "date": "2025-10-20", "time": "14:00" },
-        { "date": "2025-10-20", "time": "15:00" },
-        { "date": "2025-10-21", "time": "08:00" },
-        { "date": "2025-10-21", "time": "09:00" },
-        { "date": "2025-10-21", "time": "10:00" },
-        { "date": "2025-10-21", "time": "11:00" },
-        { "date": "2025-10-21", "time": "12:00" },
-        { "date": "2025-10-21", "time": "13:00" },
-        { "date": "2025-10-21", "time": "14:00" },
-        { "date": "2025-10-21", "time": "15:00" },
-        { "date": "2025-10-21", "time": "16:00" },
-        { "date": "2025-10-21", "time": "17:00" }
-      ]
-    }
-    //const response = await api.get(`/doctors/${id}/appointments`);
-    console.log("API Response (docAppointments):", response.data);
+    const response = await api.get(`api/user/confirmed-appointment-slots`, { docId: id });
+      console.log("API Response (docAppointments) already booked:", response.data);
     return response.data; // expected to have { success, message, data }
   } catch (error: any) {
     console.log("API Error (docAppointments):", error.response?.data || error.message);

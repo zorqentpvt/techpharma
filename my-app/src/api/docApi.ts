@@ -165,7 +165,7 @@ export async function cancelAppointment(appointmentId: string): Promise<ApiRespo
   console.log("API Payload (cancelAppointment):", appointmentId);
 
   try {
-    const response = await api.delete(`api/user/cancel-appointment`, {
+    const response = await api.delete(`api/pharmacy/cancel-appointment`, {
       data: { AppointmentID: appointmentId },
       headers: { "Content-Type": "application/json" },
     });

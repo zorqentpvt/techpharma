@@ -140,26 +140,29 @@ export default function Doctors() {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
+const handleAppointment = async (id: string) => {
+  try {
+    console.log(id);
+    
+    // Call your API helper function
+    const response = await docAppointments(id);
 
-  const handleAppointment = async (id: string) => {
-    try {
-      console.log(id)
-      // Call your API helper function
-      const appointments = await docAppointments(id);
-  
-      // If API returned an error object
-      if ((appointments as any).success === false) {
-        console.error("Error fetching appointments:", (appointments as any).message);
-        return;
-      }
- // Update state
-      setSelectedDoctorId(id);
-      console.log(id)
-      setDoctorAppointments(appointments); // assuming you have this state
-    } catch (error) {
-      console.error("Unexpected error:", error);
+    // Check if API returned an error
+    if (!response.success) {
+      console.error("Error fetching appointments:", response.message);
+      return;
     }
-  };
+
+    // ✅ Extract the data array from the response
+    setSelectedDoctorId(id);
+    setDoctorAppointments(response.data || []); // Pass only the data array
+    
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    // Optional: Show error to user
+    setDoctorAppointments([]); // Reset on error
+  }
+};
   console.log(doctors)
   return (
     <div className="min-h-screen bg-[#f5f7fa]">

@@ -110,6 +110,17 @@ func (r *AppoinmentRepository) GetConfirmedAppionmentSlot(ctx context.Context, r
 	if err != nil {
 		return nil, err
 	}
+
+	// Return array with null values if no slots found
+	if len(slots) == 0 {
+		return []types.ConfirmedSlotResponse{
+			{
+				AppointmentDate: nil,
+				AppointmentTime: nil,
+			},
+		}, nil
+	}
+
 	return slots, nil
 }
 

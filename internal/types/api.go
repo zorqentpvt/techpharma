@@ -484,8 +484,8 @@ type ListPharmacyOrders struct {
 	Limit int `json:"limit"`
 }
 type ConfirmedSlotResponse struct {
-	AppointmentDate string `json:"appointment_date"`
-	AppointmentTime string `json:"appointment_time"`
+	AppointmentDate *string `json:"date"`
+	AppointmentTime *string `json:"time"`
 }
 type ConfirmedSlotRequest struct {
 	DocID uuid.UUID `json:"docId"`

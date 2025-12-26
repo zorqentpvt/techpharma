@@ -62,7 +62,7 @@ export async function docAppointments(id: string) {
 
   try {
 
-    const response = await api.get(`api/user/confirmed-appointment-slots`, { docId: id });
+    const response = await api.get(`api/user/confirmed-appointment-slots`, { params: { docId: id } });
       console.log("API Response (docAppointments) already booked:", response.data);
     return response.data; // expected to have { success, message, data }
   } catch (error: any) {

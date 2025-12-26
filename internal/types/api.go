@@ -488,5 +488,5 @@ type ConfirmedSlotResponse struct {
 	AppointmentTime string `json:"appointment_time"`
 }
 type ConfirmedSlotRequest struct {
-	DocID uuid.UUID `json:"docId" binding:"required"`
+	DocID uuid.UUID `json:"docId"`
 }

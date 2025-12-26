@@ -84,7 +84,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			patientRoutes.DELETE("/remove-cart", orderHandler.RemoveFromCart)
 
 			patientRoutes.POST("/book-appointment", appoinmentHandler.BookAppointment)
-			patientRoutes.GET("/confirmed-appiontment-slot", appoinmentHandler.ConfirmedAppionmentSlot)
+			patientRoutes.GET("/confirmed-appointment-slots", appoinmentHandler.ConfirmedAppionmentSlot)
 
 			patientRoutes.GET("/consultations", appoinmentHandler.FetchPatientConsultations)
 

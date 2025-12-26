@@ -277,15 +277,28 @@ func (h *AppointmentHandlerClean) ScheduleAppointment(c *gin.Context) {
 
 // ConfirmedAppionmentSlot handles GET /api/doctor/confirmed-slots
 func (h *AppointmentHandlerClean) ConfirmedAppionmentSlot(c *gin.Context) {
-
-	var req types.ConfirmedSlotRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	// Get docId from query parameter (not body)
+	docIDStr := c.Query("docId")
+	if docIDStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Invalid request payload",
-			"details": err.Error(),
+			"message": "docId is required",
 		})
 		return
+	}
+
+	// Parse UUID
+	docID, err := uuid.Parse(docIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid docId format",
+		})
+		return
+	}
+
+	req := types.ConfirmedSlotRequest{
+		DocID: docID,
 	}
 
 	slots, err := h.appointmentUseCase.GetConfirmedAppionmentSlot(c.Request.Context(), &req)
@@ -300,7 +313,6 @@ func (h *AppointmentHandlerClean) ConfirmedAppionmentSlot(c *gin.Context) {
 		"data":    slots,
 	})
 }
-
 func (h *AppointmentHandlerClean) handleError(c *gin.Context, err error) {
 	switch {
 	case errors.IsNotFound(err):

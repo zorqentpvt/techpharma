@@ -444,6 +444,7 @@ type ScheduleAppointmentRequest struct {
 type DoctorScheduleResponse struct {
 	ID            string `json:"id"`
 	Patient       string `json:"patient"`
+	PatientID     string `json:"patientId"`
 	Reason        string `json:"reason"`
 	Mode          string `json:"mode"`
 	Status        string `json:"status"`

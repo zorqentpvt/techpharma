@@ -370,5 +370,18 @@ func (r *OrderRepository) GetPharmacyOrders(ctx context.Context, pharmacyID uuid
 		Limit(filter.Limit).
 		Find(&orders).Error
 
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Calculate total amount from order items
+	for _, order := range orders {
+		var totalAmount float64
+		for _, item := range order.OrderItems {
+			totalAmount += item.Subtotal
+		}
+		order.TotalAmount = totalAmount
+	}
+
 	return orders, total, err
 }

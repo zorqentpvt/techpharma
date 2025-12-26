@@ -312,13 +312,47 @@ func (r *AppoinmentRepository) GetUpcomingAppointmentsByPatient(ctx context.Cont
 	err := r.db.WithContext(ctx).
 		Preload("Doctor").
 		Preload("Doctor.User").
-		Where("patient_id = ? AND appointment_date >= ? AND status = ?",
-			patientID, now.Format("2006-01-02"), entity.AppointmentStatusConfirmed).
-		Order("appointment_date ASC, appointment_time ASC").
+		Preload("BookedSlots", func(db *gorm.DB) *gorm.DB {
+			return db.Where("appointment_date >= ? AND status IN ?",
+				now.Format("2006-01-02"), []entity.AppointmentStatus{
+					entity.AppointmentStatusPending,
+					entity.AppointmentStatusConfirmed,
+				}).
+				Order("appointment_date ASC, appointment_time ASC")
+		}).
+		Where("appointments.patient_id = ?", patientID).
+		Where("appointments.id IN (?)",
+			r.db.Table("booked_slots").
+				Select("appointment_id").
+				Where("appointment_date >= ? AND status IN ?",
+					now.Format("2006-01-02"), []entity.AppointmentStatus{
+						entity.AppointmentStatusPending,
+						entity.AppointmentStatusConfirmed,
+					}),
+		).
 		Find(&appointments).Error
+
 	if err != nil {
 		return nil, err
 	}
+
+	// Sort appointments by their earliest booked slot
+	sort.Slice(appointments, func(i, j int) bool {
+		if len(appointments[i].BookedSlots) == 0 || len(appointments[j].BookedSlots) == 0 {
+			return false
+		}
+		slotI := appointments[i].BookedSlots[0]
+		slotJ := appointments[j].BookedSlots[0]
+
+		dateI, _ := time.Parse("2006-01-02", slotI.AppointmentDate)
+		dateJ, _ := time.Parse("2006-01-02", slotJ.AppointmentDate)
+
+		if dateI.Equal(dateJ) {
+			return slotI.AppointmentTime < slotJ.AppointmentTime
+		}
+		return dateI.Before(dateJ)
+	})
+
 	return appointments, nil
 }
 
@@ -326,21 +360,51 @@ func (r *AppoinmentRepository) GetAppointmentHistoryByPatient(ctx context.Contex
 	var appointments []*entity.Appointment
 	now := time.Now()
 
-	// Assuming 'consulted' maps to 'completed'. History also includes other terminal statuses.
-	// This logic mirrors GetAppointmentHistory for a doctor, providing a complete patient history.
 	err := r.db.WithContext(ctx).
 		Preload("Doctor").
 		Preload("Doctor.User").
-		Where("patient_id = ? AND (appointment_date < ? OR status IN ?)",
-			patientID, now.Format("2006-01-02"), []entity.AppointmentStatus{
-				entity.AppointmentStatusCompleted,
-				entity.AppointmentStatusCancelled,
-				entity.AppointmentStatusNoShow,
-			}).
-		Order("appointment_date DESC, appointment_time DESC").
+		Preload("BookedSlots", func(db *gorm.DB) *gorm.DB {
+			return db.Where("appointment_date < ? OR status IN ?",
+				now.Format("2006-01-02"), []entity.AppointmentStatus{
+					entity.AppointmentStatusCompleted,
+					entity.AppointmentStatusCancelled,
+					entity.AppointmentStatusNoShow,
+				}).
+				Order("appointment_date DESC, appointment_time DESC")
+		}).
+		Where("appointments.patient_id = ?", patientID).
+		Where("appointments.id IN (?)",
+			r.db.Table("booked_slots").
+				Select("appointment_id").
+				Where("appointment_date < ? OR status IN ?",
+					now.Format("2006-01-02"), []entity.AppointmentStatus{
+						entity.AppointmentStatusCompleted,
+						entity.AppointmentStatusCancelled,
+						entity.AppointmentStatusNoShow,
+					}),
+		).
 		Find(&appointments).Error
+
 	if err != nil {
 		return nil, err
 	}
+
+	// Sort appointments by their latest booked slot (most recent first)
+	sort.Slice(appointments, func(i, j int) bool {
+		if len(appointments[i].BookedSlots) == 0 || len(appointments[j].BookedSlots) == 0 {
+			return false
+		}
+		slotI := appointments[i].BookedSlots[0]
+		slotJ := appointments[j].BookedSlots[0]
+
+		dateI, _ := time.Parse("2006-01-02", slotI.AppointmentDate)
+		dateJ, _ := time.Parse("2006-01-02", slotJ.AppointmentDate)
+
+		if dateI.Equal(dateJ) {
+			return slotI.AppointmentTime > slotJ.AppointmentTime
+		}
+		return dateI.After(dateJ)
+	})
+
 	return appointments, nil
 }

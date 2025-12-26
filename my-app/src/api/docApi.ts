@@ -10,9 +10,11 @@ export interface ApiResponse<T = any> {
 
 export interface Appointment {
   id: string;
-  doctorId: string;
-  patientId: string;
+  doctorId?: string;
+  patientId?: string;
+  patientID?: string; // Alternative field name
   patient: string; // patient name
+  patientProfile?: string; // patient profile image
   reason?: string; // optional reason for appointment
   selectedSlots: Slot[]; // slots booked by the patient
   mode: "online" | "offline"; // type of appointment
@@ -22,6 +24,8 @@ export interface Appointment {
 }
 
 export interface Slot {
+  slotId?: string; // Slot ID for scheduling (matches backend field name)
+  appointmentId?: string; // Appointment ID associated with slot
   date: string;
   time: string;
 }
@@ -52,10 +56,9 @@ export interface BookAppointmentPayload {
 }
 
 export interface ScheduleAppointmentPayload {
-  patientID:string;
-  doctorId: string;
-  date: string;
-  slots: string[]; // e.g., ["09:00", "10:00"]
+  patientID: string;
+  appointmentID: string;
+  slotID: string;
 }
 
 // FETCH CONSULTATIONS (for consultation page)
@@ -165,8 +168,8 @@ export async function cancelAppointment(appointmentId: string): Promise<ApiRespo
   console.log("API Payload (cancelAppointment):", appointmentId);
 
   try {
-    const response = await api.delete(`api/pharmacy/cancel-appointment`, {
-      data: { AppointmentID: appointmentId },
+    const response = await api.delete(`api/doctor/cancel-appointment`, {
+      data: { appointmentId: appointmentId }, // Changed to camelCase to match parameter
       headers: { "Content-Type": "application/json" },
     });
     console.log("API Response (cancelAppointment):", response.data);

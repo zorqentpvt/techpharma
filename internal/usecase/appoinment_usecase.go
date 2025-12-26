@@ -181,6 +181,7 @@ func (u *appoinmentUseCase) GetDoctorSchedule(ctx context.Context, doctorID uuid
 				appointmentMap[apt.ID] = &types.DoctorScheduleResponse{
 					ID:            apt.ID.String(),
 					Patient:       patientName,
+					PatientID:     apt.PatientID.String(),
 					Reason:        apt.Reason,
 					Mode:          string(apt.Mode),
 					Status:        string(bookedSlot.Status),
@@ -371,7 +372,7 @@ func (u *appoinmentUseCase) ScheduleAppointment(ctx context.Context, req *types.
 	targetSlot.Status = entity.AppointmentStatusConfirmed
 	now := time.Now()
 	appointment.ConfirmedAt = &now
-	appointment.JitsiID = req.JitsiID
+	appointment.JitsiID = uuid.New().String()[:8]
 
 	if err := u.appoinmentRepo.Update(ctx, appointment); err != nil {
 		return errors.NewDomainError("UPDATE_FAILED", "Failed to confirm appointment", err)
@@ -394,46 +395,57 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 		return nil, errors.NewDomainError("FETCH_FAILED", "Failed to fetch upcoming consultations", err)
 	}
 	fmt.Printf("the upcoming data is %+v\n", upcomingAppts)
+
 	historyAppts, err := u.appoinmentRepo.GetAppointmentHistoryByPatient(ctx, patientID)
 	if err != nil {
 		return nil, errors.NewDomainError("FETCH_FAILED", "Failed to fetch consultation history", err)
 	}
 
-	upcoming := make([]types.ConsultationResponse, 0, len(upcomingAppts))
+	// Transform upcoming appointments - iterate through ALL slots
+	upcoming := make([]types.ConsultationResponse, 0)
 	for _, appt := range upcomingAppts {
 		if len(appt.BookedSlots) == 0 {
 			continue
 		}
-		slot := appt.BookedSlots[0]
-		upcoming = append(upcoming, types.ConsultationResponse{
-			ID:     appt.ID.String(),
-			Name:   getDoctorName(appt),
-			Time:   slot.AppointmentTime,
-			Date:   slot.AppointmentDate,
-			Status: string(slot.Status),
-			Mode:   string(appt.Mode),
-			Reason: appt.Reason,
-		})
+
+		// ✅ LOOP through ALL slots instead of just taking [0]
+		for _, slot := range appt.BookedSlots {
+			upcoming = append(upcoming, types.ConsultationResponse{
+				ID:     appt.ID.String(),
+				SlotID: slot.ID.String(), // Add slot ID if your type supports it
+				Name:   getDoctorName(appt),
+				Time:   slot.AppointmentTime,
+				Date:   slot.AppointmentDate,
+				Status: string(slot.Status),
+				Mode:   string(appt.Mode),
+				Reason: appt.Reason,
+			})
+		}
 	}
 
-	history := make([]types.ConsultationResponse, 0, len(historyAppts))
+	// Transform history appointments - iterate through ALL slots
+	history := make([]types.ConsultationResponse, 0)
 	for _, appt := range historyAppts {
 		if len(appt.BookedSlots) == 0 {
 			continue
 		}
-		slot := appt.BookedSlots[0]
-		history = append(history, types.ConsultationResponse{
-			ID:           appt.ID.String(),
-			Name:         getDoctorName(appt),
-			Time:         slot.AppointmentTime,
-			Date:         slot.AppointmentDate,
-			Status:       string(slot.Status),
-			Mode:         string(appt.Mode),
-			Reason:       appt.Reason,
-			Diagnosis:    appt.Notes,
-			Prescription: "", // Assuming prescription is not stored directly
-			Notes:        appt.Notes,
-		})
+
+		// ✅ LOOP through ALL slots instead of just taking [0]
+		for _, slot := range appt.BookedSlots {
+			history = append(history, types.ConsultationResponse{
+				ID:           appt.ID.String(),
+				SlotID:       slot.ID.String(), // Add slot ID if your type supports it
+				Name:         getDoctorName(appt),
+				Time:         slot.AppointmentTime,
+				Date:         slot.AppointmentDate,
+				Status:       string(slot.Status),
+				Mode:         string(appt.Mode),
+				Reason:       appt.Reason,
+				Diagnosis:    appt.Notes,
+				Prescription: "",
+				Notes:        appt.Notes,
+			})
+		}
 	}
 
 	return &types.ConsultationsResponse{Upcoming: upcoming, History: history}, nil

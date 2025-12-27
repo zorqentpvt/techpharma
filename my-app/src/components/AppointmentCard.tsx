@@ -45,32 +45,10 @@ export default function AppointmentCard({ appt, selectedSlot, setSelectedSlot, o
     console.log("Slot ID:", slot.slotId);
   };
 
+  // Check if there are changes (slot selected OR manual input filled)
+  const hasChanges = selectedSlotIndex !== -1 || (manualSlot.date !== "" && manualSlot.time !== "");
+
   const handleConfirmSlot = async () => {
-    // Validate slot selection
-    if (selectedSlotIndex === -1) {
-      setPopup("Please select a slot first.");
-      return;
-    }
-
-    if (!selectedSlot.date || !selectedSlot.time) {
-      setPopup("Please select a valid date and time.");
-      return;
-    }
-
-    // For manual slots, we might need different handling
-    if (manualVisible) {
-      setPopup("Manual slot scheduling is not yet implemented. Please select from available slots.");
-      return;
-    }
-
-    // Validate slotID for API call
-    if (!selectedSlotId) {
-      setPopup("Slot ID is missing. Please contact support.");
-      console.error("Selected slot:", selectedSlot);
-      console.error("Appointment slots:", appt.selectedSlots);
-      return;
-    }
-
     // Get patientID - try both field names
     const patientID = appt.patientID || appt.patientId;
     
@@ -80,28 +58,67 @@ export default function AppointmentCard({ appt, selectedSlot, setSelectedSlot, o
       return;
     }
 
-    try {
-      // ✅ Correct payload format as per your API requirements
-      const payload = {
-        patientID: patientID,        // Use patientID from appointment
-        appointmentID: appt.id,      // Use appointment id
-        slotID: selectedSlotId,      // Use the selected slot's id
-      };
+    let payload: any;
+    let displayDate: string;
+    let displayTime: string;
+    let displayMode: string;
 
-      console.log("Scheduling appointment with payload:", payload);
-      console.log("Selected slot details:", selectedSlot);
-      console.log("Selected slot ID:", selectedSlotId);
+    // Handle manual slot input
+    if (manualVisible && manualSlot.date && manualSlot.time) {
+      // Use manual date and time
+      payload = {
+        patientID: patientID,
+        appointmentID: appt.id,
+        date: manualSlot.date,
+        time: manualSlot.time,
+        mode: manualSlot.mode,
+      };
+      displayDate = manualSlot.date;
+      displayTime = manualSlot.time;
+      displayMode = manualSlot.mode;
       
+      console.log("Scheduling appointment with manual slot:", payload);
+    } else if (selectedSlotIndex !== -1) {
+      // Use selected slot
+      if (!selectedSlotId) {
+        setPopup("Slot ID is missing. Please contact support.");
+        console.error("Selected slot:", selectedSlot);
+        console.error("Appointment slots:", appt.selectedSlots);
+        return;
+      }
+
+      if (!selectedSlot.date || !selectedSlot.time) {
+        setPopup("Please select a valid date and time.");
+        return;
+      }
+
+      payload = {
+        patientID: patientID,
+        appointmentID: appt.id,
+        slotID: selectedSlotId,
+      };
+      displayDate = selectedSlot.date;
+      displayTime = selectedSlot.time;
+      displayMode = selectedSlot.mode;
+      
+      console.log("Scheduling appointment with slot ID:", payload);
+    } else {
+      setPopup("Please select a slot or enter manual date and time.");
+      return;
+    }
+
+    try {
       const res: ApiResponse = await scheduleAppointment(payload);
       
       if (res.success) {
-        setPopup(`✅ Scheduled patient on ${selectedSlot.date} ${selectedSlot.time} (${selectedSlot.mode})`);
+        setPopup(`✅ Scheduled patient on ${displayDate} ${displayTime} (${displayMode})`);
         setTimeout(() => setPopup(null), 3000);
         onReload();
         setSelectedSlot({ date: "", time: "", mode: "online" });
         setManualSlot({ date: "", time: "", mode: "online" });
         setManualVisible(false);
         setSelectedSlotId("");
+        setSelectedSlotIndex(-1);
       } else {
         setPopup(res.message || "Failed to schedule appointment.");
       }
@@ -126,6 +143,15 @@ export default function AppointmentCard({ appt, selectedSlot, setSelectedSlot, o
     } catch (error) {
       console.error("Error cancelling appointment:", error);
       setPopup("Failed to cancel appointment.");
+    }
+  };
+
+  const handleManualInputChange = () => {
+    // Clear slot selection when manually typing
+    if (selectedSlotIndex !== -1) {
+      setSelectedSlotIndex(-1);
+      setSelectedSlotId("");
+      setSelectedSlot({ date: "", time: "", mode: "online" });
     }
   };
 
@@ -196,13 +222,19 @@ export default function AppointmentCard({ appt, selectedSlot, setSelectedSlot, o
             type="date"
             className="border p-1 rounded-md text-sm focus:ring-1 focus:ring-blue-400"
             value={manualSlot.date}
-            onChange={(e) => setManualSlot({ ...manualSlot, date: e.target.value })}
+            onChange={(e) => {
+              setManualSlot({ ...manualSlot, date: e.target.value });
+              handleManualInputChange();
+            }}
           />
           <input
             type="time"
             className="border p-1 rounded-md text-sm focus:ring-1 focus:ring-blue-400"
             value={manualSlot.time}
-            onChange={(e) => setManualSlot({ ...manualSlot, time: e.target.value })}
+            onChange={(e) => {
+              setManualSlot({ ...manualSlot, time: e.target.value });
+              handleManualInputChange();
+            }}
           />
           <button
             onClick={() =>
@@ -228,13 +260,17 @@ export default function AppointmentCard({ appt, selectedSlot, setSelectedSlot, o
         </div>
       )}
 
-      {/* Confirm / Cancel */}
+      {/* Confirm / Cancel - Single confirm button for both slot and manual */}
       {appt.status === "pending" && (
         <div className="flex gap-2 mt-3">
           <button
             onClick={handleConfirmSlot}
-            disabled={selectedSlotIndex === -1}
-            className="px-3 py-1 text-sm rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!hasChanges}
+            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              hasChanges
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
           >
             Confirm
           </button>

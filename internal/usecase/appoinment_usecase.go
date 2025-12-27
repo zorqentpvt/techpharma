@@ -348,19 +348,37 @@ func (u *appoinmentUseCase) ScheduleAppointment(ctx context.Context, req *types.
 		return errors.NewDomainError("INVALID_PATIENT", "Appointment does not belong to this patient", errors.ErrInvalidInput)
 	}
 
-	if len(appointment.BookedSlots) == 0 {
-		return errors.NewDomainError("INVALID_APPOINTMENT", "Appointment has no slots", errors.ErrInvalidInput)
-	}
-
 	var targetSlot *entity.BookedSlot
-	for i := range appointment.BookedSlots {
-		if appointment.BookedSlots[i].ID == req.SlotID {
-			targetSlot = &appointment.BookedSlots[i]
-			break
+	if req.SlotID != uuid.Nil {
+		if len(appointment.BookedSlots) == 0 {
+			return errors.NewDomainError("INVALID_APPOINTMENT", "Appointment has no slots", errors.ErrInvalidInput)
 		}
-	}
-	if targetSlot == nil {
-		return errors.NewDomainError("SLOT_NOT_FOUND", "Slot not found", errors.ErrNotFound)
+		for i := range appointment.BookedSlots {
+			if appointment.BookedSlots[i].ID == req.SlotID {
+				targetSlot = &appointment.BookedSlots[i]
+				break
+			}
+		}
+		if targetSlot == nil {
+			return errors.NewDomainError("SLOT_NOT_FOUND", "Slot not found", errors.ErrNotFound)
+		}
+	} else {
+		if req.AppointmentDate == nil || req.AppointmentTime == nil {
+			return errors.NewDomainError("INVALID_INPUT", "Date and time are required for new slot", errors.ErrInvalidInput)
+		}
+		if req.AppointmentMode != nil {
+			appointment.Mode = entity.AppointmentMode(*req.AppointmentMode)
+		}
+		newSlot := entity.BookedSlot{
+			ID:              uuid.New(),
+			AppointmentID:   appointment.ID,
+			AppointmentDate: *req.AppointmentDate,
+			AppointmentTime: *req.AppointmentTime,
+			Duration:        30,
+			Status:          entity.AppointmentStatusPending,
+		}
+		appointment.BookedSlots = append(appointment.BookedSlots, newSlot)
+		targetSlot = &appointment.BookedSlots[len(appointment.BookedSlots)-1]
 	}
 
 	// 4. Check status

@@ -434,11 +434,14 @@ type ScheduleSlotRequest struct {
 }
 
 type ScheduleAppointmentRequest struct {
-	DoctorID      uuid.UUID `json:"-"`
-	PatientID     uuid.UUID `json:"patientID"`
-	AppointmentID uuid.UUID `json:"appointmentID"`
-	SlotID        uuid.UUID `json:"slotID"`
-	JitsiID       string    `json:"jitsiID"`
+	DoctorID        uuid.UUID `json:"-"`
+	PatientID       uuid.UUID `json:"patientID"`
+	AppointmentID   uuid.UUID `json:"appointmentID"`
+	SlotID          uuid.UUID `json:"slotID"`
+	JitsiID         string    `json:"jitsiID"`
+	AppointmentDate *string   `json:"date"`
+	AppointmentTime *string   `json:"time"`
+	AppointmentMode *string   `json:"mode"`
 }
 
 type DoctorScheduleResponse struct {

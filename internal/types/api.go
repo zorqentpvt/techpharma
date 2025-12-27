@@ -470,6 +470,7 @@ type UpdateAppointmentStatusRequest struct {
 type ConsultationResponse struct {
 	ID           string `json:"id"`
 	SlotID       string `json:"slotId"`
+	JitsiID      string `json:"jitsiId"`
 	Name         string `json:"name"`
 	Time         string `json:"time"`
 	Date         string `json:"date"`

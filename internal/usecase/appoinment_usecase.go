@@ -245,14 +245,15 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 		// Iterate through ALL booked slots, not just the first one
 		for _, slot := range appt.BookedSlots {
 			upcoming = append(upcoming, types.ConsultationResponse{
-				ID:     appt.ID.String(),
-				SlotID: slot.ID.String(),
-				Name:   patientName,
-				Time:   slot.AppointmentTime,
-				Date:   slot.AppointmentDate,
-				Status: string(slot.Status),
-				Mode:   string(appt.Mode),
-				Reason: appt.Reason,
+				ID:      appt.ID.String(),
+				SlotID:  slot.ID.String(),
+				JitsiID: appt.JitsiID,
+				Name:    patientName,
+				Time:    slot.AppointmentTime,
+				Date:    slot.AppointmentDate,
+				Status:  string(slot.Status),
+				Mode:    string(appt.Mode),
+				Reason:  appt.Reason,
 			})
 		}
 	}

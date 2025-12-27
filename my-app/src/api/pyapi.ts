@@ -1,5 +1,6 @@
 // pyapi.ts
 import api from "./api";
+// pyapi.ts - Updated interfaces and functions
 
 export interface OrderData {
   orderId: string;
@@ -24,11 +25,14 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+// ✅ Updated to include medicineId and quantity
 export interface CreateOrderPayload {
   amount: number;
   currency: string;
   description: string;
   cartId: string | null;
+  medicineId?: string; // Added
+  quantity?: number;    // Added
   notes: Record<string, any>;
 }
 
@@ -46,7 +50,7 @@ export async function createOrder(
       orderData,
       { headers: { Authorization: `Bearer ${token}` } }
     );
-
+    console.log("Create order request:", orderData);
     console.log("Create order SUCCESS:", response.data);
     return response.data;
   } catch (error: any) {
@@ -80,4 +84,3 @@ export async function verifyPayment(
     throw new Error(error.response?.data?.message || "Verification failed");
   }
 }
-

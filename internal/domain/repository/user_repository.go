@@ -63,6 +63,9 @@ type OrderRepository interface {
 	GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (*entity.Pharmacy, error)
 	GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, error)
 	GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, filter types.ListPharmacyOrders) ([]*entity.Order, int64, error)
+
+	CreateOrder(ctx context.Context, order *entity.Order) error
+	CreateOrderItem(ctx context.Context, orderItems *entity.OrderItem) error
 }
 type PaymentRepository interface {
 	Create(ctx context.Context, payment *entity.Payment) error

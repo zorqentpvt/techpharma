@@ -68,6 +68,14 @@ func (r *OrderRepository) AddToCart(ctx context.Context, cart *entity.Cart) erro
 		return nil
 	})
 }
+
+func (r *OrderRepository) CreateOrder(ctx context.Context, order *entity.Order) error {
+	return r.db.WithContext(ctx).Create(order).Error
+}
+
+func (r *OrderRepository) CreateOrderItem(ctx context.Context, orderItems *entity.OrderItem) error {
+	return r.db.WithContext(ctx).Create(orderItems).Error
+}
 func (r *OrderRepository) GetCartByUserID(ctx context.Context, userID uuid.UUID) (*entity.Cart, error) {
 	var cart entity.Cart
 	err := r.db.WithContext(ctx).

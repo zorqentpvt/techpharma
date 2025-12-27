@@ -380,6 +380,8 @@ type MedicineFilters struct {
 type CreateOrderRequest struct {
 	Amount          float64                `json:"amount" binding:"required,gt=0"`
 	Currency        string                 `json:"currency" binding:"required"`
+	MedicineID      *uuid.UUID             `json:"medicineId" binding:"omitempty"`
+	Quantity        *int64                 `json:"quantity" binding:"omitempty,gt=0"`
 	Description     string                 `json:"description"`
 	CartID          *string                `json:"cartId"`
 	DeliveryAddress string                 `json:"deliveryAddress"`
@@ -396,6 +398,8 @@ type VerifyPaymentRequest struct {
 type OrderResponse struct {
 	OrderID         string                 `json:"orderId"`
 	RazorpayOrderID string                 `json:"razorpayOrderId"`
+	MedicineID      *uuid.UUID             `json:"medicineId"`
+	Quantity        *int64                 `json:"quantity"`
 	Amount          float64                `json:"amount"`
 	Currency        string                 `json:"currency"`
 	RazorpayKeyID   string                 `json:"razorpayKeyId"`

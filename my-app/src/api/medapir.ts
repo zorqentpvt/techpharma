@@ -122,3 +122,13 @@ export async function removecart(medicineId: string) {
     };
   }
 }
+export async function fetchUserOrders() {
+  try {
+    const response = await api.get("api/user/orders");
+    console.log("API Response (fetchOrders):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.log("API Error (fetchOrders):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}

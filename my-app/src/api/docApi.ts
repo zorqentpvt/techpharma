@@ -182,3 +182,13 @@ export async function cancelAppointment(appointmentId: string): Promise<ApiRespo
     };
   }
 }
+export async function completeConsultation(payload: CompleteConsultationPayload): Promise<ApiResponse> {  
+  console.log("API Payload (completeConsultation):", payload);
+  try {
+    const response = await api.post("api/doctor/complete-consultation", payload); 
+    console.log("API Response (completeConsultation):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("API Error (completeConsultation):", error.response?.data || error.message);
+  }
+}

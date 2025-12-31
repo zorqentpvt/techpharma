@@ -131,6 +131,7 @@ func (r *AppoinmentRepository) GetUpcomingAppointments(ctx context.Context, doct
 
 	err := r.db.WithContext(ctx).
 		Preload("Patient").
+		Preload("Doctor").
 		Preload("BookedSlots", func(db *gorm.DB) *gorm.DB {
 			return db.Where("appointment_date >= ? AND status IN ?",
 				now.Format("2006-01-02"), []entity.AppointmentStatus{
@@ -180,7 +181,7 @@ func (r *AppoinmentRepository) GetAppointmentHistory(ctx context.Context, doctor
 	err := r.db.WithContext(ctx).
 		Preload("Patient").
 		Preload("OpChart"). // ✅ Add this to load the relationship
-
+		Preload("Doctor").
 		Preload("BookedSlots", func(db *gorm.DB) *gorm.DB {
 			return db.Where("appointment_date < ? OR status IN ?",
 				now.Format("2006-01-02"), []entity.AppointmentStatus{

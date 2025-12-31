@@ -240,18 +240,13 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 			continue
 		}
 
-		patientName := ""
-		if appt.Patient != nil {
-			patientName = appt.Patient.FirstName + " " + appt.Patient.LastName
-		}
-
 		// Iterate through ALL booked slots, not just the first one
 		for _, slot := range appt.BookedSlots {
 			upcoming = append(upcoming, types.ConsultationResponse{
 				ID:         appt.ID,
 				SlotID:     slot.ID,
 				JitsiID:    appt.JitsiID,
-				Name:       patientName,
+				Name:       appt.Patient.FirstName + " " + appt.Patient.LastName,
 				DoctorName: appt.DoctorName,
 				//DoctorSpecialization: appt.Doctor.SpecializationID,
 				DoctorID:         appt.DoctorID,
@@ -273,11 +268,6 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 			continue
 		}
 
-		patientName := ""
-		if appt.Patient != nil {
-			patientName = appt.Patient.FirstName + " " + appt.Patient.LastName
-		}
-
 		// Iterate through ALL booked slots, not just the first one
 		for _, slot := range appt.BookedSlots {
 			var opChartResp *types.OpChartResponse
@@ -287,14 +277,14 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 				Diagnosis:    appt.OpChart.Diagnosis,
 				Prescription: appt.OpChart.Prescription,
 				DoctorNotes:  appt.OpChart.DoctorNotes,
-				Date:         appt.OpChart.Date,
+				Date:         strings.Split(appt.OpChart.Date, "T")[0],
 				Time:         appt.OpChart.Time,
 			}
 
 			history = append(history, types.ConsultationResponse{
 				ID:         appt.ID,
 				SlotID:     slot.ID,
-				Name:       patientName,
+				Name:       appt.Patient.FirstName + " " + appt.Patient.LastName,
 				DoctorName: appt.DoctorName,
 				//DoctorSpecialization: appt.Doctor.SpecializationID,
 
@@ -460,7 +450,7 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 			upcoming = append(upcoming, types.ConsultationResponse{
 				ID:         appt.ID,
 				SlotID:     slot.ID, // Add slot ID if your type supports it
-				Name:       getDoctorName(appt),
+				Name:       appt.Patient.FirstName + " " + appt.Patient.LastName,
 				DoctorName: appt.DoctorName,
 				//DoctorSpecialization: appt.Doctor.SpecializationID,
 				DoctorID:         appt.DoctorID,
@@ -492,14 +482,14 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 				Diagnosis:    appt.OpChart.Diagnosis,
 				Prescription: appt.OpChart.Prescription,
 				DoctorNotes:  appt.OpChart.DoctorNotes,
-				Date:         appt.OpChart.Date,
+				Date:         strings.Split(appt.OpChart.Date, "T")[0],
 				Time:         appt.OpChart.Time,
 			}
 
 			history = append(history, types.ConsultationResponse{
 				ID:         appt.ID,
 				SlotID:     slot.ID, // Add slot ID if your type supports it
-				Name:       getDoctorName(appt),
+				Name:       appt.Patient.FirstName + " " + appt.Patient.LastName,
 				DoctorName: appt.DoctorName,
 				//DoctorSpecialization: appt.Doctor.SpecializationID,
 				DoctorID:         appt.DoctorID,

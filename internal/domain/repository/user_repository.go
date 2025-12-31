@@ -92,4 +92,6 @@ type AppoinmentRepository interface {
 	DeletePendingSlots(ctx context.Context, appointmentID uuid.UUID) error
 	GetConfirmedAppionmentSlot(ctx context.Context, req *types.ConfirmedSlotRequest) ([]types.ConfirmedSlotResponse, error)
 	CancelBookedSlot(ctx context.Context, slotID uuid.UUID, reason string) error
+
+	CreateOpChart(ctx context.Context, req *entity.OpChart) error
 }

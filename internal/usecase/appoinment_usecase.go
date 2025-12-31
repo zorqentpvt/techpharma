@@ -25,6 +25,8 @@ type AppoinmentUseCase interface {
 	FetchConsultations(ctx context.Context, doctorID uuid.UUID) (*types.ConsultationsResponse, error)
 	FetchPatientConsultations(ctx context.Context, patientID uuid.UUID) (*types.ConsultationsResponse, error)
 	GetConfirmedAppionmentSlot(ctx context.Context, req *types.ConfirmedSlotRequest) ([]types.ConfirmedSlotResponse, error)
+
+	CompleteConsultation(ctx context.Context, req *types.CompleteConsultationRequest, doctorID uuid.UUID) error
 }
 
 // orderUseCase implements the OrderUseCase interface
@@ -110,6 +112,7 @@ func (u *appoinmentUseCase) BookAppointment(ctx context.Context, req *types.Appo
 	appointment := &entity.Appointment{
 		PatientID:       req.PatientID,
 		DoctorID:        req.DoctorID,
+		DoctorName:      doctor.User.FirstName + " " + doctor.User.LastName,
 		Reason:          req.Reason,
 		Mode:            req.Mode,
 		ConsultationFee: doctor.ConsultationFee,
@@ -245,15 +248,20 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 		// Iterate through ALL booked slots, not just the first one
 		for _, slot := range appt.BookedSlots {
 			upcoming = append(upcoming, types.ConsultationResponse{
-				ID:      appt.ID.String(),
-				SlotID:  slot.ID.String(),
-				JitsiID: appt.JitsiID,
-				Name:    patientName,
-				Time:    slot.AppointmentTime,
-				Date:    slot.AppointmentDate,
-				Status:  string(slot.Status),
-				Mode:    string(appt.Mode),
-				Reason:  appt.Reason,
+				ID:               appt.ID,
+				SlotID:           slot.ID,
+				JitsiID:          appt.JitsiID,
+				Name:             patientName,
+				DoctorName:       appt.DoctorName,
+				DoctorID:         appt.DoctorID,
+				PatientID:        appt.PatientID,
+				IsDoctorMeeting:  appt.IsDoctorMeeting,
+				IsPatientMeeting: appt.IsPatientMeeting,
+				Time:             slot.AppointmentTime,
+				Date:             slot.AppointmentDate,
+				Status:           string(slot.Status),
+				Mode:             string(appt.Mode),
+				Reason:           appt.Reason,
 			})
 		}
 	}
@@ -271,18 +279,35 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 
 		// Iterate through ALL booked slots, not just the first one
 		for _, slot := range appt.BookedSlots {
+			var opChartResp *types.OpChartResponse
+
+			opChartResp = &types.OpChartResponse{
+				ID:           appt.OpChart.ID,
+				Diagnosis:    appt.OpChart.Diagnosis,
+				Prescription: appt.OpChart.Prescription,
+				DoctorNotes:  appt.OpChart.DoctorNotes,
+				Date:         appt.OpChart.Date,
+				Time:         appt.OpChart.Time,
+			}
+
 			history = append(history, types.ConsultationResponse{
-				ID:           appt.ID.String(),
-				SlotID:       slot.ID.String(),
-				Name:         patientName,
-				Time:         slot.AppointmentTime,
-				Date:         slot.AppointmentDate,
-				Status:       string(slot.Status),
-				Mode:         string(appt.Mode),
-				Reason:       appt.Reason,
-				Diagnosis:    appt.Notes,
-				Prescription: "",
-				Notes:        appt.Notes,
+				ID:               appt.ID,
+				SlotID:           slot.ID,
+				Name:             patientName,
+				DoctorName:       appt.DoctorName,
+				DoctorID:         appt.DoctorID,
+				PatientID:        appt.PatientID,
+				IsDoctorMeeting:  appt.IsDoctorMeeting,
+				IsPatientMeeting: appt.IsPatientMeeting,
+				Time:             slot.AppointmentTime,
+				Date:             slot.AppointmentDate,
+				Status:           string(slot.Status),
+				Mode:             string(appt.Mode),
+				Reason:           appt.Reason,
+				Diagnosis:        appt.Notes,
+				Prescription:     "",
+				Notes:            appt.Notes,
+				OpChart:          opChartResp,
 			})
 		}
 	}
@@ -430,14 +455,19 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 		// ✅ LOOP through ALL slots instead of just taking [0]
 		for _, slot := range appt.BookedSlots {
 			upcoming = append(upcoming, types.ConsultationResponse{
-				ID:     appt.ID.String(),
-				SlotID: slot.ID.String(), // Add slot ID if your type supports it
-				Name:   getDoctorName(appt),
-				Time:   slot.AppointmentTime,
-				Date:   slot.AppointmentDate,
-				Status: string(slot.Status),
-				Mode:   string(appt.Mode),
-				Reason: appt.Reason,
+				ID:               appt.ID,
+				SlotID:           slot.ID, // Add slot ID if your type supports it
+				Name:             getDoctorName(appt),
+				DoctorName:       appt.DoctorName,
+				DoctorID:         appt.DoctorID,
+				PatientID:        appt.PatientID,
+				IsDoctorMeeting:  appt.IsDoctorMeeting,
+				IsPatientMeeting: appt.IsPatientMeeting,
+				Time:             slot.AppointmentTime,
+				Date:             slot.AppointmentDate,
+				Status:           string(slot.Status),
+				Mode:             string(appt.Mode),
+				Reason:           appt.Reason,
 			})
 		}
 	}
@@ -451,18 +481,35 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 
 		// ✅ LOOP through ALL slots instead of just taking [0]
 		for _, slot := range appt.BookedSlots {
+			var opChartResp *types.OpChartResponse
+			if appt.OpChart != nil {
+				opChartResp = &types.OpChartResponse{
+					ID:           appt.OpChart.ID,
+					Diagnosis:    appt.OpChart.Diagnosis,
+					Prescription: appt.OpChart.Prescription,
+					DoctorNotes:  appt.OpChart.DoctorNotes,
+					Date:         appt.OpChart.Date,
+					Time:         appt.OpChart.Time,
+				}
+			}
 			history = append(history, types.ConsultationResponse{
-				ID:           appt.ID.String(),
-				SlotID:       slot.ID.String(), // Add slot ID if your type supports it
-				Name:         getDoctorName(appt),
-				Time:         slot.AppointmentTime,
-				Date:         slot.AppointmentDate,
-				Status:       string(slot.Status),
-				Mode:         string(appt.Mode),
-				Reason:       appt.Reason,
-				Diagnosis:    appt.Notes,
-				Prescription: "",
-				Notes:        appt.Notes,
+				ID:               appt.ID,
+				SlotID:           slot.ID, // Add slot ID if your type supports it
+				Name:             getDoctorName(appt),
+				DoctorName:       appt.DoctorName,
+				DoctorID:         appt.DoctorID,
+				PatientID:        appt.PatientID,
+				IsDoctorMeeting:  appt.IsDoctorMeeting,
+				IsPatientMeeting: appt.IsPatientMeeting,
+				Time:             slot.AppointmentTime,
+				Date:             slot.AppointmentDate,
+				Status:           string(slot.Status),
+				Mode:             string(appt.Mode),
+				Reason:           appt.Reason,
+				Diagnosis:        appt.Notes,
+				Prescription:     "",
+				Notes:            appt.Notes,
+				OpChart:          opChartResp,
 			})
 		}
 	}
@@ -472,6 +519,62 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 
 func (u *appoinmentUseCase) GetConfirmedAppionmentSlot(ctx context.Context, req *types.ConfirmedSlotRequest) ([]types.ConfirmedSlotResponse, error) {
 	return u.appoinmentRepo.GetConfirmedAppionmentSlot(ctx, req)
+}
+
+func (u *appoinmentUseCase) CompleteConsultation(ctx context.Context, req *types.CompleteConsultationRequest, doctorID uuid.UUID) error {
+	// 1. Get Appointment
+	appointment, err := u.appoinmentRepo.GetByID(ctx, req.AppointmentID)
+	if err != nil {
+		return errors.NewDomainError("APPOINTMENT_NOT_FOUND", "Appointment not found", errors.ErrNotFound)
+	}
+
+	// 2. Verify Doctor ownership
+	if appointment.DoctorID != doctorID {
+		return errors.NewDomainError("UNAUTHORIZED", "You are not authorized to complete this consultation", errors.ErrUnauthorized)
+	}
+
+	// 3. Update Meeting Flags
+	appointment.IsDoctorMeeting = true
+	appointment.IsPatientMeeting = true
+
+	// 4. Update Slot Status to Completed
+	slotFound := false
+	// If SlotID is provided, find and update that specific slot
+	if req.SlotID != uuid.Nil {
+		for i := range appointment.BookedSlots {
+			if appointment.BookedSlots[i].ID == req.SlotID {
+				appointment.BookedSlots[i].Status = entity.AppointmentStatusCompleted
+				slotFound = true
+				break
+			}
+		}
+	}
+
+	if !slotFound {
+		return errors.NewDomainError("SLOT_NOT_FOUND", "Specified slot not found in appointment", errors.ErrNotFound)
+	}
+
+	// 5. Create OpChart
+	opChart := &entity.OpChart{
+		AppointmentID: appointment.ID,
+		DoctorName:    appointment.DoctorName,
+		Date:          appointment.BookedSlots[0].AppointmentDate,
+		Time:          appointment.BookedSlots[0].AppointmentTime,
+		Mode:          appointment.Mode,
+		Diagnosis:     req.Diagnosis,
+		Prescription:  req.Prescription,
+		DoctorNotes:   req.DoctorNotes,
+	}
+	if err := u.appoinmentRepo.CreateOpChart(ctx, opChart); err != nil {
+		return errors.NewDomainError("OP_CHART_FAILED", "Failed to create OP chart", err)
+	}
+
+	// 6. Save changes
+	if err := u.appoinmentRepo.Update(ctx, appointment); err != nil {
+		return errors.NewDomainError("UPDATE_FAILED", "Failed to complete consultation", err)
+	}
+
+	return nil
 }
 
 func getDoctorName(appt *entity.Appointment) string {

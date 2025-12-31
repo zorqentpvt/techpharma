@@ -169,6 +169,7 @@ func (d *Database) Migrate() error {
 		&entity.Appointment{},
 		&entity.AppointmentSlot{},
 		&entity.BookedSlot{},
+		&entity.OpChart{},
 		//&entity.AppointmentScheduled{},
 	}
 

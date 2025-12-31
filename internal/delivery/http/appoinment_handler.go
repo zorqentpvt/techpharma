@@ -313,6 +313,49 @@ func (h *AppointmentHandlerClean) ConfirmedAppionmentSlot(c *gin.Context) {
 		"data":    slots,
 	})
 }
+
+// CompleteConsultation handles POST /api/doctor/complete-consultation
+func (h *AppointmentHandlerClean) CompleteConsultation(c *gin.Context) {
+	doctorIDStr := c.GetString("userID")
+	if doctorIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "Doctor ID not found in context",
+		})
+		return
+	}
+
+	doctorID, err := uuid.Parse(doctorIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Doctor ID",
+			Message: "Doctor ID format is invalid",
+		})
+		return
+	}
+
+	var req types.CompleteConsultationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid request payload",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	err = h.appointmentUseCase.CompleteConsultation(c.Request.Context(), &req, doctorID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Consultation completed successfully",
+	})
+}
+
 func (h *AppointmentHandlerClean) handleError(c *gin.Context, err error) {
 	switch {
 	case errors.IsNotFound(err):

@@ -467,19 +467,34 @@ type UpdateAppointmentStatusRequest struct {
 	Status    entity.AppointmentStatus `json:"status" binding:"required"`
 }
 
+type OpChartResponse struct {
+	ID           uuid.UUID `json:"id"`
+	Diagnosis    string    `json:"diagnosis"`
+	Prescription string    `json:"prescription"`
+	DoctorNotes  string    `json:"doctorNotes"`
+	Date         string    `json:"date"`
+	Time         string    `json:"time"`
+}
+
 type ConsultationResponse struct {
-	ID           string `json:"id"`
-	SlotID       string `json:"slotId"`
-	JitsiID      string `json:"jitsiId"`
-	Name         string `json:"name"`
-	Time         string `json:"time"`
-	Date         string `json:"date"`
-	Status       string `json:"status"`
-	Mode         string `json:"mode,omitempty"`
-	Reason       string `json:"reason,omitempty"`
-	Diagnosis    string `json:"diagnosis,omitempty"`
-	Prescription string `json:"prescription,omitempty"`
-	Notes        string `json:"notes,omitempty"`
+	ID               uuid.UUID        `json:"id"`
+	SlotID           uuid.UUID        `json:"slotId"`
+	JitsiID          string           `json:"jitsiId"`
+	DoctorID         uuid.UUID        `json:"doctorId"`
+	PatientID        uuid.UUID        `json:"patientId"`
+	Name             string           `json:"name"`
+	DoctorName       string           `json:"doctorName"`
+	IsDoctorMeeting  bool             `json:"isDoctorMeeting"`
+	IsPatientMeeting bool             `json:"isPatientMeeting"`
+	Time             string           `json:"time"`
+	Date             string           `json:"date"`
+	Status           string           `json:"status"`
+	Mode             string           `json:"mode,omitempty"`
+	Reason           string           `json:"reason,omitempty"`
+	Diagnosis        string           `json:"diagnosis,omitempty"`
+	Prescription     string           `json:"prescription,omitempty"`
+	Notes            string           `json:"notes,omitempty"`
+	OpChart          *OpChartResponse `json:"opChart,omitempty"`
 }
 
 type ConsultationsResponse struct {
@@ -498,4 +513,12 @@ type ConfirmedSlotResponse struct {
 }
 type ConfirmedSlotRequest struct {
 	DocID uuid.UUID `json:"docId"`
+}
+type CompleteConsultationRequest struct {
+	AppointmentID uuid.UUID `json:"appointmentId" binding:"required"`
+	SlotID        uuid.UUID `json:"slotId"`
+
+	Diagnosis    string `json:"diagnosis" binding:"required"`
+	Prescription string `json:"prescription" binding:"required"`
+	DoctorNotes  string `json:"doctorNotes"`
 }

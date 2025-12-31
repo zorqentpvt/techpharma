@@ -56,6 +56,7 @@ func (r *AppoinmentRepository) GetByID(ctx context.Context, id uuid.UUID) (*enti
 		Preload("Doctor").
 		Preload("Patient").
 		Preload("BookedSlots").
+		Preload("OpChart").
 		Where("id = ?", id).
 		First(&appointment).Error
 	if err != nil {
@@ -133,7 +134,6 @@ func (r *AppoinmentRepository) GetUpcomingAppointments(ctx context.Context, doct
 		Preload("BookedSlots", func(db *gorm.DB) *gorm.DB {
 			return db.Where("appointment_date >= ? AND status IN ?",
 				now.Format("2006-01-02"), []entity.AppointmentStatus{
-					entity.AppointmentStatusPending,
 					entity.AppointmentStatusConfirmed,
 				}).
 				Order("appointment_date ASC, appointment_time ASC")
@@ -144,7 +144,6 @@ func (r *AppoinmentRepository) GetUpcomingAppointments(ctx context.Context, doct
 				Select("appointment_id").
 				Where("appointment_date >= ? AND status IN ?",
 					now.Format("2006-01-02"), []entity.AppointmentStatus{
-						entity.AppointmentStatusPending,
 						entity.AppointmentStatusConfirmed,
 					}),
 		).
@@ -180,11 +179,13 @@ func (r *AppoinmentRepository) GetAppointmentHistory(ctx context.Context, doctor
 
 	err := r.db.WithContext(ctx).
 		Preload("Patient").
+		Preload("OpChart"). // ✅ Add this to load the relationship
+
 		Preload("BookedSlots", func(db *gorm.DB) *gorm.DB {
 			return db.Where("appointment_date < ? OR status IN ?",
 				now.Format("2006-01-02"), []entity.AppointmentStatus{
 					entity.AppointmentStatusCompleted,
-					entity.AppointmentStatusCancelled,
+					//entity.AppointmentStatusCancelled,
 					entity.AppointmentStatusNoShow,
 				}).
 				Order("appointment_date DESC, appointment_time DESC")
@@ -196,7 +197,7 @@ func (r *AppoinmentRepository) GetAppointmentHistory(ctx context.Context, doctor
 				Where("appointment_date < ? OR status IN ?",
 					now.Format("2006-01-02"), []entity.AppointmentStatus{
 						entity.AppointmentStatusCompleted,
-						entity.AppointmentStatusCancelled,
+						//entity.AppointmentStatusCancelled,
 						entity.AppointmentStatusNoShow,
 					}),
 		).
@@ -276,7 +277,7 @@ func (r *AppoinmentRepository) CancelBookedSlot(ctx context.Context, appointment
 				entity.AppointmentStatusCancelled,
 				entity.AppointmentStatusCompleted,
 			}).
-			Update("status", entity.AppointmentStatusCancelled).Error; err != nil {
+			Update("status", entity.AppointmentStatusRemoved).Error; err != nil {
 			return err
 		}
 
@@ -315,7 +316,7 @@ func (r *AppoinmentRepository) GetUpcomingAppointmentsByPatient(ctx context.Cont
 		Preload("BookedSlots", func(db *gorm.DB) *gorm.DB {
 			return db.Where("appointment_date >= ? AND status IN ?",
 				now.Format("2006-01-02"), []entity.AppointmentStatus{
-					entity.AppointmentStatusPending,
+					//	entity.AppointmentStatusPending,
 					entity.AppointmentStatusConfirmed,
 				}).
 				Order("appointment_date ASC, appointment_time ASC")
@@ -326,7 +327,7 @@ func (r *AppoinmentRepository) GetUpcomingAppointmentsByPatient(ctx context.Cont
 				Select("appointment_id").
 				Where("appointment_date >= ? AND status IN ?",
 					now.Format("2006-01-02"), []entity.AppointmentStatus{
-						entity.AppointmentStatusPending,
+						//entity.AppointmentStatusPending,
 						entity.AppointmentStatusConfirmed,
 					}),
 		).
@@ -363,11 +364,13 @@ func (r *AppoinmentRepository) GetAppointmentHistoryByPatient(ctx context.Contex
 	err := r.db.WithContext(ctx).
 		Preload("Doctor").
 		Preload("Doctor.User").
+		Preload("OpChart"). // ✅ Add this to load the relationship
+
 		Preload("BookedSlots", func(db *gorm.DB) *gorm.DB {
 			return db.Where("appointment_date < ? OR status IN ?",
 				now.Format("2006-01-02"), []entity.AppointmentStatus{
 					entity.AppointmentStatusCompleted,
-					entity.AppointmentStatusCancelled,
+					//entity.AppointmentStatusCancelled,
 					entity.AppointmentStatusNoShow,
 				}).
 				Order("appointment_date DESC, appointment_time DESC")
@@ -379,7 +382,7 @@ func (r *AppoinmentRepository) GetAppointmentHistoryByPatient(ctx context.Contex
 				Where("appointment_date < ? OR status IN ?",
 					now.Format("2006-01-02"), []entity.AppointmentStatus{
 						entity.AppointmentStatusCompleted,
-						entity.AppointmentStatusCancelled,
+						//entity.AppointmentStatusCancelled,
 						entity.AppointmentStatusNoShow,
 					}),
 		).
@@ -407,4 +410,10 @@ func (r *AppoinmentRepository) GetAppointmentHistoryByPatient(ctx context.Contex
 	})
 
 	return appointments, nil
+}
+func (r *AppoinmentRepository) CreateOpChart(ctx context.Context, opChart *entity.OpChart) error {
+	if err := r.db.WithContext(ctx).Create(opChart).Error; err != nil {
+		return err
+	}
+	return nil
 }

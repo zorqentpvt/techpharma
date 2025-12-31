@@ -62,7 +62,7 @@ export async function docAppointments(id: string) {
 
   try {
 
-    const response = await api.get(`api/user/confirmed-appointment-slots`, { docId: id });
+    const response = await api.get(`api/user/confirmed-appointment-slots`, { params: { docId: id } });
       console.log("API Response (docAppointments) already booked:", response.data);
     return response.data; // expected to have { success, message, data }
   } catch (error: any) {
@@ -120,5 +120,15 @@ export async function removecart(medicineId: string) {
       success: false,
       message: error.response?.data?.message || error.message,
     };
+  }
+}
+export async function fetchUserOrders() {
+  try {
+    const response = await api.get("api/user/orders");
+    console.log("API Response (fetchOrders):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.log("API Error (fetchOrders):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
   }
 }

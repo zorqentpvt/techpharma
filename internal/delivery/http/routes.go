@@ -84,6 +84,8 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			patientRoutes.DELETE("/remove-cart", orderHandler.RemoveFromCart)
 
 			patientRoutes.POST("/book-appointment", appoinmentHandler.BookAppointment)
+			patientRoutes.GET("/confirmed-appointment-slots", appoinmentHandler.ConfirmedAppionmentSlot)
+
 			patientRoutes.GET("/consultations", appoinmentHandler.FetchPatientConsultations)
 
 			patientRoutes.GET("/profile", userHandler.GetUserProfile)
@@ -106,10 +108,14 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			pharmacyRoutes.PUT("/update-medicine/:id", medicineHanler.UpdateMedicine)
 			pharmacyRoutes.GET("/get-medicine/:id", medicineHanler.GetMedicineByID)
 			pharmacyRoutes.DELETE("/delete-medicine/:id", medicineHanler.DeleteMedicine)
+
+			pharmacyRoutes.GET("/orders", orderHandler.GetPharmacyOrders)
+			pharmacyRoutes.PUT("/orders/:id", orderHandler.UpdateOrderStatus)
+			pharmacyRoutes.GET("/orders/revenue", orderHandler.GetTotalRevenue)
+
 			/*
-				pharmacyRoutes.GET("/orders", orderHandler.GetPharmacyOrders)
-					pharmacyRoutes.GET("/orders/:id", orderHandler.GetOrderByID)
-					pharmacyRoutes.PUT("/orders/:id", orderHandler.UpdateOrderStatus)*/
+				pharmacyRoutes.GET("/orders/:id", orderHandler.GetOrderByID)
+				pharmacyRoutes.PUT("/orders/:id", orderHandler.UpdateOrderStatus)*/
 
 		}
 
@@ -125,6 +131,9 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			doctorRoutes.GET("/schedule", appoinmentHandler.GetDoctorSchedule)
 			doctorRoutes.POST("/schedule-appointment", appoinmentHandler.ScheduleAppointment)
 			doctorRoutes.GET("/consultations", appoinmentHandler.FetchConsultations)
+			doctorRoutes.DELETE("/cancel-appointment", appoinmentHandler.CancelAppointment)
+			doctorRoutes.POST("/complete-consultation", appoinmentHandler.CompleteConsultation)
+
 		}
 		// Admin routes (require authentication + admin role)
 		adminRoutes := protectedRoutes.Group("/admin")

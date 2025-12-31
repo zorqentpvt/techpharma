@@ -80,26 +80,13 @@ export default function Consultings() {
   }, []);
 
 const handleJoinCall = (consultation) => {
-  const width = 1000;
-  const height = 700;
-  const left = window.screenX + (window.outerWidth - width) / 2;
-  const top = window.screenY + (window.outerHeight - height) / 2;
+  console.log("Joining call for consultation:", consultation);
 
-  const query = new URLSearchParams({
-    user: consultation.name,
-    otherUser: "babu",
-    callDate: consultation.date,
-    callTime: consultation.time,
-    role: "Doctor",
+  navigate("/videocall", {
+    state: consultation,
   });
-  console.log(query.toString());
-
-  window.open(
-    `/videocall?${query.toString()}`,
-    "VideoCallWindow",
-    `width=${width},height=${height},left=${left},top=${top},resizable,scrollbars`
-  );
 };
+
 
 
 
@@ -109,11 +96,11 @@ const handleJoinCall = (consultation) => {
     } else if (consultation) {
       setOpChartData({
         name: consultation.name,
-        time: consultation.time,
-        date: consultation.date,
-        diagnosis: consultation.diagnosis,
-        prescription: consultation.prescription,
-        notes: consultation.notes,
+        time: consultation.opChart.time,
+        date: consultation.opChart.date,
+        diagnosis: consultation.opChart.diagnosis,
+        prescription: consultation.opChart.prescription,
+        notes: consultation.opChart.doctorNotes,
       });
     }
     setShowOpChart(true);

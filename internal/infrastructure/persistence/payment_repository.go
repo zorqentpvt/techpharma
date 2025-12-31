@@ -98,3 +98,5 @@ func (r *PaymentRepository) GetUserPayments(ctx context.Context, userID uuid.UUI
 
 	return payments, total, err
 }
+
+// GetPhar\

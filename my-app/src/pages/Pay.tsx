@@ -19,6 +19,8 @@ export default function RazorpayPayment() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [cartId, setCartId] = useState<string | null>(null);
+  const [medicineId, setMedicineId] = useState<string | undefined>(undefined); // ✅ Added
+  const [quantity] = useState<number>(1); // ✅ Always 1
   const [status, setStatus] = useState<{ type: string; message: string }>({
     type: "",
     message: "",
@@ -45,6 +47,7 @@ export default function RazorpayPayment() {
         setAmount(trx.price || 0);
         setDescription(trx.description || trx.name || "Payment");
         setCartId(trx.cartId || null);
+        setMedicineId(trx.medicineId || trx.id); // ✅ Load medicineId
       }
     } catch (err) {
       console.error("Failed to load data from localStorage", err);
@@ -112,11 +115,15 @@ export default function RazorpayPayment() {
 
     try {
       showStatus("Creating order...", "info");
+      
+      // ✅ Updated payload to include medicineId and quantity (always 1)
       const orderPayload = {
         amount,
         currency: "INR",
         description,
         cartId,
+        medicineId,  // ✅ Added
+        quantity: 1, // ✅ Always 1
         notes: { customerName, email, phone },
       };
 

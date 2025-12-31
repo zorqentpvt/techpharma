@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -420,52 +421,276 @@ func (o *OrderHandlerClean) GetOrderByID(c *gin.Context) {
 	})
 }
 
-/*
-// GetPharmacyOrders retrieves all orders for a specific pharmacy.
+// GetPharmacyOrders retrieves orders for a specific pharmacy
 func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
-	// Get pharmacy ID from context (set by auth middleware)
-	pharmacyIDStr := c.GetString("userID")
-	if pharmacyIDStr == "" {
+	// Get user ID from context
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
 		c.JSON(http.StatusUnauthorized, response.Response{
 			Success: false,
 			Error: &response.ErrorInfo{
 				Code:    "UNAUTHORIZED",
-				Message: "Pharmacy ID not found in context. Access denied.",
+				Message: "User ID not found in context",
 			},
 		})
 		return
 	}
 
-	pharmacyID, err := uuid.Parse(pharmacyIDStr)
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Response{
 			Success: false,
 			Error: &response.ErrorInfo{
-				Code:    "INVALID_PHARMACY_ID",
-				Message: "Invalid pharmacy ID format.",
+				Code:    "INVALID_USER_ID",
+				Message: "Invalid user ID format",
 			},
 		})
 		return
 	}
 
-	// Parse pagination parameters from query string
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	pharmacy, err := o.orderUseCase.GetPharmacyByUserID(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "PHARMACY_NOT_FOUND",
+				Message: "Pharmacy not found for this user",
+			},
+		})
+		return
+	}
 
-	// Call the use case to get orders for the pharmacy
-	orders, total, err := o.paymentUseCase.GetPharmacyOrders(c.Request.Context(), pharmacyID, page, limit)
+	// ADD THIS CHECK
+	if pharmacy == nil {
+		c.JSON(http.StatusNotFound, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "PHARMACY_NOT_FOUND",
+				Message: "No pharmacy associated with this user",
+			},
+		})
+		return
+	}
+
+	var filters types.ListPharmacyOrders
+	if err := c.ShouldBindQuery(&filters); err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_PARAMETERS",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+	if filters.Page < 1 {
+		filters.Page = 1
+	}
+	if filters.Limit < 1 {
+		filters.Limit = 10
+	}
+
+	// Get orders
+	orders, total, err := o.orderUseCase.GetPharmacyOrders(c.Request.Context(), pharmacy.ID, filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{
 			Success: false,
 			Error: &response.ErrorInfo{
 				Code:    "FETCH_ERROR",
-				Message: "Failed to retrieve pharmacy orders: " + err.Error(),
+				Message: err.Error(),
 			},
 		})
 		return
 	}
 
-	// Return a paginated response
-	response.Paginated(c, orders, page, limit, int(total), "Pharmacy orders retrieved successfully")
+	type MedicineResponse struct {
+		Name     string `json:"name"`
+		Quantity int    `json:"quantity"`
+	}
+
+	type OrderResponse struct {
+		ID            string             `json:"id"`
+		CustomerName  string             `json:"customerName"`
+		CustomerPhone string             `json:"customerPhone"`
+		Medicines     []MedicineResponse `json:"medicines"`
+		TotalAmount   float64            `json:"totalAmount"`
+		Status        string             `json:"status"`
+		OrderDate     time.Time          `json:"orderDate"`
+		Pharmacy      string             `json:"pharmacy"`
+	}
+
+	orderResponses := []OrderResponse{}
+	for _, order := range orders {
+		medicines := []MedicineResponse{}
+		for _, item := range order.OrderItems {
+			medicines = append(medicines, MedicineResponse{
+				Name:     item.Medicine.Name,
+				Quantity: item.Quantity,
+			})
+		}
+
+		orderResponses = append(orderResponses, OrderResponse{
+			ID:            order.ID.String(),
+			CustomerName:  order.User.FirstName + " " + order.User.LastName,
+			CustomerPhone: order.User.PhoneNumber,
+			Medicines:     medicines,
+			TotalAmount:   order.TotalAmount,
+			Status:        order.Status,
+			OrderDate:     order.CreatedAt,
+			Pharmacy:      pharmacy.Name,
+		})
+	}
+
+	// Return paginated response
+	response.Paginated(c, orderResponses, filters.Page, filters.Limit, int(total), "Pharmacy orders retrieved successfully")
 }
-*/
+
+// UpdateOrderStatus updates the status of an order
+func (o *OrderHandlerClean) UpdateOrderStatus(c *gin.Context) {
+	// Get user ID from context
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "UNAUTHORIZED",
+				Message: "User ID not found in context",
+			},
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_USER_ID",
+				Message: "Invalid user ID format",
+			},
+		})
+		return
+	}
+
+	// Parse order ID from URL
+	orderIDStr := c.Param("id")
+	orderID, err := uuid.Parse(orderIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_ORDER_ID",
+				Message: "Invalid order ID format",
+			},
+		})
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		Status string `json:"status" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_PARAMETERS",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	// Call use case
+	if err := o.orderUseCase.UpdateOrderStatus(c.Request.Context(), orderID, req.Status, userID); err != nil {
+		statusCode := http.StatusInternalServerError
+		errorCode := "UPDATE_ERROR"
+
+		switch err.Error() {
+		case "order not found":
+			statusCode = http.StatusNotFound
+			errorCode = "ORDER_NOT_FOUND"
+		case "unauthorized":
+			statusCode = http.StatusForbidden
+			errorCode = "FORBIDDEN"
+		case "invalid status":
+			statusCode = http.StatusBadRequest
+			errorCode = "INVALID_STATUS"
+		}
+
+		c.JSON(statusCode, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    errorCode,
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Message: "Order status updated successfully",
+	})
+}
+
+// GetTotalRevenue retrieves the total revenue for the pharmacy
+func (o *OrderHandlerClean) GetTotalRevenue(c *gin.Context) {
+	// Get user ID from context
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "UNAUTHORIZED",
+				Message: "User ID not found in context",
+			},
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_USER_ID",
+				Message: "Invalid user ID format",
+			},
+		})
+		return
+	}
+
+	pharmacy, err := o.orderUseCase.GetPharmacyByUserID(c.Request.Context(), userID)
+	if err != nil || pharmacy == nil {
+		c.JSON(http.StatusNotFound, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "PHARMACY_NOT_FOUND",
+				Message: "Pharmacy not found for this user",
+			},
+		})
+		return
+	}
+
+	revenue, err := o.orderUseCase.GetTotalRevenue(c.Request.Context(), pharmacy.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "FETCH_ERROR",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Message: "Total revenue retrieved successfully",
+		Data: gin.H{
+			"totalRevenue": revenue,
+		},
+	})
+}

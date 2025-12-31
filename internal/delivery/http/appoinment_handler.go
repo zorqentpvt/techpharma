@@ -197,7 +197,7 @@ func (h *AppointmentHandlerClean) CancelAppointment(c *gin.Context) {
 	}
 
 	var req struct {
-		AppointmentID string `json:"appointment_id" binding:"required"`
+		AppointmentID string `json:"appointmentId" binding:"required"`
 		Reason        string `json:"reason"`
 	}
 
@@ -272,6 +272,87 @@ func (h *AppointmentHandlerClean) ScheduleAppointment(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
 		"message": "Schedule created successfully",
+	})
+}
+
+// ConfirmedAppionmentSlot handles GET /api/doctor/confirmed-slots
+func (h *AppointmentHandlerClean) ConfirmedAppionmentSlot(c *gin.Context) {
+	// Get docId from query parameter (not body)
+	docIDStr := c.Query("docId")
+	if docIDStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "docId is required",
+		})
+		return
+	}
+
+	// Parse UUID
+	docID, err := uuid.Parse(docIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid docId format",
+		})
+		return
+	}
+
+	req := types.ConfirmedSlotRequest{
+		DocID: docID,
+	}
+
+	slots, err := h.appointmentUseCase.GetConfirmedAppionmentSlot(c.Request.Context(), &req)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Fetched confirmed slots successfully",
+		"data":    slots,
+	})
+}
+
+// CompleteConsultation handles POST /api/doctor/complete-consultation
+func (h *AppointmentHandlerClean) CompleteConsultation(c *gin.Context) {
+	doctorIDStr := c.GetString("userID")
+	if doctorIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "Doctor ID not found in context",
+		})
+		return
+	}
+
+	doctorID, err := uuid.Parse(doctorIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Doctor ID",
+			Message: "Doctor ID format is invalid",
+		})
+		return
+	}
+
+	var req types.CompleteConsultationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid request payload",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	err = h.appointmentUseCase.CompleteConsultation(c.Request.Context(), &req, doctorID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Consultation completed successfully",
 	})
 }
 

@@ -1,5 +1,4 @@
-import { medicines, Medicine } from "../mock/medicines";
-import { users } from "../mock/users"; // Import users to get doctors
+
 
 // ------------------ Helpers ------------------
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

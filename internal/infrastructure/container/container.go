@@ -113,6 +113,7 @@ func (c *Container) initUseCases() {
 	c.PaymentUseCase = usecase.NewPaymentUseCase(
 		c.PaymentRepository,
 		c.OrderRepository,
+		c.MedicineRepository,
 		c.Config.Payment.RazorpayKey,
 		c.Config.Payment.RazorpaySecret,
 	)

@@ -380,6 +380,8 @@ type MedicineFilters struct {
 type CreateOrderRequest struct {
 	Amount          float64                `json:"amount" binding:"required,gt=0"`
 	Currency        string                 `json:"currency" binding:"required"`
+	MedicineID      *uuid.UUID             `json:"medicineId" binding:"omitempty"`
+	Quantity        *int64                 `json:"quantity" binding:"omitempty,gt=0"`
 	Description     string                 `json:"description"`
 	CartID          *string                `json:"cartId"`
 	DeliveryAddress string                 `json:"deliveryAddress"`
@@ -396,6 +398,8 @@ type VerifyPaymentRequest struct {
 type OrderResponse struct {
 	OrderID         string                 `json:"orderId"`
 	RazorpayOrderID string                 `json:"razorpayOrderId"`
+	MedicineID      *uuid.UUID             `json:"medicineId"`
+	Quantity        *int64                 `json:"quantity"`
 	Amount          float64                `json:"amount"`
 	Currency        string                 `json:"currency"`
 	RazorpayKeyID   string                 `json:"razorpayKeyId"`
@@ -420,8 +424,10 @@ type AppointmentRequest struct {
 }
 
 type Slot struct {
-	Date string `json:"date" binding:"required"` // Format: "YYYY-MM-DD"
-	Time string `json:"time" binding:"required"` // Format: "HH:MM"
+	SlotID        string `json:"slotId"`        // <- Add this (BookedSlot.ID)
+	AppointmentID string `json:"appointmentId"` // Keep this too if needed
+	Date          string `json:"date"`
+	Time          string `json:"time"`
 }
 
 // ScheduleSlotRequest represents a single slot in the schedule request from the frontend.
@@ -432,14 +438,20 @@ type ScheduleSlotRequest struct {
 }
 
 type ScheduleAppointmentRequest struct {
-	DoctorID     uuid.UUID             `json:"-"`
-	PatientID    uuid.UUID             `json:"patientID"`
-	Slots        []ScheduleSlotRequest `json:"slots" binding:"required,min=1"`
+	DoctorID        uuid.UUID `json:"-"`
+	PatientID       uuid.UUID `json:"patientID"`
+	AppointmentID   uuid.UUID `json:"appointmentID"`
+	SlotID          uuid.UUID `json:"slotID"`
+	JitsiID         string    `json:"jitsiID"`
+	AppointmentDate *string   `json:"date"`
+	AppointmentTime *string   `json:"time"`
+	AppointmentMode *string   `json:"mode"`
 }
 
 type DoctorScheduleResponse struct {
 	ID            string `json:"id"`
 	Patient       string `json:"patient"`
+	PatientID     string `json:"patientId"`
 	Reason        string `json:"reason"`
 	Mode          string `json:"mode"`
 	Status        string `json:"status"`
@@ -455,20 +467,59 @@ type UpdateAppointmentStatusRequest struct {
 	Status    entity.AppointmentStatus `json:"status" binding:"required"`
 }
 
+type OpChartResponse struct {
+	ID           uuid.UUID `json:"id"`
+	Diagnosis    string    `json:"diagnosis"`
+	Prescription string    `json:"prescription"`
+	DoctorNotes  string    `json:"doctorNotes"`
+	Date         string    `json:"date"`
+	Time         string    `json:"time"`
+}
+
 type ConsultationResponse struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	Time         string `json:"time"`
-	Date         string `json:"date"`
-	Status       string `json:"status"`
-	Mode         string `json:"mode,omitempty"`
-	Reason       string `json:"reason,omitempty"`
-	Diagnosis    string `json:"diagnosis,omitempty"`
-	Prescription string `json:"prescription,omitempty"`
-	Notes        string `json:"notes,omitempty"`
+	ID                   uuid.UUID        `json:"id"`
+	SlotID               uuid.UUID        `json:"slotId"`
+	JitsiID              string           `json:"jitsiId"`
+	DoctorID             uuid.UUID        `json:"doctorId"`
+	PatientID            uuid.UUID        `json:"patientId"`
+	Name                 string           `json:"name"`
+	DoctorName           string           `json:"doctorName"`
+	DoctorSpecialization string           `json:"doctorSpecialization"`
+	IsDoctorMeeting      bool             `json:"isDoctorMeeting"`
+	IsPatientMeeting     bool             `json:"isPatientMeeting"`
+	Time                 string           `json:"time"`
+	Date                 string           `json:"date"`
+	Status               string           `json:"status"`
+	Mode                 string           `json:"mode,omitempty"`
+	Reason               string           `json:"reason,omitempty"`
+	Diagnosis            string           `json:"diagnosis,omitempty"`
+	Prescription         string           `json:"prescription,omitempty"`
+	Notes                string           `json:"notes,omitempty"`
+	OpChart              *OpChartResponse `json:"opChart,omitempty"`
 }
 
 type ConsultationsResponse struct {
 	Upcoming []ConsultationResponse `json:"upcoming"`
 	History  []ConsultationResponse `json:"history"`
+}
+type ListPharmacyOrders struct {
+	Status string `json:"status" binding:"omitempty"`
+
+	Page  int `json:"page"`
+	Limit int `json:"limit"`
+}
+type ConfirmedSlotResponse struct {
+	AppointmentDate *string `json:"date"`
+	AppointmentTime *string `json:"time"`
+}
+type ConfirmedSlotRequest struct {
+	DocID uuid.UUID `json:"docId"`
+}
+type CompleteConsultationRequest struct {
+	AppointmentID uuid.UUID `json:"appointmentId" binding:"required"`
+	SlotID        uuid.UUID `json:"slotId"`
+
+	Diagnosis    string `json:"diagnosis" binding:"required"`
+	Prescription string `json:"prescription" binding:"required"`
+	DoctorNotes  string `json:"doctorNotes"`
 }

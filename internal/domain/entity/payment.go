@@ -23,6 +23,9 @@ type Payment struct {
 
 	PharmacyID uuid.UUID `json:"pharmacyId,omitempty" gorm:"type:uuid"`
 
+	MedicineID *uuid.UUID `json:"medicineId,omitempty" gorm:"type:uuid"`
+	Quantity   *int       `json:"quantity" gorm:"not null"`
+
 	// Razorpay details
 	RazorpayOrderID   string `json:"razorpayOrderId" gorm:"uniqueIndex"`
 	RazorpayPaymentID string `json:"razorpayPaymentId" gorm:"index"`

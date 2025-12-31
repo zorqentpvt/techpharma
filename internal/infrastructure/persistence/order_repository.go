@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/skryfon/collex/internal/domain/entity"
 	"github.com/skryfon/collex/internal/domain/repository"
+	"github.com/skryfon/collex/internal/types"
 	"gorm.io/gorm"
 )
 
@@ -66,6 +67,14 @@ func (r *OrderRepository) AddToCart(ctx context.Context, cart *entity.Cart) erro
 
 		return nil
 	})
+}
+
+func (r *OrderRepository) CreateOrder(ctx context.Context, order *entity.Order) error {
+	return r.db.WithContext(ctx).Create(order).Error
+}
+
+func (r *OrderRepository) CreateOrderItem(ctx context.Context, orderItems *entity.OrderItem) error {
+	return r.db.WithContext(ctx).Create(orderItems).Error
 }
 func (r *OrderRepository) GetCartByUserID(ctx context.Context, userID uuid.UUID) (*entity.Cart, error) {
 	var cart entity.Cart
@@ -290,6 +299,18 @@ func (r *OrderRepository) GetUserOrders(ctx context.Context, userID uuid.UUID, p
 	return orders, total, err
 }
 
+func (r *OrderRepository) GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, error) {
+	var totalRevenue float64
+	err := r.db.WithContext(ctx).
+		Table("order_items").
+		Joins("JOIN medicines ON medicines.id = order_items.medicine_id").
+		Joins("JOIN orders ON orders.id = order_items.order_id").
+		Where("medicines.pharmacy_id = ? AND orders.status IN ?", pharmacyID, []string{"delivered", "confirmed"}).
+		Select("COALESCE(SUM(order_items.subtotal), 0)").
+		Scan(&totalRevenue).Error
+	return totalRevenue, err
+}
+
 // UpdateOrderStatus updates the status of an order
 func (r *OrderRepository) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error {
 	return r.db.WithContext(ctx).
@@ -310,4 +331,65 @@ func (r *OrderRepository) GetCartByID(ctx context.Context, cartID uuid.UUID) (*e
 		return nil, err
 	}
 	return &cart, nil
+}
+
+// GetPharmacyByUserID retrieves a pharmacy by user ID
+func (r *OrderRepository) GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (*entity.Pharmacy, error) {
+	var pharmacy entity.Pharmacy
+	err := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		First(&pharmacy).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &pharmacy, nil
+}
+
+// GetPharmacyOrders retrieves orders for a specific pharmacy
+func (r *OrderRepository) GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, filter types.ListPharmacyOrders) ([]*entity.Order, int64, error) {
+	var orders []*entity.Order
+	var total int64
+
+	baseQuery := r.db.WithContext(ctx).
+		Model(&entity.Order{}).
+		Joins("JOIN order_items ON order_items.order_id = orders.id").
+		Joins("JOIN medicines ON medicines.id = order_items.medicine_id").
+		Where("medicines.pharmacy_id = ?", pharmacyID)
+
+	if filter.Status != "" {
+		baseQuery = baseQuery.Where("orders.status = ?", filter.Status)
+	}
+
+	if err := baseQuery.Session(&gorm.Session{}).Distinct("orders.id").Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := baseQuery.
+		Group("orders.id").
+		Preload("OrderItems.Medicine").
+		Preload("User").
+		Preload("Payment").
+		Order("orders.created_at DESC").
+		Offset((filter.Page - 1) * filter.Limit).
+		Limit(filter.Limit).
+		Find(&orders).Error
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Calculate total amount from order items
+	for _, order := range orders {
+		var totalAmount float64
+		for _, item := range order.OrderItems {
+			totalAmount += item.Subtotal
+		}
+		order.TotalAmount = totalAmount
+	}
+
+	return orders, total, err
 }

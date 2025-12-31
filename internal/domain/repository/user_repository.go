@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/skryfon/collex/internal/domain/entity"
@@ -60,6 +59,13 @@ type OrderRepository interface {
 	GetOrderByID(ctx context.Context, orderID uuid.UUID) (*entity.Order, error)
 	GetUserOrders(ctx context.Context, userID uuid.UUID, page, limit int) ([]*entity.Order, int64, error)
 	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error
+
+	GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (*entity.Pharmacy, error)
+	GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, error)
+	GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, filter types.ListPharmacyOrders) ([]*entity.Order, int64, error)
+
+	CreateOrder(ctx context.Context, order *entity.Order) error
+	CreateOrderItem(ctx context.Context, orderItems *entity.OrderItem) error
 }
 type PaymentRepository interface {
 	Create(ctx context.Context, payment *entity.Payment) error
@@ -73,7 +79,7 @@ type PaymentRepository interface {
 }
 type AppoinmentRepository interface {
 	BookAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error)
-	IsSlotBooked(ctx context.Context, doctorID uuid.UUID, appointmentDate time.Time, appointmentTime string) (bool, error)
+	IsSlotBooked(ctx context.Context, doctorID uuid.UUID, appointmentDate string, appointmentTime string) (bool, error)
 	GetDoctorAppointments(ctx context.Context, doctorID uuid.UUID, status entity.AppointmentStatus) ([]*entity.Appointment, error)
 	GetUpcomingAppointments(ctx context.Context, doctorID uuid.UUID) ([]*entity.Appointment, error)
 	GetAppointmentHistory(ctx context.Context, doctorID uuid.UUID) ([]*entity.Appointment, error)
@@ -81,7 +87,11 @@ type AppoinmentRepository interface {
 	Update(ctx context.Context, appointment *entity.Appointment) error
 	ScheduleAppointment(ctx context.Context, appointment *entity.Appointment) (*entity.Appointment, error)
 	GetAllByDoctorID(ctx context.Context, doctorID uuid.UUID) ([]*entity.Appointment, error)
-	CancelPendingAppointments(ctx context.Context, patientID uuid.UUID, doctorID uuid.UUID) error
 	GetUpcomingAppointmentsByPatient(ctx context.Context, patientID uuid.UUID) ([]*entity.Appointment, error)
 	GetAppointmentHistoryByPatient(ctx context.Context, patientID uuid.UUID) ([]*entity.Appointment, error)
+	DeletePendingSlots(ctx context.Context, appointmentID uuid.UUID) error
+	GetConfirmedAppionmentSlot(ctx context.Context, req *types.ConfirmedSlotRequest) ([]types.ConfirmedSlotResponse, error)
+	CancelBookedSlot(ctx context.Context, slotID uuid.UUID, reason string) error
+
+	CreateOpChart(ctx context.Context, req *entity.OpChart) error
 }

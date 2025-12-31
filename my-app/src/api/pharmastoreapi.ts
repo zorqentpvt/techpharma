@@ -66,6 +66,16 @@ export async function updateMedicine(id: string, payload: Partial<MedicinePayloa
   }
 }
 
+export async function fetchprofit() {
+  try {
+    const response = await api.get("api/pharmacy/orders/revenue");
+    console.log("API Response (profit):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.log("API Error (profit):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}
 // DELETE MEDICINE
 export async function deleteMedicine(id: string) {
   console.log("API Payload (deleteMedicine):", { id });

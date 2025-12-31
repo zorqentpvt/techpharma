@@ -20,6 +20,7 @@ import (
 type PaymentUseCase struct {
 	paymentRepo    repository.PaymentRepository
 	orderRepo      repository.OrderRepository
+	medicineRepo   repository.MedicineRepository
 	razorpayKey    string
 	razorpaySecret string
 	client         *razorpay.Client
@@ -28,6 +29,7 @@ type PaymentUseCase struct {
 func NewPaymentUseCase(
 	paymentRepo repository.PaymentRepository,
 	orderRepo repository.OrderRepository,
+	medicineRepo repository.MedicineRepository,
 	razorpayKey string,
 	razorpaySecret string,
 ) *PaymentUseCase {
@@ -35,6 +37,7 @@ func NewPaymentUseCase(
 	return &PaymentUseCase{
 		paymentRepo:    paymentRepo,
 		orderRepo:      orderRepo,
+		medicineRepo:   medicineRepo,
 		razorpayKey:    razorpayKey,
 		razorpaySecret: razorpaySecret,
 		client:         client,
@@ -49,6 +52,19 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 
 	if len(orderID) > 40 {
 		orderID = orderID[:40]
+	}
+
+	// Validate MedicineID and Quantity if CartID is not provided
+	if req.CartID == nil || *req.CartID == "" {
+		if req.MedicineID == nil {
+			return nil, errors.New("medicineId is required when cartId is not provided")
+		}
+		if req.Quantity == nil || *req.Quantity <= 0 {
+			return nil, errors.New("quantity is required and must be greater than 0 when cartId is not provided")
+		}
+
+		// You can fetch medicine details from the database here using req.MedicineID
+		// and perform any necessary stock validation or price calculation.
 	}
 
 	// Convert amount to paise
@@ -89,6 +105,12 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 		notesJSON = string(notesBytes)
 	}
 
+	var paymentQuantity *int
+	if req.Quantity != nil {
+		q := int(*req.Quantity)
+		paymentQuantity = &q
+	}
+
 	// Save payment record in database
 	payment := &entity.Payment{
 		OrderID:         orderID,
@@ -96,6 +118,8 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 		Currency:        req.Currency,
 		UserID:          userID,
 		CartID:          cartID,
+		MedicineID:      req.MedicineID,
+		Quantity:        paymentQuantity,
 		RazorpayOrderID: razorpayOrderID,
 		Status:          "pending",
 		Description:     req.Description,
@@ -107,9 +131,17 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 		return nil, fmt.Errorf("failed to save payment: %w", err)
 	}
 
+	var responseQuantity *int64
+	if payment.Quantity != nil {
+		q := int64(*payment.Quantity)
+		responseQuantity = &q
+	}
+
 	return &types.OrderResponse{
 		OrderID:         orderID,
 		RazorpayOrderID: razorpayOrderID,
+		MedicineID:      payment.MedicineID,
+		Quantity:        responseQuantity,
 		Amount:          req.Amount,
 		Currency:        req.Currency,
 		RazorpayKeyID:   u.razorpayKey,
@@ -172,6 +204,41 @@ func (u *PaymentUseCase) VerifyPayment(ctx context.Context, req types.VerifyPaym
 					u.ClearCart(ctx, payment.UserID)
 				}
 			}
+		}
+	}
+
+	// If payment has medicineId and no cartId, create order and order item
+	if payment.CartID == nil && payment.MedicineID != nil {
+		medicine, err := u.medicineRepo.GetMedicineByID(ctx, *payment.MedicineID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get medicine details: %w", err)
+		}
+
+		// Create order
+		order := &entity.Order{
+			UserID:          payment.UserID,
+			PaymentID:       payment.ID,
+			DeliveryAddress: payment.DeliveryAddress,
+			Status:          "confirmed",
+			OrderNumber:     payment.OrderID,
+		}
+
+		if err := u.orderRepo.CreateOrder(ctx, order); err != nil {
+			return nil, fmt.Errorf("failed to create order: %w", err)
+		}
+
+		subTotal := medicine.Price * float64(*payment.Quantity)
+
+		// Create order item
+		orderItem := &entity.OrderItem{
+			OrderID:    order.ID,
+			MedicineID: *payment.MedicineID,
+			Quantity:   *payment.Quantity,
+			Price:      medicine.Price,
+			Subtotal:   subTotal,
+		}
+		if err := u.orderRepo.CreateOrderItem(ctx, orderItem); err != nil {
+			return nil, fmt.Errorf("failed to create order item: %w", err)
 		}
 	}
 

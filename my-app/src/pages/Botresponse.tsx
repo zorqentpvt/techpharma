@@ -9,7 +9,10 @@ interface Message {
 const MEDICAL_SYSTEM_PROMPT = `You are a reliable medical assistant. 
 Provide accurate health information, explain symptoms clearly,
 and suggest when a user should seek medical attention.
-Do NOT give unsafe or harmful advice.`;
+Do NOT give unsafe or harmful advice. 
+and most importantly only respond to medical or health related stuff otherwise say 
+sorry i can only provide medical info.
+`;
 
 let conversationHistory: Message[] = [];
 

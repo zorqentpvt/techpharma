@@ -19,6 +19,7 @@ import Schedule from "./pages/Schedule";
 import Appointments from "./pages/Appointments";
 import ProfilePage from "./pages/Profile";
 import VideoCall from "./pages/VideoCall";
+import Adminpage from "./pages/Adminpage";
 
 function App() {
   return (
@@ -30,9 +31,11 @@ function App() {
 
       <Routes>
         {/* Auth routes */}
+        
         <Route path="/" element={<SignIn />} />
         <Route path="/signup-form" element={<SignupForm />} />
         <Route path="/videocall" element={<VideoCall />} />
+        <Route path="/admin" element={<Adminpage />} />
 
         {/* Dashboard with nested routes */}
         <Route path="/dashboard" element={<Dashboard />}>

@@ -248,10 +248,10 @@ func (u *userUseCase) UpdateUser(ctx context.Context, id uuid.UUID, user *entity
 
 // UpdateUserStatus updates the status of a user
 func (u *userUseCase) UpdateUserStatus(ctx context.Context, id uuid.UUID, status string) error {
-	if status != "active" && status != "suspended" {
+	if status != "active" && status != "inactive" {
 		return &errors.DomainError{
 			Code:    "INVALID_STATUS",
-			Message: "Status must be either 'active' or 'suspended'",
+			Message: "Status must be either 'active' or 'inactive'",
 		}
 	}
 
@@ -294,7 +294,7 @@ func (u *userUseCase) UpdateUserStatus(ctx context.Context, id uuid.UUID, status
 
 	// Set the user who is updating this status
 	switch user.Status {
-	case "suspended":
+	case "inactive":
 		user.IsActive = false
 		now := time.Now()
 		user.DeactivatedAt = &now
@@ -313,24 +313,6 @@ func (u *userUseCase) UpdateUserStatus(ctx context.Context, id uuid.UUID, status
 		}
 	}
 
-	emailData := map[string]interface{}{
-		"UserName":  user.DisplayName,
-		"UserEmail": user.Email,
-		"Status":    status,
-		"UpdatedAt": user.UpdatedAt.Format("January 2, 2006 at 3:04 PM"),
-		"AppName":   "Collex",
-	}
-
-	// Add reason for suspension if applicable
-	if status == "suspended" {
-		emailData["Reason"] = "Account suspended by administrator"
-	}
-	/*
-		if err := u.emailService.Send(context.Background(), entity.EmailTypeUserStatusUpdate, emailData); err != nil {
-			// Log error but don't fail status update
-			println("Failed to send status update email:", err.Error())
-		}
-	*/
 	return nil
 }
 

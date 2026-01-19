@@ -137,21 +137,20 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 		}
 		// Admin routes (require authentication + admin role)
 		adminRoutes := protectedRoutes.Group("/admin")
-		//	adminRoutes.Use(middleware.RoleBasedAccess(string(shared.UserRoleAdmin), string(shared.UserRoleSuperAdmin)))
+		adminRoutes.Use(middleware.RoleBasedAccess(string(shared.UserRoleAdmin), string(shared.UserRoleSuperAdmin)))
 		{
 			// User management routes (admin only)
 			adminUserRoutes := adminRoutes.Group("/users")
+
 			{
 				//adminUserRoutes.GET("/roles", userHandler.FetchRoles)
 				adminUserRoutes.GET("/", userHandler.ListUsers)
-				//adminUserRoutes.GET("/:id", userHandler.GetUserByID)         // Get specific user by ID
+				adminUserRoutes.GET("/:id", userHandler.GetUserByID)            // Get specific user by ID
 				adminUserRoutes.PUT("/update-user/:id", userHandler.UpdateUser) // Changed from update/:id to standard REST
 				adminUserRoutes.GET("/:id/profile", userHandler.UserProfile)    // Get user profile by ID
 
 				// Apply SuperAdmin middleware only to this specific route
-				adminUserRoutes.POST("/:id/status",
-					middleware.RoleBasedAccess(string(shared.UserRoleSuperAdmin)),
-					userHandler.UpdateUserStatus)
+				adminUserRoutes.PUT("/:id/status", userHandler.UpdateUserStatus)
 			}
 		}
 	}

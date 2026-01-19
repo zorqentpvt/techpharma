@@ -89,14 +89,15 @@ type ContactRequest struct {
 // tygo:emit
 // UpdateUserRequest represents a user update request
 type UpdateUserRequest struct {
-	FirstName   string          `json:"firstName,omitempty"`
+	/*FirstName   string          `json:"firstName,omitempty"`
 	LastName    string          `json:"lastName,omitempty"`
 	Email       *string         `json:"email,omitempty"`
 	PhoneNumber string          `json:"phoneNumber,omitempty"`
 	Address     *AddressRequest `json:"address,omitempty"`     // Now an object
 	ContactInfo *ContactRequest `json:"contactInfo,omitempty"` // Optional contact info as a JSON string
-	RoleID      string          `json:"RoleId,omitempty"`      // ADD THIS FIELD
-	Status      string          `json:"status,omitempty"`      // e.g., "active", "inactive"
+	RoleID      string          `json:"RoleId,omitempty"`
+	*/                                      // ADD THIS FIELD
+	Status string `json:"status,omitempty"` // e.g., "active", "inactive"
 
 }
 type UpdateUserResponse struct {

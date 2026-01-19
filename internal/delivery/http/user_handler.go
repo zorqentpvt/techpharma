@@ -123,10 +123,10 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 		RoleID:          req.RoleID, // Now stores the string directly
 		IsEmailVerified: true,
 		IsPhoneVerified: true,
-		Status:          "active",
+		Status:          "Inactive",
 		Language:        "en",
 		FirstTimeLogin:  true,
-		IsActive:        true,
+		IsActive:        false,
 	}
 
 	// Create user in database
@@ -321,20 +321,24 @@ func (h *UserHandlerClean) UpdateUser(c *gin.Context) {
 	ctx := context.WithValue(c.Request.Context(), "userID", c.GetString("userID"))
 	// Prepare user entity for update
 	user := &entity.User{
-		FirstName:   req.FirstName,
-		LastName:    req.LastName,
-		PhoneNumber: req.PhoneNumber,
-		Status:      req.Status,
+		/*
+			FirstName:   req.FirstName,
+			LastName:    req.LastName,
+			PhoneNumber: req.PhoneNumber,
+		*/
+		Status: req.Status,
 	}
-	// Handle optional email
-	if req.Email != nil {
-		user.Email = req.Email
-	}
+	/*
+		// Handle optional email
+		if req.Email != nil {
+			user.Email = req.Email
+		}
 
-	// Handle optional user role update
-	if req.RoleID != "" {
-		user.RoleID = req.RoleID
-	}
+		// Handle optional user role update
+		if req.RoleID != "" {
+			user.RoleID = req.RoleID
+		}
+	*/
 
 	// ISSUE 3 FIX: Pass UUID instead of string
 	updatedUser, err := h.userUseCase.UpdateUser(ctx, userID, user)
@@ -438,7 +442,6 @@ func (h *UserHandlerClean) ListUsers(c *gin.Context) {
 	// Parse filter parameters
 	roleFilter := c.Query("role")
 	statusFilter := c.Query("status")
-	collegeFilter := c.Query("college")
 	searchQuery := c.Query("search")
 	sortParam := c.DefaultQuery("sort", "created_at_desc") // Default sort by creation date descending
 
@@ -463,10 +466,9 @@ func (h *UserHandlerClean) ListUsers(c *gin.Context) {
 
 	// Create filter options
 	filters := types.UserListFilters{
-		Role:    roleFilter,
-		Status:  statusFilter,
-		College: collegeFilter,
-		Search:  searchQuery,
+		Role:   roleFilter,
+		Status: statusFilter,
+		Search: searchQuery,
 	}
 
 	// Create pagination options with sorting
@@ -512,23 +514,15 @@ func (h *UserHandlerClean) ListUsers(c *gin.Context) {
 
 	// Return paginated response
 	c.JSON(http.StatusOK, types.PaginatedResponse{
-		Success: true,
-		Data:    userResponses,
-		Message: "Users fetched successfully",
-		Pagination: types.PaginationMeta{
-			CurrentPage:  result.Pagination.CurrentPage,
-			TotalPages:   result.Pagination.TotalPages,
-			TotalItems:   result.Pagination.TotalItems,
-			ItemsPerPage: result.Pagination.ItemsPerPage,
-			HasNext:      result.Pagination.HasNext,
-			HasPrevious:  result.Pagination.HasPrevious,
-		},
+		Success:    true,
+		Data:       result.Users,
+		Message:    "Users fetched successfully",
+		Pagination: result.Pagination,
 		Filters: map[string]interface{}{
-			"role":    roleFilter,
-			"status":  statusFilter,
-			"college": collegeFilter,
-			"search":  searchQuery,
-			"sort":    sortParam,
+			"role":   roleFilter,
+			"status": statusFilter,
+			"search": searchQuery,
+			"sort":   sortParam,
 		},
 	})
 }
@@ -559,6 +553,53 @@ func parseSortParam(sortParam string) (string, string) {
 	}
 
 	return field, order
+}
+
+// GetUserByID handles GET /users/:id
+func (h *UserHandlerClean) GetUserByID(c *gin.Context) {
+	userIDStr := c.Param("id")
+	if userIDStr == "" {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "User ID is required",
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "Invalid user ID format",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	user, err := h.userUseCase.GetUserByID(c.Request.Context(), userID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, types.ErrorResponse{
+				Error:   "User not found",
+				Message: "The specified user does not exist",
+				Details: err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   "Failed to fetch user",
+			Message: "Could not retrieve user",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Data:    user,
+		Message: "User fetched successfully",
+	})
 }
 
 func (h *UserHandlerClean) UserProfile(c *gin.Context) {

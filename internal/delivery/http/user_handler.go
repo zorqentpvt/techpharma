@@ -111,6 +111,14 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 		return
 	}
 
+	// Determine initial status based on role
+	status := "Inactive"
+	isActive := false
+	if roleName == "normal" {
+		status = "Active"
+		isActive = true
+	}
+
 	// Create base user entity
 	user := &entity.User{
 		FirstName:       req.FirstName,
@@ -123,10 +131,10 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 		RoleID:          req.RoleID, // Now stores the string directly
 		IsEmailVerified: true,
 		IsPhoneVerified: true,
-		Status:          "Inactive",
+		Status:          status,
 		Language:        "en",
 		FirstTimeLogin:  true,
-		IsActive:        false,
+		IsActive:        isActive,
 	}
 
 	// Create user in database

@@ -143,30 +143,17 @@ func (r *userRepository) ListWithFilters(ctx context.Context, filters types.User
 
 	// Start building the query
 	query := r.db.WithContext(ctx).
-		Preload("UserRole.Role").
-		Preload("Collage")
+		Preload("Doctor").
+		Preload("Pharmacy")
 
 	// Apply filters with explicit table names
 	if filters.Status != "" {
 		query = query.Where("users.status = ?", filters.Status)
 	}
 
-	if filters.College != "" {
-		// Convert college filter to UUID if it's a UUID, otherwise filter by name
-		if collegeUUID, err := uuid.Parse(filters.College); err == nil {
-			query = query.Where("users.collage_id = ?", collegeUUID)
-		} else {
-			query = query.Joins("JOIN collages ON users.collage_id = collages.id").
-				Where("collages.name ILIKE ?", "%"+filters.College+"%")
-		}
-	}
-
 	if filters.Role != "" {
 		// Filter by role name or code
-		query = query.Joins("JOIN user_roles ON users.user_role_id = user_roles.id").
-			Joins("JOIN roles ON user_roles.role_id = roles.id").
-			Where("user_roles.is_active = ? AND (roles.name ILIKE ? OR roles.code ILIKE ?)",
-				true, "%"+filters.Role+"%", "%"+filters.Role+"%")
+		query = query.Where("role_id = ?", filters.Role)
 	}
 
 	if filters.Search != "" {

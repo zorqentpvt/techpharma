@@ -42,8 +42,8 @@ type User struct {
 	RoleID string `gorm:"type:varchar(50);index" json:"roleId,omitempty"`
 
 	// Add this: Doctor relationship (one-to-one)
-	Doctor   *Doctor   `gorm:"foreignKey:UserID" json:"doctor,omitempty"`
-	Pharmacy *Pharmacy `gorm:"foreignKey:UserID" json:"pharmacy,omitempty"`
+	Doctor   *Doctor   `gorm:"foreignKey:UserID;references:ID" json:"doctor,omitempty"`
+	Pharmacy *Pharmacy `gorm:"foreignKey:UserID;references:ID" json:"pharmacy,omitempty"`
 	// Audit fields
 	IsActive       bool       `gorm:"default:true;index" json:"isActive"`
 	DeactivatedAt  *time.Time `json:"deactivatedAt,omitempty"`

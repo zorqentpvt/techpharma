@@ -1,11 +1,14 @@
 import React from 'react'
-import { useState } from "react";
+import { FC, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { FaUserMd, FaClinicMedical, FaUserCircle } from "react-icons/fa";
 
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("doctor");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const navigate = useNavigate();
   return (
    <div className="h-screen w-full flex flex-col lg:flex-row bg-gradient-to-r from-gray-50 via-blue-100 to-blue-50 relative overflow-hidden">
 
@@ -39,36 +42,26 @@ export default function AdminDashboard() {
         {/* Tabs */}
         <nav className="flex flex-col gap-3">
           <button
-            onClick={() => {
-              setActiveTab("doctor");
-              setMobileMenuOpen(false);
-            }}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition
-              ${
-                activeTab === "doctor"
-                  ? "bg-[#002E6E] text-white shadow-md"
-                  : "text-gray-700 hover:bg-blue-50"
-              }`}
-          >
-            <FaUserMd size={20} />
-            Doctor
-          </button>
+                onClick={() => {
+                  navigate("/admin/doctor");
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-gray-700 hover:bg-blue-50"
+              >
+                <FaUserMd size={20} />
+                Doctor
+              </button>
 
           <button
-            onClick={() => {
-              setActiveTab("pharmacy");
-              setMobileMenuOpen(false);
-            }}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition
-              ${
-                activeTab === "pharmacy"
-                  ? "bg-[#002E6E] text-white shadow-md"
-                  : "text-gray-700 hover:bg-blue-50"
-              }`}
-          >
-            <FaClinicMedical size={20} />
-            Pharmacy
-          </button>
+              onClick={() => {
+                navigate("/admin/pharmacy");
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-gray-700 hover:bg-blue-50"
+            >
+              <FaClinicMedical size={20} />
+              Pharmacy
+            </button>
         </nav>
       </aside>
 

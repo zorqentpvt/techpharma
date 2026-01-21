@@ -138,7 +138,6 @@ export default function SignupForm() {
       
               <label className="flex items-center gap-2 cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                       <input
-                        disabled
                         type="file"
                         name="certi"
                         // required
@@ -207,7 +206,6 @@ export default function SignupForm() {
                       <input
                         type="file"
                         name="certi"
-                        disabled
                         // required
                         value={formData.certi}
                         className="hidden"

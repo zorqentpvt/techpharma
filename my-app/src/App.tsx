@@ -19,6 +19,9 @@ import Schedule from "./pages/Schedule";
 import Appointments from "./pages/Appointments";
 import ProfilePage from "./pages/Profile";
 import VideoCall from "./pages/VideoCall";
+import Adminpage from "./pages/Adminpage";
+import DoctorPage from "./pages/DoctorPage";
+import PharmacyPage from "./pages/PharmacyPage";
 
 function App() {
   return (
@@ -30,9 +33,16 @@ function App() {
 
       <Routes>
         {/* Auth routes */}
+        
         <Route path="/" element={<SignIn />} />
         <Route path="/signup-form" element={<SignupForm />} />
         <Route path="/videocall" element={<VideoCall />} />
+        <Route path="/admin" element={<Adminpage />} />
+          {/* Admin paths */}
+            <Route path="/admin/doctor" element={<DoctorPage />} />
+            <Route path="/admin/pharmacy" element={<PharmacyPage />} />
+
+
 
         {/* Dashboard with nested routes */}
         <Route path="/dashboard" element={<Dashboard />}>

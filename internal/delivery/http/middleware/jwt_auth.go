@@ -12,6 +12,12 @@ import (
 // JWTAuth creates a JWT authentication middleware
 func JWTAuth(tokenService service.TokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Skip authentication for OPTIONS requests (CORS preflight)
+		if c.Request.Method == "OPTIONS" {
+			c.Next()
+			return
+		}
+
 		// Get token from Authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -63,6 +69,12 @@ func JWTAuth(tokenService service.TokenService) gin.HandlerFunc {
 // This allows endpoints to work with or without authentication
 func OptionalJWTAuth(tokenService service.TokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Skip for OPTIONS requests
+		if c.Request.Method == "OPTIONS" {
+			c.Next()
+			return
+		}
+
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			// No auth header, continue without setting user context
@@ -106,6 +118,12 @@ func OptionalJWTAuth(tokenService service.TokenService) gin.HandlerFunc {
 // RequireRole creates a middleware that requires a specific role
 func RequireRole(requiredRole string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Skip for OPTIONS requests
+		if c.Request.Method == "OPTIONS" {
+			c.Next()
+			return
+		}
+
 		userRole, exists := c.Get("userRole")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
@@ -127,6 +145,12 @@ func RequireRole(requiredRole string) gin.HandlerFunc {
 // RequireAnyRole creates a middleware that requires any of the specified roles
 func RequireAnyRole(requiredRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Skip for OPTIONS requests
+		if c.Request.Method == "OPTIONS" {
+			c.Next()
+			return
+		}
+
 		userRole, exists := c.Get("userRole")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})

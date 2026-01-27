@@ -19,7 +19,6 @@ import Schedule from "./pages/Schedule";
 import Appointments from "./pages/Appointments";
 import ProfilePage from "./pages/Profile";
 import VideoCall from "./pages/VideoCall";
-import Adminpage from "./pages/Adminpage";
 import DoctorPage from "./pages/DoctorPage";
 import PharmacyPage from "./pages/PharmacyPage";
 
@@ -37,10 +36,9 @@ function App() {
         <Route path="/" element={<SignIn />} />
         <Route path="/signup-form" element={<SignupForm />} />
         <Route path="/videocall" element={<VideoCall />} />
-        <Route path="/admin" element={<Adminpage />} />
-          {/* Admin paths */}
-            <Route path="/admin/doctor" element={<DoctorPage />} />
-            <Route path="/admin/pharmacy" element={<PharmacyPage />} />
+  
+         
+
 
 
 
@@ -50,6 +48,8 @@ function App() {
           <Route index element={<Home />} />
 
           {/* All other dashboard pages */}
+          <Route path="admin/doctor" element={<DoctorPage />} />
+            <Route path="admin/pharmacy" element={<PharmacyPage />} />
           <Route path="store" element={<Store />} />
           <Route path="pay" element={<Pay />} />
           <Route path="chatbot" element={<ChatbotInterface />} />

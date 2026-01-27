@@ -31,10 +31,13 @@ const getUserFromStorage = () => {
 
 const tabIcons = {
   home: FaHome,
+  ad: FaHome,
   medicine: FaPills,
   doctor: FaUserMd,
+  doc:FaUserMd,
   schedule: FaCalendarAlt,
   consult: FaComments,
+  phar: FaStore,
   chatbot: FaComments,
   store: FaStore,
   orders: FaClipboardList,
@@ -84,7 +87,9 @@ useEffect(() => {
   if (!user) return null;
 
   const tabs = [
-    { key: "home", label: "Home", path: "/dashboard", roles: ["normal", "doctor", "pharmacy"] },
+    { key: "home", label: "Home", path: "/dashboard", roles: ["normal", "doctor", "pharmacy","admin"] },
+    { key: "doc", label: "Registered Doctors", path: "/dashboard/admin/doctor", roles: ["admin"] },
+    { key: "phar", label: "Registered Pharmacies", path: "/dashboard/admin/pharmacy", roles: ["admin"] },
     { key: "medicine", label: "Medicine", path: "/dashboard/medicine", roles: ["normal"] },
     { key: "doctor", label: "Doctors", path: "/dashboard/doctor", roles: ["normal"] },
     { key: "schedule", label: "Schedule", path: "/dashboard/schedule", roles: ["doctor"] },
@@ -92,7 +97,7 @@ useEffect(() => {
     { key: "chatbot", label: "Chatbot", path: "/dashboard/chatbot", roles: ["normal"] },
     { key: "store", label: "Store", path: "/dashboard/store", roles: ["pharmacy"] },
     { key: "orders", label: "Orders", path: "/dashboard/orders", roles: ["pharmacy"] },
-    { key: "logout", label: "Logout", path: "/logout", roles: ["normal", "doctor", "pharmacy"] },
+    { key: "logout", label: "Logout", path: "/logout", roles: ["normal", "doctor", "pharmacy","admin"] },
   ];
 
   const renderNavLinks = () =>

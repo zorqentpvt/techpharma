@@ -4,14 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/skryfon/collex/internal/delivery/http/middleware"
 	"github.com/skryfon/collex/internal/infrastructure/container"
-	"github.com/skryfon/collex/shared"
 )
 
 // SetupCleanRoutes configures all routes using clean architecture
 func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 	// Add CORS middleware first (before any routes)
-	router.Use(middleware.CORS(container.Config))
-
+	router.Use(middleware.CORSWithDefaults())
 	// Health check routes (no rate limiting)
 	healthHandler := NewHealthHandler(container.Database)
 	router.GET("/health", healthHandler.HealthCheck)
@@ -137,15 +135,15 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 		}
 		// Admin routes (require authentication + admin role)
 		adminRoutes := protectedRoutes.Group("/admin")
-		adminRoutes.Use(middleware.RoleBasedAccess(string(shared.UserRoleAdmin), string(shared.UserRoleSuperAdmin)))
+		//adminRoutes.Use(middleware.RoleBasedAccess(string(shared.UserRoleAdmin), string(shared.UserRoleSuperAdmin)))
 		{
 			// User management routes (admin only)
 			adminUserRoutes := adminRoutes.Group("/users")
 
 			{
 				//adminUserRoutes.GET("/roles", userHandler.FetchRoles)
-				adminUserRoutes.GET("/", userHandler.ListUsers)
-				adminUserRoutes.GET("/:id", userHandler.GetUserByID)            // Get specific user by ID
+				adminUserRoutes.GET("", userHandler.ListUsers)                  // GET /api/admin/users
+				adminUserRoutes.GET("/:id", userHandler.GetUserByID)            // GET /api/admin/users/:id				           // Matches /api/admin/users				adminUserRoutes.GET("/:id", userHandler.GetUserByID)            // Get specific user by ID
 				adminUserRoutes.PUT("/update-user/:id", userHandler.UpdateUser) // Changed from update/:id to standard REST
 				adminUserRoutes.GET("/:id/profile", userHandler.UserProfile)    // Get user profile by ID
 

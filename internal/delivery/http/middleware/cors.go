@@ -29,15 +29,14 @@ func CORSWithDefaults() gin.HandlerFunc {
 
 	// Default origins for development
 	corsConfig.AllowOrigins = []string{
-		"http://localhost:3000", // React default
-		"http://localhost:5173", // Vite default
-		"http://localhost:8080", // Backend
+		"http://localhost:3000",
+		"http://localhost:5173",
+		"http://localhost:8080",
 		"http://127.0.0.1:3000",
 		"http://127.0.0.1:5173",
 		"http://127.0.0.1:8080",
 	}
 
-	// Default headers commonly used in API requests
 	corsConfig.AllowHeaders = []string{
 		"Origin",
 		"Content-Length",
@@ -55,7 +54,6 @@ func CORSWithDefaults() gin.HandlerFunc {
 		"User-Agent",
 	}
 
-	// Default HTTP methods
 	corsConfig.AllowMethods = []string{
 		"GET",
 		"POST",

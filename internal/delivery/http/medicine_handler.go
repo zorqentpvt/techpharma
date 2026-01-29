@@ -287,10 +287,10 @@ func (h *MedicineHandlerClean) ListMedicines(c *gin.Context) {
 		userID, err := uuid.Parse(userIDStr)
 		if err == nil {
 			// Get user data with preloaded pharmacy
-			user, err := h.userRepo.GetByID(c.Request.Context(), userID)
-			if err == nil && user != nil && user.Pharmacy != nil {
+			pharmacyID := h.userRepo.GetPharmacyByUserID(c.Request.Context(), userID)
+			if pharmacyID != uuid.Nil {
 				// Set pharmacy ID filter from user's pharmacy
-				filters.PharmacyID = &user.Pharmacy.ID
+				filters.PharmacyID = &pharmacyID
 			}
 		}
 	}

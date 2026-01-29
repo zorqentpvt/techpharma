@@ -284,3 +284,15 @@ func (r *userRepository) CountTotalUsers(ctx context.Context) (int64, error) {
 	err := r.db.WithContext(ctx).Model(&entity.User{}).Count(&count).Error
 	return count, err
 }
+func (r *userRepository) GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (id uuid.UUID) {
+	var pharmacy entity.Pharmacy
+	err := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&pharmacy).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return uuid.Nil // Or handle the not found case as appropriate
+		}
+		// Log the error or handle it as needed
+		return uuid.Nil // Return zero UUID in case of error
+	}
+	return pharmacy.ID
+}

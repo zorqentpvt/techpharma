@@ -29,6 +29,7 @@ type UserRepository interface {
 	CountActivePharmacies(ctx context.Context) (int64, error)
 	CountInactivePharmacies(ctx context.Context) (int64, error)
 	CountTotalUsers(ctx context.Context) (int64, error)
+	GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (id uuid.UUID)
 }
 
 type AuditLogRepository interface {

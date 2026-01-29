@@ -1,6 +1,8 @@
 import { FC, useEffect, useState } from "react";
 import { FaUserMd } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import { getUsersByRole } from "../api/adminapi";
+
 
 interface DoctorUser {
   id: string;
@@ -18,6 +20,7 @@ interface DoctorUser {
 const DoctorPage: FC = () => {
   const [doctors, setDoctors] = useState<DoctorUser[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDoctors();
@@ -26,6 +29,7 @@ const DoctorPage: FC = () => {
   const fetchDoctors = async () => {
     try {
       const res = await getUsersByRole("doctor");
+      console.log(res.data)
       setDoctors(res.data);
     } catch (err) {
       console.error("Failed to fetch doctors", err);
@@ -105,12 +109,14 @@ const DoctorPage: FC = () => {
               >
                 {doc.status}
               </span>
-
+ 
               <button
-                className="bg-[#002E6E] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#001f4d]"
-                onClick={() => {
-                  console.log("View doctor:", doc.id);
-                }}
+                onClick={() =>
+                  navigate(`/dashboard/admin/doctor/view/${doc.doctor?.id}`, {
+                    state: { doctor: doc }
+                  })
+                }
+                className="mt-4 w-full bg-[#002E6E] text-white py-2 rounded-lg hover:bg-[#001f4d]"
               >
                 View
               </button>

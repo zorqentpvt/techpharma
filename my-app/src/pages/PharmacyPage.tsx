@@ -64,23 +64,26 @@ const PharmacyPage: FC = () => {
                 Status:{" "}
                 <span
                   className={
-                    user.pharmacy?.isActive
+                    user.status == "active"
                       ? "text-green-600 font-medium"
                       : "text-red-500 font-medium"
                   }
                 >
-                  {user.pharmacy?.isActive ? "Active" : "Inactive"}
+                  {user.status}
                 </span>
               </p>
-
+ 
               <button
                 onClick={() =>
-                  navigate(`/admin/pharmacies/${user.pharmacy?.id}`)
+                  navigate(`/dashboard/admin/pharmacies/view/${user.pharmacy?.id}`, {
+                    state: { pharmacy: user }
+                  })
                 }
                 className="mt-4 w-full bg-[#002E6E] text-white py-2 rounded-lg hover:bg-[#001f4d]"
               >
                 View
               </button>
+
             </div>
           ))}
         </div>

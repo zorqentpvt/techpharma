@@ -184,7 +184,8 @@ export default function Home() {
                        </p> <p className="flex justify-between"> <span>Today's Appointments</span> 
                        <span className="font-semibold text-[#0f4c81]">8</span> </p> 
                        <p className="flex justify-between"> <span>Pending Reports</span> 
-                       <span className="font-semibold text-[#0f4c81]">5</span> </p> </div> </div> </div> )}
+                       <span className="font-semibold text-[#0f4c81]">5</span> </p> </div> </div> </div> 
+                       )}
 
         {/* Normal User Dashboard */}
         {user.role === "normal" && (
@@ -455,6 +456,10 @@ export default function Home() {
     </div>
   </div>
 )}
+        {user.role === "admin" && (
+          <h1>Hi i am admin</h1>
+                       )}
+
 
       </div>
     </div>

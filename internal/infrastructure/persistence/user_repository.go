@@ -237,3 +237,50 @@ func (r *userRepository) CreatePharmacy(ctx context.Context, pharmacy *entity.Ph
 	}
 	return pharmacy, nil
 }
+func (r *userRepository) CountActiveDoctors(ctx context.Context) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&entity.User{}).
+		Joins("JOIN doctors ON users.id = doctors.user_id").
+		Where("users.status = ? AND doctors.is_active = ?", "active", true).
+		Where("role_id = ? AND status = ?", "doctor", "active").
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (r *userRepository) CountInactiveDoctors(ctx context.Context) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&entity.User{}).
+		Where("role_id = ? AND status = ?", "doctor", "inactive").
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (r *userRepository) CountActivePharmacies(ctx context.Context) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&entity.User{}).
+		Where("role_id = ? AND status = ?", "pharmacy", "active").
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (r *userRepository) CountInactivePharmacies(ctx context.Context) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&entity.User{}).
+		Where("role_id = ? AND status = ?", "pharmacy", "inactive").
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (r *userRepository) CountTotalUsers(ctx context.Context) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&entity.User{}).Count(&count).Error
+	return count, err
+}

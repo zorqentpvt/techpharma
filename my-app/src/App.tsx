@@ -21,6 +21,8 @@ import ProfilePage from "./pages/Profile";
 import VideoCall from "./pages/VideoCall";
 import DoctorPage from "./pages/DoctorPage";
 import PharmacyPage from "./pages/PharmacyPage";
+import Viewdoc from "./pages/Viewdoc";
+import Viewpharm from "./pages/Viewpharm";
 
 function App() {
   return (
@@ -48,8 +50,10 @@ function App() {
           <Route index element={<Home />} />
 
           {/* All other dashboard pages */}
-          <Route path="admin/doctor" element={<DoctorPage />} />
+          <Route path="admin/doctor" element={<DoctorPage />} /> 
             <Route path="admin/pharmacy" element={<PharmacyPage />} />
+            <Route path="admin/pharmacies/view/:id"  element={<Viewpharm />}/>
+            <Route path="admin/doctor/view/:id"  element={<Viewdoc />}/>
           <Route path="store" element={<Store />} />
           <Route path="pay" element={<Pay />} />
           <Route path="chatbot" element={<ChatbotInterface />} />

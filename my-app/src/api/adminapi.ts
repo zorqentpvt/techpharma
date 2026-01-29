@@ -122,7 +122,7 @@ export async function updateUserStatus(
       payload
     );
 
-    console.log("API Response (updateUserStatus):", response.data);
+    console.log("API Response (updateUserStatus):", response);
 
     return response.data; // backend already returns { success, message }
   } catch (error: any) {
@@ -135,5 +135,30 @@ export async function updateUserStatus(
       success: false,
       message: error.response?.data?.message || error.message,
     };
+  }
+}
+interface UserStats {
+  activeDoctors: number;
+  inactiveDoctors: number;
+  activePharmacies: number;
+  inactivePharmacies: number;
+  totalUsers: number;
+}
+
+export async function getUserStats(): Promise<UserStats | null> {
+  try {
+    const response = await api.get('api/admin/users/stats');
+
+    // Axios wraps response in `data`
+    const result = response.data;
+
+    if (result.success) {
+      return result.data; // { activeDoctors, inactiveDoctors, ... }
+    } else {
+      throw new Error(result.message || 'Failed to fetch stats');
+    }
+  } catch (error: any) {
+    console.error('Error fetching user stats:', error.response?.data?.message || error.message);
+    return null;
   }
 }

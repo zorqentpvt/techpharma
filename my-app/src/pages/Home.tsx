@@ -11,6 +11,7 @@ import AnalyticsComponent from "../components/AnalyticsComponent";
 import { motion, AnimatePresence } from "framer-motion";
 
 import Checkbox from '@mui/material/Checkbox';
+import { getUserStats } from "../api/adminapi";
 
 const label = { slotProps: { input: { 'aria-label': 'Checkbox demo' } } };
 
@@ -102,6 +103,31 @@ export default function Home() {
       }
     });
   };
+  useEffect(() => {
+    if (user.role === "admin") {
+      const fetchAdminStats = async () => {
+        try {
+          const res = await getUserStats();
+          console.log("Admin stats:", res);
+        } catch (err) {
+          console.error("Failed to load admin stats", err);
+        }
+      };
+  
+      fetchAdminStats();
+    }
+  }, [user.role]);
+
+  const fetchAdminStats = async () => {
+  try {
+    const res = await getUserStats();
+    console.log(res)
+  } catch (err) {
+    console.error("Failed to load pharmacies", err);
+  } finally {
+    
+  }
+};
 
   useEffect(() => {
     reminders.forEach(scheduleNotification);

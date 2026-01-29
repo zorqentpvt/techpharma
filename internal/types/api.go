@@ -524,3 +524,13 @@ type CompleteConsultationRequest struct {
 	Prescription string `json:"prescription" binding:"required"`
 	DoctorNotes  string `json:"doctorNotes"`
 }
+
+// tygo:emit
+// DashboardStatsResponse represents dashboard statistics
+type DashboardStatsResponse struct {
+	ActiveDoctors      int64 `json:"activeDoctors"`
+	InactiveDoctors    int64 `json:"inactiveDoctors"`
+	ActivePharmacies   int64 `json:"activePharmacies"`
+	InactivePharmacies int64 `json:"inactivePharmacies"`
+	TotalUsers         int64 `json:"totalUsers"`
+}

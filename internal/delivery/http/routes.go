@@ -146,6 +146,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 				adminUserRoutes.GET("/:id", userHandler.GetUserByID)            // GET /api/admin/users/:id				           // Matches /api/admin/users				adminUserRoutes.GET("/:id", userHandler.GetUserByID)            // Get specific user by ID
 				adminUserRoutes.PUT("/update-user/:id", userHandler.UpdateUser) // Changed from update/:id to standard REST
 				adminUserRoutes.GET("/:id/profile", userHandler.UserProfile)    // Get user profile by ID
+				adminUserRoutes.GET("/stats", userHandler.GetStatusCount)
 
 				// Apply SuperAdmin middleware only to this specific route
 				adminUserRoutes.PUT("/:id/status", userHandler.UpdateUserStatus)

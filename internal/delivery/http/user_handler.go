@@ -435,10 +435,34 @@ func (h *UserHandlerClean) UpdateUserStatus(c *gin.Context) {
 		})
 		return
 	}
+	type UserData struct {
+		UserID uuid.UUID `json:"user_id"`
+		Status string    `json:"status"`
+	}
 
-	c.JSON(http.StatusOK, types.UpdateUserResponse{
-		UserID:  userID,
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Data:    UserData{UserID: userID, Status: req.Status},
 		Message: "User status updated successfully",
+	})
+}
+
+// GetStatusCount handles GET /admin/users/stats
+func (h *UserHandlerClean) GetStatusCount(c *gin.Context) {
+	stats, err := h.userUseCase.GetDashboardStats(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   "Failed to fetch statistics",
+			Message: "Could not retrieve dashboard statistics",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Data:    stats,
+		Message: "Statistics fetched successfully",
 	})
 }
 

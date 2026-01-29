@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 
 	"time"
 
@@ -27,6 +28,8 @@ type UserUseCase interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	CreateDoctor(ctx context.Context, doctor *entity.Doctor) (*entity.Doctor, error)
 	CreatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error)
+
+	GetDashboardStats(ctx context.Context) (*types.DashboardStatsResponse, error)
 }
 
 // userUseCase implements the UserUseCase interface
@@ -565,4 +568,41 @@ func (u *userUseCase) CreateDoctor(ctx context.Context, user *entity.Doctor) (*e
 
 func (u *userUseCase) CreatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error) {
 	return u.userRepo.CreatePharmacy(ctx, pharmacy)
+}
+
+func (h *userUseCase) GetDashboardStats(ctx context.Context) (*types.DashboardStatsResponse, error) {
+	activeDoctors, err := h.userRepo.CountActiveDoctors(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count active doctors: %w", err)
+	}
+
+	inactiveDoctors, err := h.userRepo.CountInactiveDoctors(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count inactive doctors: %w", err)
+	}
+
+	activePharmacies, err := h.userRepo.CountActivePharmacies(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count active pharmacies: %w", err)
+	}
+
+	inactivePharmacies, err := h.userRepo.CountInactivePharmacies(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count inactive pharmacies: %w", err)
+	}
+
+	totalUsers, err := h.userRepo.CountTotalUsers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count total users: %w", err)
+	}
+
+	stats := &types.DashboardStatsResponse{
+		ActiveDoctors:      activeDoctors,
+		InactiveDoctors:    inactiveDoctors,
+		ActivePharmacies:   activePharmacies,
+		InactivePharmacies: inactivePharmacies,
+		TotalUsers:         totalUsers,
+	}
+
+	return stats, nil
 }

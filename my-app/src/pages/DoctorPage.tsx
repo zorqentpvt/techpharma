@@ -39,93 +39,106 @@ const DoctorPage: FC = () => {
   };
 
   return (
-    <div className="min-h-full bg-white rounded-2xl shadow-lg p-6">
+  <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8">
+    <div className="max-w-7xl mx-auto">
 
-      {/* Header */}
-      <h2 className="text-2xl font-bold text-[#002E6E] flex items-center gap-2 mb-2">
-        <FaUserMd /> Doctor Management
-      </h2>
+      {/* HEADER */}
+      <div className="bg-white rounded-3xl shadow-lg p-8 mb-8">
+        <h2 className="text-4xl font-bold text-[#0f4c81] flex items-center gap-3">
+          <FaUserMd className="text-5xl" />
+          Doctor Management
+        </h2>
+        <p className="text-lg text-gray-600 mt-2">
+          Manage doctor profiles, approvals, and activity status
+        </p>
+      </div>
 
-      <p className="text-gray-600 mb-6">
-        Manage doctors, approvals, and profiles.
-      </p>
-
-      {/* Loading */}
+      {/* LOADING */}
       {loading && (
-        <div className="text-center text-gray-500">
+        <div className="text-center text-xl text-gray-500 py-20">
           Loading doctors...
         </div>
       )}
 
-      {/* Empty */}
+      {/* EMPTY STATE */}
       {!loading && doctors.length === 0 && (
-        <div className="text-center text-gray-400">
+        <div className="text-center text-xl text-gray-400 py-20">
           No doctors found
         </div>
       )}
 
-      {/* Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {doctors.map((doc) => (
-          <div
-            key={doc.id}
-            className="border rounded-xl p-5 shadow-sm hover:shadow-md transition"
-          >
-            <h3 className="font-semibold text-lg text-gray-800">
-              {doc.displayName}
-            </h3>
+      {/* DOCTOR CARDS */}
+      {!loading && doctors.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {doctors.map((doc) => (
+            <div
+              key={doc.id}
+              className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex flex-col justify-between"
+            >
+              {/* TOP */}
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800">
+                  {doc.displayName}
+                </h3>
 
-            <p className="text-sm text-gray-500">
-              {doc.email}
-            </p>
+                <p className="text-base text-gray-500 mt-1">
+                  {doc.email}
+                </p>
 
-            <p className="text-sm text-gray-500">
-              {doc.phoneNumber}
-            </p>
+                <p className="text-base text-gray-500">
+                  {doc.phoneNumber}
+                </p>
 
-            <p className="mt-2 text-sm">
-              <span className="font-medium">Specialization:</span>{" "}
-              {doc.doctor?.specializationId || "N/A"}
-            </p>
+                <div className="mt-6 space-y-2 text-lg">
+                  <p>
+                    <span className="font-semibold">Specialization:</span>{" "}
+                    {doc.doctor?.specializationId || "N/A"}
+                  </p>
 
-            <p className="text-sm">
-              <span className="font-medium">License:</span>{" "}
-              {doc.doctor?.licenseNumber || "N/A"}
-            </p>
+                  <p>
+                    <span className="font-semibold">License:</span>{" "}
+                    {doc.doctor?.licenseNumber || "N/A"}
+                  </p>
 
-            <p className="text-sm">
-              <span className="font-medium">Experience:</span>{" "}
-              {doc.doctor?.experience ?? 0} yrs
-            </p>
+                  <p>
+                    <span className="font-semibold">Experience:</span>{" "}
+                    {doc.doctor?.experience ?? 0} years
+                  </p>
+                </div>
+              </div>
 
-            {/* Footer */}
-            <div className="mt-4 flex justify-between items-center">
-              <span
-                className={`text-xs px-3 py-1 rounded-full ${
-                  doc.status === "active"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                {doc.status}
-              </span>
- 
-              <button
-                onClick={() =>
-                  navigate(`/dashboard/admin/doctor/view/${doc.doctor?.id}`, {
-                    state: { doctor: doc }
-                  })
-                }
-                className="mt-4 w-full bg-[#002E6E] text-white py-2 rounded-lg hover:bg-[#001f4d]"
-              >
-                View
-              </button>
+              {/* FOOTER */}
+              <div className="mt-8">
+                <span
+                  className={`inline-block text-sm font-semibold px-4 py-1 rounded-full mb-4
+                    ${
+                      doc.status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                >
+                  {doc.status.toUpperCase()}
+                </span>
+
+                <button
+                  onClick={() =>
+                    navigate(
+                      `/dashboard/admin/doctor/view/${doc.id}`,
+                      { state: { doctor: doc } }
+                    )
+                  }
+                  className="w-full bg-[#0f4c81] text-white text-lg py-3 rounded-2xl font-bold hover:bg-[#0c3d68] transition"
+                >
+                  View Doctor
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 };
 
 export default DoctorPage;

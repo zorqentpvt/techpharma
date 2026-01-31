@@ -97,57 +97,96 @@ const ViewPharm: React.FC = () => {
   if (!user) return <div className="text-center py-10">No user data available.</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md space-y-6 font-sans">
-      <h1 className="text-2xl font-bold text-gray-800">Pharmacy User Details</h1>
+  <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8">
+    <div className="max-w-5xl mx-auto space-y-8">
 
-      <section className="p-4 bg-gray-50 rounded-md shadow-sm">
-        <h2 className="text-xl font-semibold mb-3">User Info</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <p><span className="font-medium">ID:</span> {user.id}</p>
-          <p><span className="font-medium">Name:</span> {user.displayName}</p>
-          <p><span className="font-medium">First Name:</span> {user.firstName}</p>
-          <p><span className="font-medium">Last Name:</span> {user.lastName}</p>
-          <p><span className="font-medium">Email:</span> {user.email}</p>
-          <p><span className="font-medium">Phone:</span> {user.phoneNumber}</p>
-          <p><span className="font-medium">Gender:</span> {user.gender}</p>
-          <p><span className="font-medium">Status:</span> {user.status}</p>
-          <p><span className="font-medium">Role:</span> {user.roleId}</p>
-          <p><span className="font-medium">Active:</span> {user.isActive ? "Yes" : "No"}</p>
-          <p><span className="font-medium">First Time:</span> {user.firsttime ? "Yes" : "No"}</p>
+      {/* HEADER */}
+      <div className="bg-white rounded-3xl shadow-lg p-8">
+        <h1 className="text-4xl font-bold text-[#0f4c81] mb-2">
+          🏥 Pharmacy User Details
+        </h1>
+        <p className="text-lg text-gray-600">
+          Detailed information about the pharmacy and associated user
+        </p>
+      </div>
+
+      {/* USER INFO */}
+      <div className="bg-white rounded-3xl shadow-md p-8">
+        <h2 className="text-3xl font-semibold text-[#0f4c81] mb-6">
+          👤 User Information
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
+          <p><span className="font-semibold">ID:</span> {user.id}</p>
+          <p><span className="font-semibold">Display Name:</span> {user.displayName}</p>
+          <p><span className="font-semibold">First Name:</span> {user.firstName}</p>
+          <p><span className="font-semibold">Last Name:</span> {user.lastName}</p>
+          <p><span className="font-semibold">Email:</span> {user.email}</p>
+          <p><span className="font-semibold">Phone:</span> {user.phoneNumber}</p>
+          <p><span className="font-semibold">Gender:</span> {user.gender}</p>
+          <p><span className="font-semibold">Role ID:</span> {user.roleId}</p>
+          <p>
+            <span className="font-semibold">Status:</span>{" "}
+            <span className={user.isActive ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
+              {user.status}
+            </span>
+          </p>
+          <p><span className="font-semibold">First Time:</span> {user.firsttime ? "Yes" : "No"}</p>
         </div>
-      </section>
+      </div>
 
-      <section className="p-4 bg-gray-50 rounded-md shadow-sm">
-        <h2 className="text-xl font-semibold mb-3">Address Info</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <p><span className="font-medium">Address:</span> {user.address.address}</p>
-          <p><span className="font-medium">City:</span> {user.address.city}</p>
-          <p><span className="font-medium">State:</span> {user.address.state}</p>
-          <p><span className="font-medium">Postal Code:</span> {user.address.postalCode}</p>
-          <p><span className="font-medium">Country:</span> {user.address.country}</p>
-          <p><span className="font-medium">Latitude:</span> {user.address.latitude}</p>
-          <p><span className="font-medium">Longitude:</span> {user.address.longitude}</p>
+      {/* ADDRESS INFO */}
+      <div className="bg-white rounded-3xl shadow-md p-8">
+        <h2 className="text-3xl font-semibold text-[#0f4c81] mb-6">
+          📍 Address Details
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
+          <p><span className="font-semibold">Address:</span> {user.address.address}</p>
+          <p><span className="font-semibold">City:</span> {user.address.city}</p>
+          <p><span className="font-semibold">State:</span> {user.address.state}</p>
+          <p><span className="font-semibold">Postal Code:</span> {user.address.postalCode}</p>
+          <p><span className="font-semibold">Country:</span> {user.address.country}</p>
+          <p><span className="font-semibold">Latitude:</span> {user.address.latitude}</p>
+          <p><span className="font-semibold">Longitude:</span> {user.address.longitude}</p>
         </div>
-      </section>
+      </div>
 
-      <section className="p-4 bg-gray-50 rounded-md shadow-sm">
-        <h2 className="text-xl font-semibold mb-3">Pharmacy Info</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* PHARMACY INFO */}
+      <div className="bg-white rounded-3xl shadow-md p-8">
+        <h2 className="text-3xl font-semibold text-[#0f4c81] mb-6">
+          💊 Pharmacy Information
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
           {Object.entries(user.pharmacy).map(([key, value]) => (
-            <p key={key}><span className="font-medium">{key}:</span> {String(value)}</p>
+            <p key={key}>
+              <span className="font-semibold capitalize">
+                {key.replace(/([A-Z])/g, " $1")}:
+              </span>{" "}
+              {String(value)}
+            </p>
           ))}
         </div>
-      </section>
+      </div>
 
-      <button
-        onClick={toggleStatus}
-        className={`w-full py-2 rounded-lg text-white font-semibold ${user.isActive ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}`}
-      >
-        {user.isActive ? "Deactivate" : "Activate"}
-      </button>
-    
+      {/* ACTION BUTTON */}
+      <div className="bg-white rounded-3xl shadow-md p-8">
+        <button
+          onClick={toggleStatus}
+          className={`w-full py-4 text-xl rounded-2xl font-bold text-white transition-all duration-300
+            ${user.isActive
+              ? "bg-red-600 hover:bg-red-700"
+              : "bg-green-600 hover:bg-green-700"
+            }`}
+        >
+          {user.isActive ? "🚫 Deactivate Pharmacy" : "✅ Activate Pharmacy"}
+        </button>
+      </div>
+
     </div>
-  );
+  </div>
+);
 };
 
 export default ViewPharm;

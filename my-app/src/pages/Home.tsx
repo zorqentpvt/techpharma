@@ -15,6 +15,14 @@ import { getUserStats } from "../api/adminapi";
 
 const label = { slotProps: { input: { 'aria-label': 'Checkbox demo' } } };
 
+const stats = {
+    activeDoctors: 1,
+    inactiveDoctors: 0,
+    activePharmacies: 1,
+    inactivePharmacies: 0,
+    totalUsers: 4,
+  };
+
 interface User {
   username: string;
   role: string;
@@ -483,7 +491,90 @@ export default function Home() {
   </div>
 )}
         {user.role === "admin" && (
-          <h1>Hi i am admin</h1>
+          <div className="min-h-screen bg-blue-50 rounded-2xl">
+      <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-100 to-white rounded-3xl shadow-md p-8">
+          <h1 className="text-3xl font-bold text-[#0f4c81] flex items-center gap-2">
+            📊 Admin Dashboard
+          </h1>
+          <p className="text-gray-600 mt-2">
+            System-wide user and service statistics
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
+          {/* Active Doctors */}
+          <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-green-100 text-green-600 text-xl">
+              🧑‍⚕️
+            </div>
+            <div>
+              <h3 className="text-gray-600 font-medium">Active Doctors</h3>
+              <p className="text-3xl font-bold text-[#0f4c81]">
+                {stats.activeDoctors}
+              </p>
+            </div>
+          </div>
+
+          {/* Inactive Doctors */}
+          <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-100 text-red-600 text-xl">
+              🚫🧑‍⚕️
+            </div>
+            <div>
+              <h3 className="text-gray-600 font-medium">Inactive Doctors</h3>
+              <p className="text-3xl font-bold text-[#0f4c81]">
+                {stats.inactiveDoctors}
+              </p>
+            </div>
+          </div>
+
+          {/* Active Pharmacies */}
+          <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-green-100 text-green-600 text-xl">
+              💊
+            </div>
+            <div>
+              <h3 className="text-gray-600 font-medium">Active Pharmacies</h3>
+              <p className="text-3xl font-bold text-[#0f4c81]">
+                {stats.activePharmacies}
+              </p>
+            </div>
+          </div>
+
+          {/* Inactive Pharmacies */}
+          <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-100 text-red-600 text-xl">
+              🚫💊
+            </div>
+            <div>
+              <h3 className="text-gray-600 font-medium">Inactive Pharmacies</h3>
+              <p className="text-3xl font-bold text-[#0f4c81]">
+                {stats.inactivePharmacies}
+              </p>
+            </div>
+          </div>
+
+          {/* Total Users */}
+          <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4 border-2 border-[#0f4c81] sm:col-span-2 lg:col-span-1">
+            <div className="w-14 h-14 flex items-center justify-center rounded-full bg-[#0f4c81]/10 text-[#0f4c81] text-xl">
+              👥
+            </div>
+            <div>
+              <h3 className="text-gray-600 font-medium">Total Users</h3>
+              <p className="text-3xl font-bold text-[#0f4c81]">
+                {stats.totalUsers}
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
                        )}
 
 

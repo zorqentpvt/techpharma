@@ -24,72 +24,102 @@ const PharmacyPage: FC = () => {
   };
 
   return (
-    <div className="min-h-full bg-white rounded-2xl shadow-lg p-6">
-      <h2 className="text-2xl font-bold text-[#002E6E] flex items-center gap-2 mb-4">
-        <FaClinicMedical /> Pharmacy Management
-      </h2>
+  <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8">
+    <div className="max-w-7xl mx-auto">
 
-      <p className="text-gray-600 mb-6">
-        Manage pharmacies, licenses, and access.
-      </p>
+      {/* HEADER */}
+      <div className="bg-white rounded-3xl shadow-lg p-8 mb-8">
+        <h2 className="text-4xl font-bold text-[#0f4c81] flex items-center gap-3">
+          <FaClinicMedical className="text-5xl" />
+          Pharmacy Management
+        </h2>
+        <p className="text-lg text-gray-600 mt-2">
+          Manage pharmacies, licenses, and access control
+        </p>
+      </div>
 
-      {loading ? (
-        <p className="text-gray-500">Loading pharmacies...</p>
-      ) : pharmacies.length === 0 ? (
-        <p className="text-gray-500">No pharmacies found.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* LOADING */}
+      {loading && (
+        <div className="text-center text-xl text-gray-500 py-20">
+          Loading pharmacies...
+        </div>
+      )}
+
+      {/* EMPTY */}
+      {!loading && pharmacies.length === 0 && (
+        <div className="text-center text-xl text-gray-400 py-20">
+          No pharmacies found
+        </div>
+      )}
+
+      {/* PHARMACY CARDS */}
+      {!loading && pharmacies.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {pharmacies.map((user) => (
             <div
               key={user.id}
-              className="border rounded-xl p-5 shadow-sm hover:shadow-md transition"
+              className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex flex-col justify-between"
             >
-              <h3 className="text-lg font-semibold text-[#002E6E]">
-                {user.pharmacy?.name}
-              </h3>
+              {/* TOP */}
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800">
+                  {user.pharmacy?.name || "Pharmacy"}
+                </h3>
 
-              <p className="text-sm text-gray-600">
-                License: {user.pharmacy?.licenseNumber}
-              </p>
+                <p className="text-base text-gray-500 mt-1">
+                  {user.pharmacy?.email}
+                </p>
 
-              <p className="text-sm text-gray-600">
-                Email: {user.pharmacy?.email}
-              </p>
+                <p className="text-base text-gray-500">
+                  {user.pharmacy?.phoneNumber}
+                </p>
 
-              <p className="text-sm text-gray-600">
-                Phone: {user.pharmacy?.phoneNumber}
-              </p>
+                <div className="mt-6 space-y-2 text-lg">
+                  <p>
+                    <span className="font-semibold">License:</span>{" "}
+                    {user.pharmacy?.licenseNumber || "N/A"}
+                  </p>
 
-              <p className="text-sm text-gray-600 mt-1">
-                Status:{" "}
+                  <p>
+                    <span className="font-semibold">City:</span>{" "}
+                    {user.pharmacy?.city || "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              {/* FOOTER */}
+              <div className="mt-8">
                 <span
-                  className={
-                    user.status == "active"
-                      ? "text-green-600 font-medium"
-                      : "text-red-500 font-medium"
-                  }
+                  className={`inline-block text-sm font-semibold px-4 py-1 rounded-full mb-4
+                    ${
+                      user.status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
                 >
-                  {user.status}
+                  {user.status.toUpperCase()}
                 </span>
-              </p>
- 
-              <button
-                onClick={() =>
-                  navigate(`/dashboard/admin/pharmacies/view/${user.pharmacy?.id}`, {
-                    state: { pharmacy: user }
-                  })
-                }
-                className="mt-4 w-full bg-[#002E6E] text-white py-2 rounded-lg hover:bg-[#001f4d]"
-              >
-                View
-              </button>
 
+                <button
+                  onClick={() =>
+                    navigate(
+                      `/dashboard/admin/pharmacies/view/${user.pharmacy?.id}`,
+                      { state: { pharmacy: user } }
+                    )
+                  }
+                  className="w-full bg-[#0f4c81] text-white text-lg py-3 rounded-2xl font-bold hover:bg-[#0c3d68] transition"
+                >
+                  View Pharmacy
+                </button>
+              </div>
             </div>
           ))}
         </div>
       )}
     </div>
-  );
+  </div>
+);
+
 };
 
 export default PharmacyPage;

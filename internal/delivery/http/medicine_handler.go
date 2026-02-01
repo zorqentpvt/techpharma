@@ -56,9 +56,13 @@ func (h *MedicineHandlerClean) GetMedicines(c *gin.Context) {
 		})
 		return
 	}
-	searchquery := req.SearchQuery
 
-	medicinedata, err := h.medicineUseCase.GetMedicines(c.Request.Context(), searchquery)
+	filter := types.MedicineRequest{
+		SearchQuery: req.SearchQuery,
+		Latitude:    lattitude,
+		Longitude:   longitude,
+	}
+	medicinedata, err := h.medicineUseCase.GetMedicines(c.Request.Context(), filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
 			Error:   "Failed to retrieve medicines",
@@ -68,6 +72,7 @@ func (h *MedicineHandlerClean) GetMedicines(c *gin.Context) {
 		return
 	}
 	log.Printf("%f,%f", lattitude, longitude)
+	fmt.Printf("latitude: %f, longitude: %f, radius: %d\n", lattitude, longitude, req.Radius)
 	c.JSON(http.StatusOK, response.Response{
 		Success: true,
 		Data:    medicinedata,

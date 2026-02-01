@@ -42,7 +42,7 @@ type SecurityEventRepository interface {
 	SendPasswordResetEmail(ctx context.Context, email string, resetoken string) error
 }
 type MedicineRepository interface {
-	GetMedicines(ctx context.Context, searchQuery string) ([]*entity.Medicine, error)
+	GetMedicines(ctx context.Context, filter types.MedicineRequest) ([]*entity.Medicine, error)
 	AddMedicine(ctx context.Context, userId uuid.UUID, medicine *entity.Medicine) (*entity.Medicine, error)
 	ListMedicines(ctx context.Context, filters types.MedicineFilters) ([]*entity.Medicine, int64, error)
 	GetMedicineByID(ctx context.Context, medicineID uuid.UUID) (*entity.Medicine, error)

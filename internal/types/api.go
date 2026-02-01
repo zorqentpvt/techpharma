@@ -319,7 +319,10 @@ type UpdateProfileRequest struct {
 	ContactInfo *ContactRequest `json:"contactInfo,omitempty"`
 }
 type MedicineRequest struct {
-	SearchQuery string `json:"searchQuery"`
+	SearchQuery string  `json:"searchQuery"`
+	Latitude    float64 `json:"latitude,omitempty"`
+	Longitude   float64 `json:"longitude,omitempty"`
+	Radius      int     `json:"radius,omitempty" default:"20"`
 }
 type DoctorRequest struct {
 	Query string `json:"query"`

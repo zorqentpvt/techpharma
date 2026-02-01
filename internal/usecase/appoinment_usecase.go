@@ -448,11 +448,10 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 		// ✅ LOOP through ALL slots instead of just taking [0]
 		for _, slot := range appt.BookedSlots {
 			upcoming = append(upcoming, types.ConsultationResponse{
-				ID:         appt.ID,
-				SlotID:     slot.ID, // Add slot ID if your type supports it
-				Name:       appt.Patient.FirstName + " " + appt.Patient.LastName,
-				DoctorName: appt.DoctorName,
-				//DoctorSpecialization: appt.Doctor.SpecializationID,
+				ID:               appt.ID,
+				SlotID:           slot.ID,
+				Name:             appt.Patient.FirstName + " " + appt.Patient.LastName,
+				DoctorName:       appt.DoctorName,
 				DoctorID:         appt.DoctorID,
 				PatientID:        appt.PatientID,
 				IsDoctorMeeting:  appt.IsDoctorMeeting,
@@ -477,21 +476,28 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 		for _, slot := range appt.BookedSlots {
 			var opChartResp *types.OpChartResponse
 
-			opChartResp = &types.OpChartResponse{
-				ID:           appt.OpChart.ID,
-				Diagnosis:    appt.OpChart.Diagnosis,
-				Prescription: appt.OpChart.Prescription,
-				DoctorNotes:  appt.OpChart.DoctorNotes,
-				Date:         strings.Split(appt.OpChart.Date, "T")[0],
-				Time:         appt.OpChart.Time,
+			// ✅ FIX: Check if OpChart exists before accessing it
+			if appt.OpChart != nil {
+				dateStr := ""
+				if appt.OpChart.Date != "" {
+					dateStr = strings.Split(appt.OpChart.Date, "T")[0]
+				}
+
+				opChartResp = &types.OpChartResponse{
+					ID:           appt.OpChart.ID,
+					Diagnosis:    appt.OpChart.Diagnosis,
+					Prescription: appt.OpChart.Prescription,
+					DoctorNotes:  appt.OpChart.DoctorNotes,
+					Date:         dateStr,
+					Time:         appt.OpChart.Time,
+				}
 			}
 
 			history = append(history, types.ConsultationResponse{
-				ID:         appt.ID,
-				SlotID:     slot.ID, // Add slot ID if your type supports it
-				Name:       appt.Patient.FirstName + " " + appt.Patient.LastName,
-				DoctorName: appt.DoctorName,
-				//DoctorSpecialization: appt.Doctor.SpecializationID,
+				ID:               appt.ID,
+				SlotID:           slot.ID,
+				Name:             appt.Patient.FirstName + " " + appt.Patient.LastName,
+				DoctorName:       appt.DoctorName,
 				DoctorID:         appt.DoctorID,
 				PatientID:        appt.PatientID,
 				IsDoctorMeeting:  appt.IsDoctorMeeting,
@@ -504,7 +510,7 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 				Diagnosis:        appt.Notes,
 				Prescription:     "",
 				Notes:            appt.Notes,
-				OpChart:          opChartResp,
+				OpChart:          opChartResp, // This will be nil if OpChart doesn't exist
 			})
 		}
 	}

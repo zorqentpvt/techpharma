@@ -272,13 +272,19 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 		for _, slot := range appt.BookedSlots {
 			var opChartResp *types.OpChartResponse
 
-			opChartResp = &types.OpChartResponse{
-				ID:           appt.OpChart.ID,
-				Diagnosis:    appt.OpChart.Diagnosis,
-				Prescription: appt.OpChart.Prescription,
-				DoctorNotes:  appt.OpChart.DoctorNotes,
-				Date:         strings.Split(appt.OpChart.Date, "T")[0],
-				Time:         appt.OpChart.Time,
+			if appt.OpChart != nil {
+				dateStr := ""
+				if appt.OpChart.Date != "" {
+					dateStr = strings.Split(appt.OpChart.Date, "T")[0]
+				}
+				opChartResp = &types.OpChartResponse{
+					ID:           appt.OpChart.ID,
+					Diagnosis:    appt.OpChart.Diagnosis,
+					Prescription: appt.OpChart.Prescription,
+					DoctorNotes:  appt.OpChart.DoctorNotes,
+					Date:         dateStr,
+					Time:         appt.OpChart.Time,
+				}
 			}
 
 			history = append(history, types.ConsultationResponse{

@@ -68,7 +68,7 @@ type OrderRepository interface {
 	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error
 
 	GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (*entity.Pharmacy, error)
-	GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, error)
+	GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, int64, error)
 	GetPharmacyOrders(ctx context.Context, pharmacyID uuid.UUID, filter types.ListPharmacyOrders) ([]*entity.Order, int64, error)
 
 	CreateOrder(ctx context.Context, order *entity.Order) error

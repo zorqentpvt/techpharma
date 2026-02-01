@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,7 +16,7 @@ import (
 type MedicineUseCase interface {
 	// Medicine management methods
 
-	GetMedicines(ctx context.Context, searchQuery string) ([]*entity.Medicine, error)
+	GetMedicines(ctx context.Context, filter types.MedicineRequest) ([]*entity.Medicine, error)
 	AddMedicine(ctx context.Context, userId uuid.UUID, medicine *entity.Medicine) (*entity.Medicine, error)
 	ListMedicines(ctx context.Context, filters types.MedicineFilters) ([]*entity.Medicine, int64, error)
 	GetMedicineByID(ctx context.Context, medicineID uuid.UUID) (*entity.Medicine, error)
@@ -38,8 +39,30 @@ func NewMedicineUseCase(medicineRepo repository.MedicineRepository, userRepo rep
 }
 
 // GetMedicines implements the MedicineUseCase interface
-func (u *medicineUseCase) GetMedicines(ctx context.Context, searchQuery string) ([]*entity.Medicine, error) {
-	return u.medicineRepo.GetMedicines(ctx, searchQuery)
+// This function probably uses the Haversine formula to calculate distance between two points on Earth:
+func (u *medicineUseCase) GetMedicines(ctx context.Context, filter types.MedicineRequest) ([]*entity.Medicine, error) {
+	medicines, err := u.medicineRepo.GetMedicines(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	if filter.Latitude != 0 || filter.Longitude != 0 {
+		var nearbyMedicines []*entity.Medicine
+		radius := float64(filter.Radius)
+		if radius <= 0 {
+			radius = 20 // Default radius 20km
+		}
+
+		for _, med := range medicines {
+			if med.Pharmacy != nil {
+				if calculateDistance(filter.Latitude, filter.Longitude, med.Pharmacy.Latitude, med.Pharmacy.Longitude) <= radius {
+					nearbyMedicines = append(nearbyMedicines, med)
+				}
+			}
+		}
+		return nearbyMedicines, nil
+	}
+	return medicines, nil
 }
 
 // AddMedicine implements the MedicineUseCase interface
@@ -135,4 +158,16 @@ func (u *medicineUseCase) UpdateMedicine(ctx context.Context, userID uuid.UUID, 
 		return nil, err
 	}
 	return updatedMedicineData, nil
+}
+
+func calculateDistance(lat1, lon1, lat2, lon2 float64) float64 {
+	const R = 6371 // Earth radius in km
+	dLat := (lat2 - lat1) * (math.Pi / 180)
+	dLon := (lon2 - lon1) * (math.Pi / 180)
+	lat1 = lat1 * (math.Pi / 180)
+	lat2 = lat2 * (math.Pi / 180)
+
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) + math.Sin(dLon/2)*math.Sin(dLon/2)*math.Cos(lat1)*math.Cos(lat2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	return R * c
 }

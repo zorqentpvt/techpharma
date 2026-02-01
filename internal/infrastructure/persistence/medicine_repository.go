@@ -24,14 +24,14 @@ func NewMedicineRepository(db *gorm.DB) repository.MedicineRepository {
 		db: db,
 	}
 }
-func (r *MedicineRepository) GetMedicines(ctx context.Context, searchQuery string) ([]*entity.Medicine, error) {
+func (r *MedicineRepository) GetMedicines(ctx context.Context, filter types.MedicineRequest) ([]*entity.Medicine, error) {
 	var medicines []*entity.Medicine
 
 	query := r.db.WithContext(ctx).Preload("Pharmacy")
 
 	// If search query is provided, search in both name and content
-	if searchQuery != "" {
-		searchPattern := "%" + strings.ToLower(searchQuery) + "%"
+	if filter.SearchQuery != "" {
+		searchPattern := "%" + strings.ToLower(filter.SearchQuery) + "%"
 		query = query.Where(
 			"LOWER(name) LIKE ? OR LOWER(content) LIKE ?",
 			searchPattern,

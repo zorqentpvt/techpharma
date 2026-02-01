@@ -202,13 +202,22 @@ export default function Home() {
     localStorage.setItem("reminders", JSON.stringify(updatedReminders));
   };
 
+  const bgMap: Record<string, string> = {
+  admin: "/images/admin.jpg",
+  doctor: "/images/doc.jpg",
+  pharmacy: "/images/pharma.png",
+  normal: "/images/user.png",
+};
+
+
   // ✅ JSX
   return (
-    <div className="min-h-screen rounded-2xl bg-blue-50">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat opacity-90 rounded-2xl bg-blue-50" style={{ backgroundImage: `url(${bgMap[user.role]})` }}>
       <div className="max-w-7xl mx-auto pt-4 pb-10 px-6">
         {/* Pharmacy Dashboard */}
         {user.role === "pharmacy" && (
-          <div className="bg-[#e7f3ffd0] rounded-2xl shadow-lg p-6 mb-6">
+          <div className="bg-[#e7f3ffd0] rounded-2xl shadow-lg p-6 mb-6 opacity-90" >
+            
             <h2 className="text-xl font-semibold text-[#084377] mb-4">
               Business Analytics
             </h2>
@@ -248,7 +257,7 @@ export default function Home() {
 
         {/* Normal User Dashboard */}
         {user.role === "normal" && (
-  <div className="space-y-10 max-w-4xl mx-auto">
+  <div className="space-y-10 max-w-4xl mx-auto opacity-90" >
 
 
           {/* mui */}
@@ -516,13 +525,13 @@ export default function Home() {
   </div>
 )}
         {user.role === "admin" && (
-          <div className="min-h-screen bg-blue-50 rounded-2xl">
+          <div className=" min-h-screen bg-blue-50 rounded-2xl opacity-90">
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-100 to-white rounded-3xl shadow-md p-8">
+        <div className="bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md p-8">
           <h1 className="text-3xl font-bold text-[#0f4c81] flex items-center gap-2">
-            📊 Admin Dashboard
+             Admin Dashboard
           </h1>
           <p className="text-gray-600 mt-2">
             System-wide user and service statistics
@@ -534,8 +543,8 @@ export default function Home() {
 
           {/* Active Doctors */}
           <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
-            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-green-100 text-green-600 text-xl">
-              🧑‍⚕️
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-100 text-green-600 text-xl">
+              
             </div>
             <div>
               <h3 className="text-gray-600 font-medium">Active Doctors</h3>
@@ -548,7 +557,7 @@ export default function Home() {
           {/* Inactive Doctors */}
           <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
             <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-100 text-red-600 text-xl">
-              🚫🧑‍⚕️
+              
             </div>
             <div>
               <h3 className="text-gray-600 font-medium">Inactive Doctors</h3>
@@ -560,8 +569,8 @@ export default function Home() {
 
           {/* Active Pharmacies */}
           <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
-            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-green-100 text-green-600 text-xl">
-              💊
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-100 text-green-600 text-xl">
+              
             </div>
             <div>
               <h3 className="text-gray-600 font-medium">Active Pharmacies</h3>
@@ -574,7 +583,7 @@ export default function Home() {
           {/* Inactive Pharmacies */}
           <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
             <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-100 text-red-600 text-xl">
-              🚫💊
+              
             </div>
             <div>
               <h3 className="text-gray-600 font-medium">Inactive Pharmacies</h3>
@@ -587,7 +596,7 @@ export default function Home() {
           {/* Total Users */}
           <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4 border-2 border-[#0f4c81] sm:col-span-2 lg:col-span-1">
             <div className="w-14 h-14 flex items-center justify-center rounded-full bg-[#0f4c81]/10 text-[#0f4c81] text-xl">
-              👥
+              👤
             </div>
             <div>
               <h3 className="text-gray-600 font-medium">Total Users</h3>

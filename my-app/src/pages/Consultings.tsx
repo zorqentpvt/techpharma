@@ -117,7 +117,7 @@ const handleJoinCall = (consultation) => {
   };
 
   const SectionCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+    <div className="bg-white opacity-85 rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
       <h3 className="text-lg font-semibold text-[#002E6E] mb-4">{title}</h3>
       {children}
     </div>
@@ -201,7 +201,7 @@ const handleJoinCall = (consultation) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] px-4 py-6">
+    <div className="min-h-screen bg-[#f7f9fc] px-4 py-6" style={{ backgroundImage: "url('/images/user.png')" }}>
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-2">
         <h1 className="text-2xl sm:text-3xl font-bold text-[#002E6E]">🧑‍⚕️ Consultations</h1>
         <h2 className="text-sm sm:text-base font-medium text-[#002E6E]">Welcome {user.username || "Guest"}</h2>

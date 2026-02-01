@@ -103,7 +103,7 @@ const ViewDoctor: React.FC = () => {
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md p-8">
           <h1 className="text-4xl font-bold text-[#0f4c81] flex items-center gap-3">
-            🧑‍⚕️ {user.displayName}
+             {user.displayName}
           </h1>
           <p className="text-lg text-gray-600 mt-2">
             Role: <span className="font-medium">{user.roleId}</span>
@@ -141,7 +141,7 @@ const ViewDoctor: React.FC = () => {
 
           {/* Address */}
           <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8">
-            <h2 className="text-2xl font-bold text-[#0f4c81] mb-6">📍 Address</h2>
+            <h2 className="text-2xl font-bold text-[#0f4c81] mb-6"> Address</h2>
             <ul className="text-gray-700 space-y-3 text-lg leading-relaxed">
               <li><b>Address:</b> {user.address.address || "N/A"}</li>
               <li><b>City:</b> {user.address.city || "N/A"}</li>
@@ -156,7 +156,7 @@ const ViewDoctor: React.FC = () => {
 
         {/* Doctor Info */}
         <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8">
-          <h2 className="text-2xl font-bold text-[#0f4c81] mb-6">💊 Doctor Info</h2>
+          <h2 className="text-2xl font-bold text-[#0f4c81] mb-6"> Doctor Info</h2>
           <ul className="text-gray-700 space-y-3 text-lg leading-relaxed">
             <li><b>ID:</b> {user.doctor.id}</li>
             <li><b>Specialization:</b> {user.doctor.specializationId}</li>

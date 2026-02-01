@@ -299,16 +299,19 @@ func (r *OrderRepository) GetUserOrders(ctx context.Context, userID uuid.UUID, p
 	return orders, total, err
 }
 
-func (r *OrderRepository) GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, error) {
-	var totalRevenue float64
+func (r *OrderRepository) GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, int64, error) {
+	var result struct {
+		TotalRevenue float64
+		TotalOrders  int64
+	}
 	err := r.db.WithContext(ctx).
 		Table("order_items").
 		Joins("JOIN medicines ON medicines.id = order_items.medicine_id").
 		Joins("JOIN orders ON orders.id = order_items.order_id").
-		Where("medicines.pharmacy_id = ? AND orders.status IN ?", pharmacyID, []string{"delivered", "confirmed"}).
-		Select("COALESCE(SUM(order_items.subtotal), 0)").
-		Scan(&totalRevenue).Error
-	return totalRevenue, err
+		Where("medicines.pharmacy_id = ? AND orders.status IN ?", pharmacyID, []string{"delivered", "confirmed", "completed"}).
+		Select("COALESCE(SUM(order_items.subtotal), 0) as total_revenue, COUNT(DISTINCT orders.id) as total_orders").
+		Scan(&result).Error
+	return result.TotalRevenue, result.TotalOrders, err
 }
 
 // UpdateOrderStatus updates the status of an order

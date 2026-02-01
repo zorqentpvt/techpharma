@@ -674,7 +674,7 @@ func (o *OrderHandlerClean) GetTotalRevenue(c *gin.Context) {
 		return
 	}
 
-	revenue, err := o.orderUseCase.GetTotalRevenue(c.Request.Context(), pharmacy.ID)
+	revenue, orders, err := o.orderUseCase.GetTotalRevenue(c.Request.Context(), pharmacy.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{
 			Success: false,
@@ -691,6 +691,7 @@ func (o *OrderHandlerClean) GetTotalRevenue(c *gin.Context) {
 		Message: "Total revenue retrieved successfully",
 		Data: gin.H{
 			"totalRevenue": revenue,
+			"totalOrders":  orders,
 		},
 	})
 }

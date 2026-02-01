@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -33,8 +35,8 @@ func NewUserHandlerClean(userUseCase usecase.UserUseCase) *UserHandlerClean {
 func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 	var req types.CreateUserRequest
 
-	// Bind and validate JSON
-	if err := c.ShouldBindJSON(&req); err != nil {
+	// Bind and validate (supports JSON and Form Data)
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Invalid request",
 			Message: "Request body validation failed",
@@ -74,7 +76,55 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 	if !validRoles[roleName] {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Invalid request",
-			Message: "Invalid role. Must be one of: patient, doctor, pharmacy",
+			Message: "Invalid role. Must be one of: normal, doctor, pharmacy",
+		})
+		return
+	}
+
+	// Handle file upload for certificate
+	var certificateURL string
+	file, header, err := c.Request.FormFile("certi")
+	if err == nil {
+		defer file.Close()
+
+		// Validate file extension
+		ext := strings.ToLower(filepath.Ext(header.Filename))
+		if ext != ".pdf" && ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+			c.JSON(http.StatusBadRequest, types.ErrorResponse{
+				Error:   "Invalid request",
+				Message: "Certificate must be a PDF, PNG, or JPEG file",
+			})
+			return
+		}
+
+		// Generate unique filename
+		filename := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+		filePath := filepath.Join("uploads", "certificates", filename)
+
+		// Ensure directory exists
+		if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+				Error:   "Internal server error",
+				Message: "Failed to create upload directory",
+			})
+			return
+		}
+
+		// Save file
+		if err := c.SaveUploadedFile(header, filePath); err != nil {
+			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+				Error:   "File upload failed",
+				Message: "Could not save certificate file",
+			})
+			return
+		}
+
+		// Set certificate URL (convert to forward slashes for consistency)
+		certificateURL = filepath.ToSlash(filePath)
+	} else if err != http.ErrMissingFile {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "File Upload Error",
+			Message: err.Error(),
 		})
 		return
 	}
@@ -84,6 +134,11 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 
 	// Validate role-specific required fields
 	if err := h.validateRoleSpecificFields(&req, roleName); err != nil {
+		// Clean up uploaded file if validation fails
+		if certificateURL != "" {
+			os.Remove(certificateURL)
+		}
+
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Invalid request",
 			Message: err.Error(),
@@ -94,6 +149,11 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 	// Parse date of birth
 	dob, err := time.Parse("2006-01-02", req.DateOfBirth)
 	if err != nil {
+		// Clean up uploaded file if date parsing fails
+		if certificateURL != "" {
+			os.Remove(certificateURL)
+		}
+
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Invalid request",
 			Message: "Invalid date of birth format (use YYYY-MM-DD)",
@@ -104,6 +164,11 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 	// Hash password
 	hashedPassword, err := h.hashPassword(req.Password)
 	if err != nil {
+		// Clean up uploaded file if password hashing fails
+		if certificateURL != "" {
+			os.Remove(certificateURL)
+		}
+
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
 			Error:   "Failed to process password",
 			Message: "Password hashing failed",
@@ -119,16 +184,28 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 		isActive = true
 	}
 
-	// Create base user entity
+	// Create base user entity with proper null handling
+	var email, fileURL, gender *string
+	if req.Email != "" {
+		email = &req.Email
+	}
+	if certificateURL != "" {
+		fileURL = &certificateURL
+	}
+	if req.Gender != "" {
+		gender = &req.Gender
+	}
+
 	user := &entity.User{
 		FirstName:       req.FirstName,
 		LastName:        req.LastName,
-		Email:           &req.Email,
+		Email:           email,
 		PhoneNumber:     req.PhoneNumber,
 		Password:        hashedPassword,
 		DateOfBirth:     &dob,
-		Gender:          &req.Gender,
-		RoleID:          req.RoleID, // Now stores the string directly
+		FileURL:         fileURL,
+		Gender:          gender,
+		RoleID:          req.RoleID,
 		IsEmailVerified: true,
 		IsPhoneVerified: true,
 		Status:          status,
@@ -140,6 +217,11 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 	// Create user in database
 	createdUser, err := h.userUseCase.CreateUser(ctx, user)
 	if err != nil {
+		// Clean up uploaded file if user creation fails
+		if certificateURL != "" {
+			os.Remove(certificateURL)
+		}
+
 		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
 			Error:   "Failed to create user",
 			Message: err.Error(),
@@ -153,6 +235,10 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 		if err := h.createDoctor(ctx, createdUser.ID, &req); err != nil {
 			// Rollback user creation if doctor creation fails
 			h.userUseCase.DeleteUser(ctx, createdUser.ID)
+			// Clean up uploaded file
+			if certificateURL != "" {
+				os.Remove(certificateURL)
+			}
 			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
 				Error:   "Failed to create doctor profile",
 				Message: err.Error(),
@@ -164,6 +250,10 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 		if err := h.createPharmacy(ctx, createdUser.ID, &req); err != nil {
 			// Rollback user creation if pharmacy creation fails
 			h.userUseCase.DeleteUser(ctx, createdUser.ID)
+			// Clean up uploaded file
+			if certificateURL != "" {
+				os.Remove(certificateURL)
+			}
 			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
 				Error:   "Failed to create pharmacy profile",
 				Message: err.Error(),

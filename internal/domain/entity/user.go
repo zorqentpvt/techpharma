@@ -44,6 +44,8 @@ type User struct {
 	// Add this: Doctor relationship (one-to-one)
 	Doctor   *Doctor   `gorm:"foreignKey:UserID;references:ID" json:"doctor,omitempty"`
 	Pharmacy *Pharmacy `gorm:"foreignKey:UserID;references:ID" json:"pharmacy,omitempty"`
+	FileURL  *string   `gorm:"type:varchar(500)" json:"fileUrl,omitempty"`
+
 	// Audit fields
 	IsActive       bool       `gorm:"default:true;index" json:"isActive"`
 	DeactivatedAt  *time.Time `json:"deactivatedAt,omitempty"`

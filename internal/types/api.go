@@ -39,31 +39,31 @@ type RegisterRequest struct {
 }
 
 // tygo:emit
+
 type CreateUserRequest struct {
 	// Basic fields
-	FirstName   string `json:"firstname" binding:"required"`
-	LastName    string `json:"lastname" binding:"required"`
-	Username    string `json:"username" binding:"required"`
-	Email       string `json:"email" binding:"required,email"`
-	Password    string `json:"password" binding:"required,min=6"`
-	CPassword   string `json:"cpassword" binding:"required"`
-	PhoneNumber string `json:"num" binding:"required"`
-	Address     string `json:"address"`
-	DateOfBirth string `json:"dob" binding:"required"`
-	Gender      string `json:"gen" binding:"required"`
-	RoleID      string `json:"role,omitempty" ` // UUID as string
+	FirstName   string `form:"firstname" json:"firstname" binding:"required"`
+	LastName    string `form:"lastname" json:"lastname" binding:"required"`
+	Username    string `form:"username" json:"username" binding:"required"`
+	Email       string `form:"email" json:"email" binding:"required,email"`
+	Password    string `form:"password" json:"password" binding:"required,min=6"`
+	CPassword   string `form:"cpassword" json:"cpassword" binding:"required"`
+	PhoneNumber string `form:"num" json:"num" binding:"required"`
+	Address     string `form:"address" json:"address"`
+	DateOfBirth string `form:"dob" json:"dob" binding:"required"`
+	Gender      string `form:"gen" json:"gen" binding:"required"`
+	RoleID      string `form:"role" json:"role,omitempty"`
 
 	// Doctor-specific fields
-	SpecializationID string `json:"specialization,omitempty"` // UUID as string
-	LicenseNumber    string `json:"licenseNumber,omitempty"`
-	Qualification    string `json:"qual,omitempty"`
-	Certificate      string `json:"certi,omitempty"`
+	SpecializationID string `form:"specialization" json:"specialization,omitempty"`
+	LicenseNumber    string `form:"licenseNumber" json:"licenseNumber,omitempty"`
+	Qualification    string `form:"qual" json:"qual,omitempty"`
 
 	// Pharmacy-specific fields
-	PharmacyName    string `json:"pharmacyName,omitempty"`
-	PharmacyAddress string `json:"paddress,omitempty"`
-	GSTNumber       string `json:"gstnumber,omitempty"`
-	PharmacyPhone   string `json:"pnum,omitempty"`
+	PharmacyName    string `form:"pharmacyName" json:"pharmacyName,omitempty"`
+	PharmacyAddress string `form:"paddress" json:"paddress,omitempty"`
+	GSTNumber       string `form:"gstnumber" json:"gstnumber,omitempty"`
+	PharmacyPhone   string `form:"pnum" json:"pnum,omitempty"`
 }
 
 // tygo:emit

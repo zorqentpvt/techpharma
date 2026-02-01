@@ -90,15 +90,8 @@ export async function deleteMedicine(id: string) {
 }
 
 // UPDATE ORDER STATUS
-export async function updateOrderStatus(orderId: string,   status:
-    | "pending"
-    | "confirmed"
-    | "preparing"
-    | "ready"
-    | "completed"
-    | "cancelled"
-){
-  console.log("API Payload (updateOrderStatus):", { orderId, status });
+export async function updateOrderStatus(status: string,orderId : string){
+  console.log("API Payload (updateOrderStatus):", { status });
   try {
     const response = await api.put(`api/pharmacy/orders/${orderId}`, { status });
     console.log("API Response (updateOrderStatus):", response.data);

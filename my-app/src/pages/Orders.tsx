@@ -28,16 +28,23 @@ interface Order {
 }
 
 /* ---------------- STATUS CONFIG ---------------- */
-const statusConfig: Record<
-  OrderStatus,
-  { label: string; color: string }
-> = {
+const statusConfig: Record<OrderStatus, { label: string; color: string }> = {
   pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800" },
   confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-800" },
   preparing: { label: "Preparing", color: "bg-purple-100 text-purple-800" },
   ready: { label: "Ready for Pickup", color: "bg-green-100 text-green-800" },
   completed: { label: "Completed", color: "bg-gray-100 text-gray-800" },
   cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800" },
+};
+
+/* ---------------- MAP UI STATUS → API STATUS ---------------- */
+const STATUS_TO_API: Record<OrderStatus, string> = {
+  pending: "pending",
+  confirmed: "confirmed",
+  preparing: "preparing",
+  ready: "ready to pickup",
+  completed: "completed",
+  cancelled: "cancelled",
 };
 
 /* ---------------- COMPONENT ---------------- */
@@ -80,15 +87,9 @@ export default function Orders() {
   const handleUpdate = async (order: Order) => {
     setUpdatingId(order.id);
 
-    // API only supports these
-    const apiStatus =
-      order.status === "completed"
-        ? "completed"
-        : order.status === "cancelled"
-        ? "cancelled"
-        : "pending";
+    const apiStatus = STATUS_TO_API[order.status];
 
-    const res = await updateOrderStatus(order.id, apiStatus);
+    const res = await updateOrderStatus(apiStatus, order.id);
 
     if (!res?.success) {
       alert(res?.message || "Failed to update order");
@@ -124,6 +125,7 @@ export default function Orders() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
+
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between mb-6 gap-2">
           <h1 className="text-xl sm:text-2xl font-semibold">
@@ -161,6 +163,7 @@ export default function Orders() {
               {filteredOrders.length > 0 ? (
                 filteredOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
+
                     <td className="px-4 py-3 text-sm font-medium">
                       {order.id}
                     </td>
@@ -218,6 +221,7 @@ export default function Orders() {
                           : "Update"}
                       </button>
                     </td>
+
                   </tr>
                 ))
               ) : (
@@ -239,6 +243,7 @@ export default function Orders() {
             Showing {filteredOrders.length} orders
           </div>
         )}
+
       </div>
     </div>
   );

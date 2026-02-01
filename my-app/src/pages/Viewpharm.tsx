@@ -103,7 +103,7 @@ const ViewPharm: React.FC = () => {
       {/* HEADER */}
       <div className="bg-white rounded-3xl shadow-lg p-8">
         <h1 className="text-4xl font-bold text-[#0f4c81] mb-2">
-          🏥 Pharmacy User Details
+           Pharmacy User Details
         </h1>
         <p className="text-lg text-gray-600">
           Detailed information about the pharmacy and associated user
@@ -138,7 +138,7 @@ const ViewPharm: React.FC = () => {
       {/* ADDRESS INFO */}
       <div className="bg-white rounded-3xl shadow-md p-8">
         <h2 className="text-3xl font-semibold text-[#0f4c81] mb-6">
-          📍 Address Details
+           Address Details
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
@@ -155,7 +155,7 @@ const ViewPharm: React.FC = () => {
       {/* PHARMACY INFO */}
       <div className="bg-white rounded-3xl shadow-md p-8">
         <h2 className="text-3xl font-semibold text-[#0f4c81] mb-6">
-          💊 Pharmacy Information
+           Pharmacy Information
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">

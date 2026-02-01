@@ -15,13 +15,6 @@ import { getUserStats } from "../api/adminapi";
 
 const label = { slotProps: { input: { 'aria-label': 'Checkbox demo' } } };
 
-const stats = {
-    activeDoctors: 1,
-    inactiveDoctors: 0,
-    activePharmacies: 1,
-    inactivePharmacies: 0,
-    totalUsers: 4,
-  };
 
 interface User {
   username: string;
@@ -41,6 +34,14 @@ const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export default function Home() {
   const navigate = useNavigate();
   const user: User = JSON.parse(localStorage.getItem("user") || "{}");
+  const [stats, setStats] = useState({
+    activeDoctors: 0,
+    inactiveDoctors: 0,
+    activePharmacies: 0,
+    inactivePharmacies: 0,
+    totalUsers: 0,
+  });
+  
 
   // ✅ Health Tips (auto changing)
   const tips: string[] = [
@@ -117,6 +118,7 @@ export default function Home() {
         try {
           const res = await getUserStats();
           console.log("Admin stats:", res);
+          setStats(res)
         } catch (err) {
           console.error("Failed to load admin stats", err);
         }
@@ -129,7 +131,7 @@ export default function Home() {
   const fetchAdminStats = async () => {
   try {
     const res = await getUserStats();
-    console.log(res)
+ 
   } catch (err) {
     console.error("Failed to load pharmacies", err);
   } finally {

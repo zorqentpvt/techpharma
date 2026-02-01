@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import Checkbox from '@mui/material/Checkbox';
 import { getUserStats } from "../api/adminapi";
+import { fetchUserOrders } from "../api/medapir";
+import { fetchprofit } from "../api/pharmastoreapi";
 
 const label = { slotProps: { input: { 'aria-label': 'Checkbox demo' } } };
 
@@ -78,6 +80,27 @@ export default function Home() {
       return [];
     }
   });
+  const [torder,settorder]=useState(0);
+  const [trev,settrev]=useState(0);
+
+  useEffect(() => {
+    const loadData = async () => {
+      console.log("Fetching user data...", user.role);
+  
+      if (user?.role === "pharmacy") {
+        const profit = await fetchprofit();
+        console.log("Profit Data:", profit.data);
+        settrev(profit.data.totalRevenue);
+        settorder(profit.data.totalOrders);
+      } else if (user?.role === "normal") {
+        const myorder = await fetchUserOrders();
+        console.log("My Orders Data:", myorder);
+      }
+    };
+  
+    loadData();
+  }, [user]);
+  
 
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -189,13 +212,13 @@ export default function Home() {
             <h2 className="text-xl font-semibold text-[#084377] mb-4">
               Business Analytics
             </h2>
+            <p>Total Orders{torder}</p>
+            <p>Total Revenue{trev}</p>
             <AnalyticsComponent
-              totalOrders={1250}
-              totalRevenue={48000}
-              currency="USD"
-              labels={["Jan", "Feb", "Mar", "Apr", "May", "Jun"]}
-              orderTrend={[100, 200, 150, 250, 300, 400]}
-              revenueTrend={[500, 800, 600, 1000, 1200, 1400]}
+              totalOrders={torder}
+              totalRevenue={trev}
+              currency="INR"
+
             />
           </div>
         )}

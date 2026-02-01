@@ -16,8 +16,7 @@ import {
 import { ChevronLeft, Menu } from "lucide-react";
 import React from "react";
 import Home from "./Home";
-import { fetchUserOrders } from "../api/medapir";
-import { fetchprofit } from "../api/pharmastoreapi";
+
 
 const getUserFromStorage = () => {
   const stored = localStorage.getItem("user");
@@ -58,24 +57,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) navigate("/");
   }, [user, navigate]);
-
-
-useEffect(() => {
-  const loadData = async () => {
-    console.log("Fetching user data...", user.role);
-
-    if (user?.role === "pharmacy") {
-      const profit = await fetchprofit();
-      console.log("Profit Data:", profit);
-    } else if (user?.role === "normal") {
-      const myorder = await fetchUserOrders();
-      console.log("My Orders Data:", myorder);
-    }
-  };
-
-  loadData();
-}, [user]);
-
 
 
   const handleLogout = () => {

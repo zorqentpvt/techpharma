@@ -1,110 +1,69 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
+  BarElement,
   Tooltip,
   Legend,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 type AnalyticsProps = {
   totalOrders: number;
   totalRevenue: number;
   currency?: string;
-  labels?: string[];
-  orderTrend?: number[];
-  revenueTrend?: number[];
 };
 
 const AnalyticsComponent: React.FC<AnalyticsProps> = ({
   totalOrders,
   totalRevenue,
   currency = "USD",
-  labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-  orderTrend = [100, 200, 150, 250, 300, 400],
-  revenueTrend = [500, 800, 600, 1000, 1200, 1400],
 }) => {
-  const data = {
-    labels,
+
+  // Build chart data dynamically
+  const data = useMemo(() => ({
+    labels: ["Total Orders", "Total Revenue"],
     datasets: [
       {
-        label: "Orders",
-        data: orderTrend,
-        borderColor: "#00ccff", // indigo-500
-        backgroundColor: "rgba(99, 102, 241, 0.2)",
-        tension: 0.3,
-        fill: true,
-      },
-      {
-        label: "Revenue",
-        data: revenueTrend,
-        borderColor: "#22c55e", // green-500
-        backgroundColor: "rgba(34, 197, 94, 0.2)",
-        tension: 0.3,
-        fill: true,
+        label: "Totals",
+        data: [totalOrders, totalRevenue],
+        backgroundColor: ["#2563eb", "#22c55e"], // blue and green
       },
     ],
-  };
+  }), [totalOrders, totalRevenue]);
 
   const options = {
     responsive: true,
-    plugins: {
-      legend: { display: true, position: "top" as const },
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true },
     },
   };
 
   return (
-    <div className="flex flex-col col-span-full xl:col-span-8 bg-white dark:bg-gray-100 shadow-md rounded-xl">
-      <header className="px-2 py-4 border-b border-gray-200 dark:border-gray-200 flex items-center">
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-          Analytics Overview
-        </h2>
+    <div className="flex flex-col bg-white shadow-md rounded-xl">
+      <header className="px-4 py-3 border-b">
+        <h2 className="font-semibold text-gray-800">Analytics Overview</h2>
       </header>
 
-      <div className="px- py-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Total Orders */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-              {totalOrders}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Total Orders
-            </div>
-          </div>
+      <div className="px-4 py-3 grid grid-cols-2 gap-6">
+        <div>
+          <p className="text-3xl font-bold">{totalOrders}</p>
+          <p className="text-sm text-gray-500">Total Orders</p>
         </div>
-
-        {/* Total Revenue */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-              {new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency,
-              }).format(totalRevenue)}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Earned Revenue
-            </div>
-          </div>
+        <div>
+          <p className="text-3xl font-bold">
+            {new Intl.NumberFormat("en-US", { style: "currency", currency }).format(totalRevenue)}
+          </p>
+          <p className="text-sm text-gray-500">Total Revenue</p>
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="px-2 pb-5">
-        <Line data={data} options={options} height={150} />
+      <div className="px-4 pb-4">
+        <Bar data={data} options={options} height={140} />
       </div>
     </div>
   );

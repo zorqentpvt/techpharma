@@ -14,6 +14,7 @@ import Checkbox from '@mui/material/Checkbox';
 import { getUserStats } from "../api/adminapi";
 import { fetchUserOrders } from "../api/medapir";
 import { fetchprofit } from "../api/pharmastoreapi";
+import { fetchConsultations } from "../api/docApi";
 
 const label = { slotProps: { input: { 'aria-label': 'Checkbox demo' } } };
 
@@ -82,24 +83,37 @@ export default function Home() {
   });
   const [torder,settorder]=useState(0);
   const [trev,settrev]=useState(0);
+  const [totalpatient,settotalpatient]=useState(0);
 
   useEffect(() => {
-    const loadData = async () => {
-      console.log("Fetching user data...", user.role);
+    if (!user?.role) return;
   
-      if (user?.role === "pharmacy") {
-        const profit = await fetchprofit();
-        console.log("Profit Data:", profit.data);
-        settrev(profit.data.totalRevenue);
-        settorder(profit.data.totalOrders);
-      } else if (user?.role === "normal") {
-        const myorder = await fetchUserOrders();
-        console.log("My Orders Data:", myorder);
+    const loadData = async () => {
+      try {
+        console.log("Fetching user data...", user.role);
+  
+        if (user.role === "pharmacy") {
+          const profit = await fetchprofit();
+          console.log("Profit Data:", profit.data);
+          settrev(profit.data.totalRevenue);
+          settorder(profit.data.totalOrders);
+  
+        } else if (user.role === "normal") {
+          const myorder = await fetchUserOrders();
+          console.log("My Orders Data:", myorder);
+  
+        } else if (user.role === "doctor") {
+          const consult = await fetchConsultations();
+  
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
       }
     };
   
     loadData();
   }, [user]);
+  
   
 
   const [title, setTitle] = useState("");

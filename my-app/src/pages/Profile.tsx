@@ -106,6 +106,7 @@ export default function ProfilePage() {
   };
 
   const isDoctor = userData.role?.toLowerCase() === "doctor";
+  const ispharma =  userData.role?.toLowerCase() === "pharmacy";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-100 relative">

@@ -27,9 +27,11 @@ type AppoinmentUseCase interface {
 	GetConfirmedAppionmentSlot(ctx context.Context, req *types.ConfirmedSlotRequest) ([]types.ConfirmedSlotResponse, error)
 	GetAppointmentStats(ctx context.Context, doctorID uuid.UUID) (*types.AppointmentStatsResponse, error)
 	CompleteConsultation(ctx context.Context, req *types.CompleteConsultationRequest, doctorID uuid.UUID) error
+	UpdateIsPaid(ctx context.Context, appointmentID uuid.UUID, isPaid bool) error
+	GetIsPaid(ctx context.Context, appointmentID uuid.UUID) (bool, error)
 }
 
-// orderUseCase implements the OrderUseCase interface
+// appoinmentUseCase implements the AppoinmentUseCase interface
 type appoinmentUseCase struct {
 	appoinmentRepo repository.AppoinmentRepository
 	doctorRepo     repository.DoctorRepository
@@ -692,6 +694,30 @@ func (u *appoinmentUseCase) CompleteConsultation(ctx context.Context, req *types
 	}
 
 	return nil
+}
+
+func (u *appoinmentUseCase) UpdateIsPaid(ctx context.Context, appointmentID uuid.UUID, isPaid bool) error {
+	appointment, err := u.appoinmentRepo.GetByID(ctx, appointmentID)
+	if err != nil {
+		return errors.NewDomainError("APPOINTMENT_NOT_FOUND", "Appointment not found", errors.ErrNotFound)
+	}
+
+	appointment.IsPaid = isPaid
+
+	if err := u.appoinmentRepo.Update(ctx, appointment); err != nil {
+		return errors.NewDomainError("UPDATE_FAILED", "Failed to update payment status", err)
+	}
+
+	return nil
+}
+
+func (u *appoinmentUseCase) GetIsPaid(ctx context.Context, appointmentID uuid.UUID) (bool, error) {
+	appointment, err := u.appoinmentRepo.GetByID(ctx, appointmentID)
+	if err != nil {
+		return false, errors.NewDomainError("APPOINTMENT_NOT_FOUND", "Appointment not found", errors.ErrNotFound)
+	}
+
+	return appointment.IsPaid, nil
 }
 
 func getDoctorName(appt *entity.Appointment) string {

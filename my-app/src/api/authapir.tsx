@@ -52,11 +52,35 @@ export async function signin(payload: { username: string; password: string }) {
 
 
 // SIGNUP
+// In api.ts - SIGNUP function
 export async function signup(payload: any) {
   console.log("API Payload (signup):", payload);
 
   try {
-    const response = await api.post("api/auth/register", payload);
+    const formData = new FormData();
+    
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] !== null && payload[key] !== undefined) {
+        // Handle File objects (like certi)
+        if (payload[key] instanceof File) {
+          formData.append(key, payload[key]);
+        } 
+        // Handle other values
+        else if (typeof payload[key] === 'object') {
+          formData.append(key, JSON.stringify(payload[key]));
+        }
+        else {
+          formData.append(key, payload[key].toString());
+        }
+      }
+    });
+
+    const response = await api.post("api/auth/register", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    
     console.log("API Response (signup):", response.data);
     return response.data;
   } catch (error: any) {
@@ -64,7 +88,6 @@ export async function signup(payload: any) {
     return { success: false, message: error.response?.data?.message || error.message };
   }
 }
-
 // --- PROFILE APIs ---
 
 // Update Profile

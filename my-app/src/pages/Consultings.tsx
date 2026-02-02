@@ -88,6 +88,13 @@ const handleJoinCall = (consultation) => {
 };
 
 
+  const bgMap: Record<string, string> = {
+  admin: "/images/admin.jpg",
+  doctor: "/images/doc.jpg",
+  pharmacy: "/images/pharma1.png",
+  normal: "/images/cons.jpg",
+};
+
 
 
   const handleViewOpChart = (consultation?: Consultation, isUpcoming = false) => {
@@ -201,10 +208,20 @@ const handleJoinCall = (consultation) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] px-4 py-6" style={{ backgroundImage: "url('/images/user.png')" }}>
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-2">
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#002E6E]">🧑‍⚕️ Consultations</h1>
-        <h2 className="text-sm sm:text-base font-medium text-[#002E6E]">Welcome {user.username || "Guest"}</h2>
+    <div className="min-h-screen bg-[#f7f9fc] " >
+      <div className="w-full aspect-[3.5/.7]  overflow-hidden shadow-md hover:shadow-xl transition-all">
+
+  <img
+    src={bgMap[user.role]}
+    alt="img"
+    className="w-full h-full object-cover "
+  />
+
+</div>
+
+      <header className="flex flex-col pt-7 sm:flex-row justify-between items-start sm:items-center mb-8 gap-2">
+        <h1 className="text-3xl sm:text-4xl font-bold text-[#002E6E]">🧑‍⚕️ Consultations</h1>
+        <h2 className="text-sm sm:text-base pr-5 font-medium text-[#002E6E]">Welcome {user.username || "Guest"}</h2>
       </header>
 
       {renderSection()}

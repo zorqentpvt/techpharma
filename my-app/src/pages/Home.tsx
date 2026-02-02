@@ -232,7 +232,7 @@ export default function Home() {
   const bgMap: Record<string, string> = {
   admin: "/images/admin.jpg",
   doctor: "/images/doc.jpg",
-  pharmacy: "/images/pharma.png",
+  pharmacy: "/images/pharma1.png",
   normal: "/images/user.png",
 };
 
@@ -240,15 +240,15 @@ export default function Home() {
 
   // ✅ JSX
   return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat opacity-90 rounded-2xl bg-blue-50">
+    <div className="min-h-screen bg-center bg-no-repeat opacity-90 rounded-2xl bg-blue-50">
 
       
-<div className="w-full aspect-[3.5/1] rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all">
+<div className="w-full aspect-[3.5/.8]  overflow-hidden shadow-md hover:shadow-xl transition-all">
 
   <img
     src={bgMap[user.role]}
     alt="img"
-    className="w-full h-full object-cover"
+    className="w-full h-full object-cover "
   />
 
 </div>

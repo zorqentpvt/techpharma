@@ -1121,3 +1121,208 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 		Message: "Profile updated successfully",
 	})
 }
+
+// UpdateAvatar handles PUT /users/avatar
+func (h *UserHandlerClean) UpdateAvatar(c *gin.Context) {
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "User not authenticated",
+		})
+		return
+	}
+
+	// Parse UUID properly
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid user ID",
+			Message: "Failed to parse user ID from token",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	var avatarURL string
+	var isFileUpload bool
+
+	file, header, err := c.Request.FormFile("avatar")
+	if err == nil {
+		defer file.Close()
+		isFileUpload = true
+
+		// Validate file extension
+		ext := strings.ToLower(filepath.Ext(header.Filename))
+		if ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+			c.JSON(http.StatusBadRequest, types.ErrorResponse{
+				Error:   "Invalid request",
+				Message: "Avatar must be a PNG or JPEG file",
+			})
+			return
+		}
+
+		// Generate unique filename
+		filename := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+		filePath := filepath.Join("uploads", "avatars", filename)
+
+		// Ensure directory exists
+		if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+				Error:   "Internal server error",
+				Message: "Failed to create upload directory",
+			})
+			return
+		}
+
+		// Save file
+		if err := c.SaveUploadedFile(header, filePath); err != nil {
+			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+				Error:   "File upload failed",
+				Message: "Could not save avatar file",
+			})
+			return
+		}
+
+		avatarURL = filepath.ToSlash(filePath)
+	} else if err == http.ErrMissingFile {
+		var req types.UpdateAvatarRequest
+		if err := c.ShouldBind(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.ErrorResponse{
+				Error:   "Invalid request",
+				Message: "Request body validation failed",
+				Details: err.Error(),
+			})
+			return
+		}
+		if req.Avatar != nil {
+			avatarURL = *req.Avatar
+		} else {
+			c.JSON(http.StatusBadRequest, types.ErrorResponse{
+				Error:   "Invalid request",
+				Message: "Avatar file or URL is required",
+			})
+			return
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "File Upload Error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx := context.WithValue(c.Request.Context(), "userID", userIDStr)
+	user := &entity.User{
+		Avatar: &avatarURL,
+	}
+
+	updatedUser, err := h.userUseCase.UpdateUserProfile(ctx, userID, user)
+	if err != nil {
+		if isFileUpload && avatarURL != "" {
+			os.Remove(avatarURL)
+		}
+
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, types.ErrorResponse{
+				Error:   "User not found",
+				Message: "The authenticated user no longer exists",
+				Details: err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   "Failed to update avatar",
+			Message: "Avatar update failed",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Data:    getStringValue(updatedUser.Avatar),
+		Message: "Avatar updated successfully",
+	})
+}
+
+// DeleteAvatar handles DELETE /users/avatar
+func (h *UserHandlerClean) DeleteAvatar(c *gin.Context) {
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "User not authenticated",
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid user ID",
+			Message: "Failed to parse user ID from token",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	ctx := context.WithValue(c.Request.Context(), "userID", userIDStr)
+
+	// Get the current user to find the path of the avatar to delete
+	currentUser, err := h.userUseCase.GetUserByID(ctx, userID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, types.ErrorResponse{
+				Error:   "User not found",
+				Message: "The authenticated user no longer exists",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   "Failed to fetch user",
+			Message: "Could not retrieve user information",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	// If there's no avatar, there's nothing to do.
+	if currentUser.Avatar == nil || *currentUser.Avatar == "" {
+		c.JSON(http.StatusOK, response.Response{
+			Success: true,
+			Message: "No avatar to delete.",
+		})
+		return
+	}
+	oldAvatarPath := *currentUser.Avatar
+
+	// Update the user's avatar to an empty string in the database.
+	emptyAvatar := ""
+	userUpdate := &entity.User{
+		Avatar: &emptyAvatar,
+	}
+
+	_, err = h.userUseCase.UpdateUserProfile(ctx, userID, userUpdate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   "Failed to delete avatar",
+			Message: "Database update to remove avatar failed",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	// After successfully updating the DB, delete the file from the filesystem.
+	if oldAvatarPath != "" && strings.HasPrefix(oldAvatarPath, "uploads/") {
+		if err := os.Remove(oldAvatarPath); err != nil && !os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "WARN: Failed to delete avatar file %s: %v\n", oldAvatarPath, err)
+		}
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Message: "Avatar deleted successfully",
+	})
+}

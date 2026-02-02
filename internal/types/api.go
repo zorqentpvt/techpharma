@@ -310,13 +310,32 @@ type UserListResult struct {
 	Users      []*entity.User `json:"users"`
 	Pagination PaginationMeta `json:"pagination"`
 }
+
+type UpdateAvatarRequest struct {
+	Avatar *string `form:"avatar" json:"avatar"`
+}
+
 type UpdateProfileRequest struct {
+	FirstName   *string         `json:"firstName,omitempty"`
+	LastName    *string         `json:"lastName,omitempty"`
+	PhoneNumber *string         `json:"phoneNumber,omitempty"`
 	Language    string          `json:"language,omitempty"`
 	Avatar      *string         `json:"avatar,omitempty"`
 	DateOfBirth *time.Time      `json:"dateOfBirth,omitempty"`
 	Gender      *string         `json:"gender,omitempty"`
 	Address     *AddressRequest `json:"address,omitempty"`
 	ContactInfo *ContactRequest `json:"contactInfo,omitempty"`
+
+	// Doctor-specific fields
+	SpecializationID *string `json:"specializationId,omitempty"`
+	LicenseNumber    *string `json:"licenseNumber,omitempty"`
+	Qualification    *string `json:"qualification,omitempty"`
+
+	// Pharmacy-specific fields
+	PharmacyName    *string `json:"pharmacyName,omitempty"`
+	PharmacyAddress *string `json:"pharmacyAddress,omitempty"`
+	GSTNumber       *string `json:"gstNumber,omitempty"`
+	PharmacyPhone   *string `json:"pharmacyPhone,omitempty"`
 }
 type MedicineRequest struct {
 	SearchQuery string  `json:"searchQuery"`

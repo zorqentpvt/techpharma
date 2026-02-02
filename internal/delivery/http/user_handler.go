@@ -622,6 +622,7 @@ func (h *UserHandlerClean) ListUsers(c *gin.Context) {
 			DisplayName: user.DisplayName,
 			Email:       user.Email,
 			PhoneNumber: user.PhoneNumber,
+			FileURL:     user.FileURL,
 			Status:      user.Status,
 			CreatedAt:   user.CreatedAt,
 			UpdatedAt:   user.UpdatedAt,

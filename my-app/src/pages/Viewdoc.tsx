@@ -174,6 +174,25 @@ const ViewDoctor: React.FC = () => {
             </li>
           </ul>
         </div>
+        {/* Documents */}
+      <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8">
+        <h2 className="text-2xl font-bold text-[#0f4c81] mb-6">📄 Documents</h2>
+
+        {user.fileUri ? (
+          <div className="w-full h-[600px] border rounded-xl overflow-hidden">
+            <iframe
+              src={user.fileUri}
+              title="Doctor Document"
+              className="w-full h-full"
+            />
+          </div>
+        ) : (
+          <p className="text-gray-500 text-lg text-center">
+            No document attached.
+          </p>
+        )}
+      </div>
+
 
         {/* Action */}
         <button

@@ -94,6 +94,8 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			patientRoutes.GET("/profile", userHandler.GetUserProfile)
 			patientRoutes.PUT("/profile", userHandler.UpdateUserProfile)
 			patientRoutes.POST("/change-password", authHandler.ChangePassword)
+			patientRoutes.PUT("/consultation/ispaid/:id", appoinmentHandler.UpdateIsPaid)
+			patientRoutes.GET("/consultation/ispaid/:id", appoinmentHandler.GetIsPaid)
 
 			// Option 1: Orders under /user/orders
 			orderRoutes := patientRoutes.Group("/orders")

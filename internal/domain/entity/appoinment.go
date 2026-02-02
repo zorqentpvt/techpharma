@@ -56,6 +56,9 @@ type Appointment struct {
 	// Add this inside the Appointment struct
 	OpChart *OpChart `gorm:"foreignKey:AppointmentID" json:"opChart,omitempty"`
 
+	//
+	IsPaid bool `gorm:"default:false" json:"isPaid,omitempty"`
+
 	// Cancellation tracking
 	CancelledAt        *time.Time `json:"cancelledAt,omitempty"`
 	CancelledBy        *uuid.UUID `gorm:"type:uuid" json:"cancelledBy,omitempty"`

@@ -231,6 +231,71 @@ func (h *AppointmentHandlerClean) CancelAppointment(c *gin.Context) {
 	})
 }
 
+// UpdateIsPaid handles PUT /consultation/ispaid/:id
+func (h *AppointmentHandlerClean) UpdateIsPaid(c *gin.Context) {
+	idStr := c.Param("id")
+	if idStr == "" {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Request",
+			Message: "Appointment ID is required",
+		})
+		return
+	}
+
+	appointmentID, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Appointment ID",
+			Message: "Appointment ID format is invalid",
+		})
+		return
+	}
+
+	err = h.appointmentUseCase.UpdateIsPaid(c.Request.Context(), appointmentID, true)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Payment status updated successfully",
+	})
+}
+
+// GetIsPaid handles GET /consultation/ispaid/:id
+func (h *AppointmentHandlerClean) GetIsPaid(c *gin.Context) {
+	idStr := c.Param("id")
+	if idStr == "" {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Request",
+			Message: "Appointment ID is required",
+		})
+		return
+	}
+
+	appointmentID, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Appointment ID",
+			Message: "Appointment ID format is invalid",
+		})
+		return
+	}
+
+	isPaid, err := h.appointmentUseCase.GetIsPaid(c.Request.Context(), appointmentID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"isPaid":  isPaid,
+		"message": "Consultation Payment Status Retrived Successfully",
+	})
+}
+
 // ScheduleAppointment handles POST /api/doctor/schedule-appointment (doctor setting available slots)
 func (h *AppointmentHandlerClean) ScheduleAppointment(c *gin.Context) {
 	doctorIDStr := c.GetString("userID")

@@ -131,6 +131,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			doctorRoutes.GET("/consultations", appoinmentHandler.FetchConsultations)
 			doctorRoutes.DELETE("/cancel-appointment", appoinmentHandler.CancelAppointment)
 			doctorRoutes.POST("/complete-consultation", appoinmentHandler.CompleteConsultation)
+			doctorRoutes.GET("/appoinment-stats", appoinmentHandler.GetAppointmentStats)
 
 		}
 		// Admin routes (require authentication + admin role)

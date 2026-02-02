@@ -356,6 +356,39 @@ func (h *AppointmentHandlerClean) CompleteConsultation(c *gin.Context) {
 	})
 }
 
+// GetAppointmentStats handles GET /api/doctor/stats
+func (h *AppointmentHandlerClean) GetAppointmentStats(c *gin.Context) {
+	doctorIDStr := c.GetString("userID")
+	if doctorIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "Doctor ID not found in context",
+		})
+		return
+	}
+
+	doctorID, err := uuid.Parse(doctorIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid Doctor ID",
+			Message: "Doctor ID format is invalid",
+		})
+		return
+	}
+
+	stats, err := h.appointmentUseCase.GetAppointmentStats(c.Request.Context(), doctorID)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Appointment stats fetched successfully",
+		"data":    stats,
+	})
+}
+
 func (h *AppointmentHandlerClean) handleError(c *gin.Context, err error) {
 	switch {
 	case errors.IsNotFound(err):

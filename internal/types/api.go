@@ -127,6 +127,7 @@ type UserListResponse struct {
 	Email       *string       `json:"email,omitempty"`
 	PhoneNumber string        `json:"phone_number"`
 	Status      string        `json:"status"`
+	FileURL     *string       `json:"fileURL,omitempty"`
 	Role        *RoleInfo     `json:"role,omitempty"`
 	CreatedAt   time.Time     `json:"created_at"`
 	UpdatedAt   time.Time     `json:"updated_at"`
@@ -500,25 +501,27 @@ type OpChartResponse struct {
 }
 
 type ConsultationResponse struct {
-	ID                   uuid.UUID        `json:"id"`
-	SlotID               uuid.UUID        `json:"slotId"`
-	JitsiID              string           `json:"jitsiId"`
-	DoctorID             uuid.UUID        `json:"doctorId"`
-	PatientID            uuid.UUID        `json:"patientId"`
-	Name                 string           `json:"name"`
-	DoctorName           string           `json:"doctorName"`
-	DoctorSpecialization string           `json:"doctorSpecialization"`
-	IsDoctorMeeting      bool             `json:"isDoctorMeeting"`
-	IsPatientMeeting     bool             `json:"isPatientMeeting"`
-	Time                 string           `json:"time"`
-	Date                 string           `json:"date"`
-	Status               string           `json:"status"`
-	Mode                 string           `json:"mode,omitempty"`
-	Reason               string           `json:"reason,omitempty"`
-	Diagnosis            string           `json:"diagnosis,omitempty"`
-	Prescription         string           `json:"prescription,omitempty"`
-	Notes                string           `json:"notes,omitempty"`
-	OpChart              *OpChartResponse `json:"opChart,omitempty"`
+	ID                    uuid.UUID        `json:"id"`
+	SlotID                uuid.UUID        `json:"slotId"`
+	JitsiID               string           `json:"jitsiId"`
+	DoctorID              uuid.UUID        `json:"doctorId"`
+	PatientID             uuid.UUID        `json:"patientId"`
+	Name                  string           `json:"name"`
+	DoctorName            string           `json:"doctorName"`
+	DoctorSpecialization  string           `json:"doctorSpecialization"`
+	DoctorConsultationFee int64            `json:"doctorConsultationFee"`
+	DoctorPhoneNumber     string           `json:"doctorPhoneNumber"`
+	IsDoctorMeeting       bool             `json:"isDoctorMeeting"`
+	IsPatientMeeting      bool             `json:"isPatientMeeting"`
+	Time                  string           `json:"time"`
+	Date                  string           `json:"date"`
+	Status                string           `json:"status"`
+	Mode                  string           `json:"mode,omitempty"`
+	Reason                string           `json:"reason,omitempty"`
+	Diagnosis             string           `json:"diagnosis,omitempty"`
+	Prescription          string           `json:"prescription,omitempty"`
+	Notes                 string           `json:"notes,omitempty"`
+	OpChart               *OpChartResponse `json:"opChart,omitempty"`
 }
 
 type ConsultationsResponse struct {

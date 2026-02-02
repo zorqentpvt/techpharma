@@ -46,6 +46,7 @@ type Appointment struct {
 	// Additional information
 	Notes           string  `gorm:"type:text" json:"notes,omitempty"`
 	ConsultationFee float64 `gorm:"default:0" json:"consultationFee"`
+	PhoneNumber     *string `gorm:"type:varchar(100)" json:"phoneNumber,omitempty"`
 
 	DoctorName string `gorm:"type:varchar(100)" json:"doctorName,omitempty"`
 

@@ -114,6 +114,7 @@ func (u *appoinmentUseCase) BookAppointment(ctx context.Context, req *types.Appo
 		DoctorID:        req.DoctorID,
 		DoctorName:      doctor.User.FirstName + " " + doctor.User.LastName,
 		Reason:          req.Reason,
+		PhoneNumber:     &doctor.User.PhoneNumber,
 		Mode:            req.Mode,
 		ConsultationFee: doctor.ConsultationFee,
 		BookedSlots:     bookedSlots,
@@ -242,6 +243,11 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 
 		// Iterate through ALL booked slots, not just the first one
 		for _, slot := range appt.BookedSlots {
+			doctorPhone := ""
+			if appt.PhoneNumber != nil {
+				doctorPhone = *appt.PhoneNumber
+			}
+
 			upcoming = append(upcoming, types.ConsultationResponse{
 				ID:         appt.ID,
 				SlotID:     slot.ID,
@@ -249,15 +255,17 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 				Name:       appt.Patient.FirstName + " " + appt.Patient.LastName,
 				DoctorName: appt.DoctorName,
 				//DoctorSpecialization: appt.Doctor.SpecializationID,
-				DoctorID:         appt.DoctorID,
-				PatientID:        appt.PatientID,
-				IsDoctorMeeting:  appt.IsDoctorMeeting,
-				IsPatientMeeting: appt.IsPatientMeeting,
-				Time:             slot.AppointmentTime,
-				Date:             slot.AppointmentDate,
-				Status:           string(slot.Status),
-				Mode:             string(appt.Mode),
-				Reason:           appt.Reason,
+				DoctorID:              appt.DoctorID,
+				PatientID:             appt.PatientID,
+				IsDoctorMeeting:       appt.IsDoctorMeeting,
+				IsPatientMeeting:      appt.IsPatientMeeting,
+				Time:                  slot.AppointmentTime,
+				Date:                  slot.AppointmentDate,
+				Status:                string(slot.Status),
+				Mode:                  string(appt.Mode),
+				Reason:                appt.Reason,
+				DoctorConsultationFee: int64(appt.ConsultationFee),
+				DoctorPhoneNumber:     doctorPhone,
 			})
 		}
 	}
@@ -287,6 +295,11 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 				}
 			}
 
+			doctorPhone := ""
+			if appt.PhoneNumber != nil {
+				doctorPhone = *appt.PhoneNumber
+			}
+
 			history = append(history, types.ConsultationResponse{
 				ID:         appt.ID,
 				SlotID:     slot.ID,
@@ -294,19 +307,21 @@ func (u *appoinmentUseCase) FetchConsultations(ctx context.Context, doctorID uui
 				DoctorName: appt.DoctorName,
 				//DoctorSpecialization: appt.Doctor.SpecializationID,
 
-				DoctorID:         appt.DoctorID,
-				PatientID:        appt.PatientID,
-				IsDoctorMeeting:  appt.IsDoctorMeeting,
-				IsPatientMeeting: appt.IsPatientMeeting,
-				Time:             slot.AppointmentTime,
-				Date:             slot.AppointmentDate,
-				Status:           string(slot.Status),
-				Mode:             string(appt.Mode),
-				Reason:           appt.Reason,
-				Diagnosis:        appt.Notes,
-				Prescription:     "",
-				Notes:            appt.Notes,
-				OpChart:          opChartResp,
+				DoctorID:              appt.DoctorID,
+				PatientID:             appt.PatientID,
+				IsDoctorMeeting:       appt.IsDoctorMeeting,
+				IsPatientMeeting:      appt.IsPatientMeeting,
+				Time:                  slot.AppointmentTime,
+				Date:                  slot.AppointmentDate,
+				Status:                string(slot.Status),
+				Mode:                  string(appt.Mode),
+				Reason:                appt.Reason,
+				Diagnosis:             appt.Notes,
+				Prescription:          "",
+				Notes:                 appt.Notes,
+				OpChart:               opChartResp,
+				DoctorConsultationFee: int64(appt.ConsultationFee),
+				DoctorPhoneNumber:     doctorPhone,
 			})
 		}
 	}
@@ -437,7 +452,6 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 	if err != nil {
 		return nil, errors.NewDomainError("FETCH_FAILED", "Failed to fetch upcoming consultations", err)
 	}
-	fmt.Printf("the upcoming data is %+v\n", upcomingAppts)
 
 	historyAppts, err := u.appoinmentRepo.GetAppointmentHistoryByPatient(ctx, patientID)
 	if err != nil {
@@ -453,20 +467,27 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 
 		// ✅ LOOP through ALL slots instead of just taking [0]
 		for _, slot := range appt.BookedSlots {
+			doctorPhone := ""
+			if appt.PhoneNumber != nil {
+				doctorPhone = *appt.PhoneNumber
+			}
+
 			upcoming = append(upcoming, types.ConsultationResponse{
-				ID:               appt.ID,
-				SlotID:           slot.ID,
-				Name:             appt.Patient.FirstName + " " + appt.Patient.LastName,
-				DoctorName:       appt.DoctorName,
-				DoctorID:         appt.DoctorID,
-				PatientID:        appt.PatientID,
-				IsDoctorMeeting:  appt.IsDoctorMeeting,
-				IsPatientMeeting: appt.IsPatientMeeting,
-				Time:             slot.AppointmentTime,
-				Date:             slot.AppointmentDate,
-				Status:           string(slot.Status),
-				Mode:             string(appt.Mode),
-				Reason:           appt.Reason,
+				ID:                    appt.ID,
+				SlotID:                slot.ID,
+				Name:                  appt.Patient.FirstName + " " + appt.Patient.LastName,
+				DoctorName:            appt.DoctorName,
+				DoctorID:              appt.DoctorID,
+				PatientID:             appt.PatientID,
+				IsDoctorMeeting:       appt.IsDoctorMeeting,
+				IsPatientMeeting:      appt.IsPatientMeeting,
+				Time:                  slot.AppointmentTime,
+				Date:                  slot.AppointmentDate,
+				Status:                string(slot.Status),
+				Mode:                  string(appt.Mode),
+				Reason:                appt.Reason,
+				DoctorConsultationFee: int64(appt.ConsultationFee),
+				DoctorPhoneNumber:     doctorPhone,
 			})
 		}
 	}
@@ -498,25 +519,30 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 					Time:         appt.OpChart.Time,
 				}
 			}
-
+			doctorPhone := ""
+			if appt.PhoneNumber != nil {
+				doctorPhone = *appt.PhoneNumber
+			}
 			history = append(history, types.ConsultationResponse{
-				ID:               appt.ID,
-				SlotID:           slot.ID,
-				Name:             appt.Patient.FirstName + " " + appt.Patient.LastName,
-				DoctorName:       appt.DoctorName,
-				DoctorID:         appt.DoctorID,
-				PatientID:        appt.PatientID,
-				IsDoctorMeeting:  appt.IsDoctorMeeting,
-				IsPatientMeeting: appt.IsPatientMeeting,
-				Time:             slot.AppointmentTime,
-				Date:             slot.AppointmentDate,
-				Status:           string(slot.Status),
-				Mode:             string(appt.Mode),
-				Reason:           appt.Reason,
-				Diagnosis:        appt.Notes,
-				Prescription:     "",
-				Notes:            appt.Notes,
-				OpChart:          opChartResp, // This will be nil if OpChart doesn't exist
+				ID:                    appt.ID,
+				SlotID:                slot.ID,
+				Name:                  appt.Patient.FirstName + " " + appt.Patient.LastName,
+				DoctorName:            appt.DoctorName,
+				DoctorID:              appt.DoctorID,
+				PatientID:             appt.PatientID,
+				IsDoctorMeeting:       appt.IsDoctorMeeting,
+				IsPatientMeeting:      appt.IsPatientMeeting,
+				Time:                  slot.AppointmentTime,
+				Date:                  slot.AppointmentDate,
+				Status:                string(slot.Status),
+				Mode:                  string(appt.Mode),
+				Reason:                appt.Reason,
+				Diagnosis:             appt.Notes,
+				Prescription:          "",
+				Notes:                 appt.Notes,
+				OpChart:               opChartResp, // This will be nil if OpChart doesn't exist
+				DoctorConsultationFee: int64(appt.ConsultationFee),
+				DoctorPhoneNumber:     doctorPhone,
 			})
 		}
 	}
@@ -691,4 +717,12 @@ func parseMinute(timeStr string) int {
 	}
 	minute, _ := strconv.Atoi(parts[1])
 	return minute
+}
+
+func getDoctorPhoneNumber(appt *entity.Appointment) string {
+	if appt != nil && appt.Doctor != nil && appt.Doctor.User != nil {
+		fmt.Println("notfound", appt.Doctor.User.PhoneNumber)
+		return appt.Doctor.User.PhoneNumber
+	}
+	return ""
 }

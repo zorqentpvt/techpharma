@@ -14,7 +14,7 @@ import Checkbox from '@mui/material/Checkbox';
 import { getUserStats } from "../api/adminapi";
 import { fetchUserOrders } from "../api/medapir";
 import { fetchprofit } from "../api/pharmastoreapi";
-import { fetchConsultations } from "../api/docApi";
+import { fetchConsultations, getdocstat } from "../api/docApi";
 import MedicineReminder from "../components/MedicineReminder";
 
 const label = { slotProps: { input: { 'aria-label': 'Checkbox demo' } } };
@@ -84,8 +84,9 @@ export default function Home() {
   });
   const [torder,settorder]=useState(0);
   const [trev,settrev]=useState(0);
-  const [totalpatient,settotalpatient]=useState(0);
-  const [upcoming,setupcoming]=useState<any[]>([]);
+  const [upcoming, setUpcoming] = useState<any[]>([]);
+  const [todayapp, setTodayapp] = useState(0);
+  const [tp, setTp] = useState(0);
 
   useEffect(() => {
     if (!user?.role) return;
@@ -105,12 +106,17 @@ export default function Home() {
           console.log("My Orders Data:", myorder);
   
         } else if (user.role === "doctor") {
-          const consult = await fetchConsultations();
-          console.log(consult);
-          console.log(consult.data);
-          console.log(consult.data.upcoming);
-          setupcoming(consult.data.upcoming || []);
-      
+          const consult = await getdocstat();
+  
+          const {
+            upcomingAppointments,
+            totalPatientsCount,
+            todayAppointmentsCount,
+          } = consult.data;
+  
+          setUpcoming(upcomingAppointments || []);
+          setTp(totalPatientsCount || 0);
+          setTodayapp(todayAppointmentsCount || 0);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -118,6 +124,7 @@ export default function Home() {
     };
   
     loadData();
+  
   }, [user?.role]);
   
   
@@ -230,6 +237,7 @@ export default function Home() {
 };
 
 
+
   // ✅ JSX
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat opacity-90 rounded-2xl bg-blue-50">
@@ -270,28 +278,48 @@ export default function Home() {
                 <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
                   <h2 className="text-xl font-semibold text-[#0f4c81] mb-4">Upcoming Appointments</h2>
 
-                  {upcoming && upcoming.length > 0 ? (
-                    <ul className="divide-y divide-gray-100">
-                      {upcoming.slice(-3).map((appointment) => (
-                        <li key={appointment.id} className="py-3 flex justify-between">
-                          <span className="font-medium">{appointment.name}</span>
-                          <span className="text-gray-500 text-sm">{appointment.time}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-gray-400 text-sm">No upcoming appointments</p>
-                  )}
+                            {upcoming.length > 0 ? (
+                        <ul className="divide-y divide-gray-100">
+                          {upcoming.slice(0, 3).map((appointment) => (
+                            <li key={appointment.id} className="py-3 flex justify-between">
+                              <span className="font-medium">
+                                {appointment.patientName}
+                              </span>
+
+                              <span className="text-gray-500 text-sm">
+                                {new Date(appointment.startTime).toLocaleString()}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-gray-400 text-sm">No upcoming appointments</p>
+                      )}
+
                 </div>
 
-                  <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition"> 
-                    <h2 className="text-xl font-semibold text-[#0f4c81] mb-4">Patient Overview</h2> 
-                    <div className="space-y-3 text-gray-700"> <p className="flex justify-between"> 
-                      <span>Total Patients</span> <span className="font-semibold text-[#0f4c81]">320</span>
-                       </p> <p className="flex justify-between"> <span>Today's Appointments</span> 
-                       <span className="font-semibold text-[#0f4c81]">8</span> </p> 
-                       <p className="flex justify-between"> <span>Pending Reports</span> 
-                       <span className="font-semibold text-[#0f4c81]">5</span> </p> </div> </div> </div> 
+                                          <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
+                            <h2 className="text-xl font-semibold text-[#0f4c81] mb-4">
+                              Patient Overview
+                            </h2>
+
+                            <div className="space-y-3 text-gray-700">
+                              <p className="flex justify-between">
+                                <span>Total Patients</span>
+                                <span className="font-semibold text-[#0f4c81]">
+                                  {tp}
+                                </span>
+                              </p>
+
+                              <p className="flex justify-between">
+                                <span>Today's Appointments</span>
+                                <span className="font-semibold text-[#0f4c81]">
+                                  {todayapp}
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+                          </div> 
                        )}
 
         {/* Normal User Dashboard */}

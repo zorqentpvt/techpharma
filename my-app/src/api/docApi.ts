@@ -159,6 +159,22 @@ export async function getDoctorSchedule(): Promise<ApiResponse> {
   }
 }
 
+export async function getdocstat(): Promise<ApiResponse> {
+  console.log("API Payload (getDoctorSchedule):");
+
+  try {
+    const response = await api.get(`api/doctor/appoinment-stats`);
+    console.log("API Response (getdocsta):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("API Error (getdocsta):", error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message,
+    };
+  }
+}
+
 // CANCEL APPOINTMENT (user or doctor)
 export async function cancelAppointment(appointmentId: string): Promise<ApiResponse> {
   if (!appointmentId) {

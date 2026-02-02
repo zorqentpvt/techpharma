@@ -180,7 +180,7 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 	status := "Inactive"
 	isActive := false
 	if roleName == "normal" {
-		status = "Active"
+		status = "active"
 		isActive = true
 	}
 

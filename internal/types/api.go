@@ -537,3 +537,29 @@ type DashboardStatsResponse struct {
 	InactivePharmacies int64 `json:"inactivePharmacies"`
 	TotalUsers         int64 `json:"totalUsers"`
 }
+
+type AppointmentStatsResponse struct {
+	UpcomingAppointments   []UpcomingAppointment `json:"upcomingAppointments"`
+	TodaysPatients         []TodaysPatient       `json:"todaysPatients"`
+	TotalPatientsCount     int64                 `json:"totalPatientsCount"`
+	TodayAppointmentsCount int64                 `json:"todayAppointmentsCount"`
+}
+
+type UpcomingAppointment struct {
+	ID          uuid.UUID `json:"id"`
+	PatientName string    `json:"patientName"`
+	StartTime   time.Time `json:"startTime"`
+	EndTime     time.Time `json:"endTime"`
+	Mode        string    `json:"mode"`
+	Status      string    `json:"status"`
+}
+
+type TodaysPatient struct {
+	PatientID     uuid.UUID `json:"patientId"`
+	AppointmentID uuid.UUID `json:"appointmentId"`
+	Name          string    `json:"name"`
+	Age           int       `json:"age"`
+	Gender        string    `json:"gender"`
+	Time          time.Time `json:"time"`
+	Reason        string    `json:"reason"`
+}

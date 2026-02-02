@@ -25,7 +25,7 @@ type AppoinmentUseCase interface {
 	FetchConsultations(ctx context.Context, doctorID uuid.UUID) (*types.ConsultationsResponse, error)
 	FetchPatientConsultations(ctx context.Context, patientID uuid.UUID) (*types.ConsultationsResponse, error)
 	GetConfirmedAppionmentSlot(ctx context.Context, req *types.ConfirmedSlotRequest) ([]types.ConfirmedSlotResponse, error)
-
+	GetAppointmentStats(ctx context.Context, doctorID uuid.UUID) (*types.AppointmentStatsResponse, error)
 	CompleteConsultation(ctx context.Context, req *types.CompleteConsultationRequest, doctorID uuid.UUID) error
 }
 
@@ -526,6 +526,90 @@ func (u *appoinmentUseCase) FetchPatientConsultations(ctx context.Context, patie
 
 func (u *appoinmentUseCase) GetConfirmedAppionmentSlot(ctx context.Context, req *types.ConfirmedSlotRequest) ([]types.ConfirmedSlotResponse, error) {
 	return u.appoinmentRepo.GetConfirmedAppionmentSlot(ctx, req)
+}
+
+func (u *appoinmentUseCase) GetAppointmentStats(ctx context.Context, doctorID uuid.UUID) (*types.AppointmentStatsResponse, error) {
+	appointments, err := u.appoinmentRepo.GetAllByDoctorID(ctx, doctorID)
+	if err != nil {
+		return nil, errors.NewDomainError("FETCH_FAILED", "Failed to fetch appointments", err)
+	}
+
+	stats := &types.AppointmentStatsResponse{
+		UpcomingAppointments:   make([]types.UpcomingAppointment, 0),
+		TodaysPatients:         make([]types.TodaysPatient, 0),
+		TotalPatientsCount:     0,
+		TodayAppointmentsCount: 0,
+	}
+
+	uniquePatients := make(map[uuid.UUID]struct{})
+	now := time.Now()
+	todayStr := now.Format("2006-01-02")
+
+	for _, appt := range appointments {
+		if appt.PatientID != uuid.Nil {
+			uniquePatients[appt.PatientID] = struct{}{}
+		}
+
+		patientName := ""
+		if appt.Patient != nil {
+			patientName = appt.Patient.FirstName + " " + appt.Patient.LastName
+		}
+
+		for _, slot := range appt.BookedSlots {
+			slotTime, err := time.Parse("15:04", slot.AppointmentTime)
+			if err != nil {
+				continue
+			}
+			slotDate, err := time.Parse("2006-01-02", slot.AppointmentDate)
+			if err != nil {
+				continue
+			}
+
+			apptDateTime := time.Date(slotDate.Year(), slotDate.Month(), slotDate.Day(), slotTime.Hour(), slotTime.Minute(), 0, 0, time.Local)
+			endTime := apptDateTime.Add(time.Duration(slot.Duration) * time.Minute)
+
+			// Today's stats
+			if slot.AppointmentDate == todayStr {
+				if slot.Status != entity.AppointmentStatusCancelled {
+					stats.TodayAppointmentsCount++
+
+					stats.TodaysPatients = append(stats.TodaysPatients, types.TodaysPatient{
+						PatientID:     appt.PatientID,
+						AppointmentID: appt.ID,
+						Name:          patientName,
+						Age:           0,  // Placeholder as Patient entity fields are unknown
+						Gender:        "", // Placeholder as Patient entity fields are unknown
+						Time:          apptDateTime,
+						Reason:        appt.Reason,
+					})
+				}
+			}
+
+			// Upcoming appointments (Future)
+			if apptDateTime.After(now) && slot.Status != entity.AppointmentStatusCancelled && slot.Status != entity.AppointmentStatusCompleted {
+				stats.UpcomingAppointments = append(stats.UpcomingAppointments, types.UpcomingAppointment{
+					ID:          appt.ID,
+					PatientName: patientName,
+					StartTime:   apptDateTime,
+					EndTime:     endTime,
+					Mode:        string(appt.Mode),
+					Status:      string(slot.Status),
+				})
+			}
+		}
+	}
+
+	stats.TotalPatientsCount = int64(len(uniquePatients))
+
+	sort.Slice(stats.UpcomingAppointments, func(i, j int) bool {
+		return stats.UpcomingAppointments[i].StartTime.Before(stats.UpcomingAppointments[j].StartTime)
+	})
+
+	sort.Slice(stats.TodaysPatients, func(i, j int) bool {
+		return stats.TodaysPatients[i].Time.Before(stats.TodaysPatients[j].Time)
+	})
+
+	return stats, nil
 }
 
 func (u *appoinmentUseCase) CompleteConsultation(ctx context.Context, req *types.CompleteConsultationRequest, doctorID uuid.UUID) error {

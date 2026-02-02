@@ -56,7 +56,7 @@ export default function SignupForm() {
         localStorage.setItem("user", JSON.stringify(result.user || formData));
 
         alert(`Welcome, ${formData.username}!`);
-        navigate("/dashboard");
+        navigate("/");
       } else {
         alert(result.message || "Signup failed. Please try again.");
       }

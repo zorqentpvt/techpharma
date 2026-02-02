@@ -213,14 +213,14 @@ export default function Store() {
               type="number"
               placeholder="Price"
               className="border border-gray-300 px-4 py-2 rounded-md text-sm"
-              value={price}
+              value={price || ""}
               onChange={(e) => setPrice(Number(e.target.value))}
             />
             <input
               type="number"
-              placeholder="Stock Quantity"
+              placeholder="Stocks"
               className="border border-gray-300 px-4 py-2 rounded-md text-sm"
-              value={stock}
+              value={stock || ""}
               onChange={(e) => setStock(Number(e.target.value))}
             />
             <input

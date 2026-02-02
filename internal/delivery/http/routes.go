@@ -21,7 +21,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 
 	// API routes with rate limiting
 	api := router.Group("/api")
-	api.Use(middleware.GlobalRateLimit(1000)) // Global rate limit of 1000 requests per minute
+	api.Use(middleware.GlobalRateLimit(10000)) // Global rate limit of 1000 requests per minute
 
 	// Create handlers using the container (avoiding import cycle)
 	authHandler := NewAuthHandlerClean(

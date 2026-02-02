@@ -15,6 +15,7 @@ import { getUserStats } from "../api/adminapi";
 import { fetchUserOrders } from "../api/medapir";
 import { fetchprofit } from "../api/pharmastoreapi";
 import { fetchConsultations } from "../api/docApi";
+import MedicineReminder from "../components/MedicineReminder";
 
 const label = { slotProps: { input: { 'aria-label': 'Checkbox demo' } } };
 
@@ -84,6 +85,7 @@ export default function Home() {
   const [torder,settorder]=useState(0);
   const [trev,settrev]=useState(0);
   const [totalpatient,settotalpatient]=useState(0);
+  const [upcoming,setupcoming]=useState<any[]>([]);
 
   useEffect(() => {
     if (!user?.role) return;
@@ -104,7 +106,11 @@ export default function Home() {
   
         } else if (user.role === "doctor") {
           const consult = await fetchConsultations();
-  
+          console.log(consult);
+          console.log(consult.data);
+          console.log(consult.data.upcoming);
+          setupcoming(consult.data.upcoming || []);
+      
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -112,7 +118,7 @@ export default function Home() {
     };
   
     loadData();
-  }, [user]);
+  }, [user?.role]);
   
   
 
@@ -226,7 +232,20 @@ export default function Home() {
 
   // ✅ JSX
   return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat opacity-90 rounded-2xl bg-blue-50" style={{ backgroundImage: `url(${bgMap[user.role]})` }}>
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat opacity-90 rounded-2xl bg-blue-50">
+
+      
+<div className="w-full aspect-[3.5/1] rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all">
+
+  <img
+    src={bgMap[user.role]}
+    alt="img"
+    className="w-full h-full object-cover"
+  />
+
+</div>
+
+
       <div className="max-w-7xl mx-auto pt-4 pb-10 px-6">
         {/* Pharmacy Dashboard */}
         {user.role === "pharmacy" && (
@@ -248,17 +267,23 @@ export default function Home() {
 
         {user.role === "doctor" && (
            <div className="grid gap-6 md:grid-cols-2"> 
-           <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition"> 
-            <h2 className="text-xl font-semibold text-[#0f4c81] mb-4">Upcoming Appointments</h2> 
-            <ul className="divide-y divide-gray-100"> <li className="py-3 flex justify-between"> 
-              <span className="font-medium">John Doe</span> <span className="text-gray-500 text-sm">10:00 AM</span> 
-              </li> <li className="py-3 flex justify-between"> 
-                <span className="font-medium">Jane Smith</span> 
-                <span className="text-gray-500 text-sm">11:30 AM</span> 
-                </li> <li className="py-3 flex justify-between"> 
-                  <span className="font-medium">Michael Lee</span> 
-                  <span className="text-gray-500 text-sm">1:00 PM</span> 
-                  </li> </ul> </div> 
+                <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
+                  <h2 className="text-xl font-semibold text-[#0f4c81] mb-4">Upcoming Appointments</h2>
+
+                  {upcoming && upcoming.length > 0 ? (
+                    <ul className="divide-y divide-gray-100">
+                      {upcoming.slice(-3).map((appointment) => (
+                        <li key={appointment.id} className="py-3 flex justify-between">
+                          <span className="font-medium">{appointment.name}</span>
+                          <span className="text-gray-500 text-sm">{appointment.time}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-400 text-sm">No upcoming appointments</p>
+                  )}
+                </div>
+
                   <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition"> 
                     <h2 className="text-xl font-semibold text-[#0f4c81] mb-4">Patient Overview</h2> 
                     <div className="space-y-3 text-gray-700"> <p className="flex justify-between"> 
@@ -326,6 +351,8 @@ export default function Home() {
             View All →
           </button>
         </div>
+
+
 
 
         {/* --- 💡 Health Tip Section --- */}
@@ -402,24 +429,6 @@ export default function Home() {
         </button>
       </div>)}
 
-          {/* --- 🏥 Nearby Pharmacies ---
-          <div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 border-l-4 border-[#0f4c81] flex flex-col sm:flex-row justify-between items-start sm:items-center">
-            <div className="flex items-start gap-3">
-              <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
-                🏥
-              </div>
-              <div>
-                <h3 className="font-bold text-[#0f4c81] text-xl">Nearby Pharmacies</h3>
-                <p className="text-gray-600">
-                  <strong>HealthPlus</strong> — 0.8 km away  
-                </p>
-                <p className="text-sm text-gray-500 mt-1">Open till 10:00 PM</p>
-              </div>
-            </div>
-            <button className="text-[#0f4c81] font-semibold hover:underline mt-4 sm:mt-0">
-              View Map →
-            </button>
-          </div> */}
 
           {/* --- 🧘 Wellness Goals --- */}
         {Well &&(<div className="w-full bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10  flex flex-col sm:flex-row justify-between items-start sm:items-center">
@@ -441,101 +450,7 @@ export default function Home() {
           
 
     {/* --- ⏰ Reminder Setup Section --- */}
-    <div className="bg-gradient-to-br from-white to-blue-50 p-8 rounded-3xl shadow-lg w-full">
-      <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
-        ⏰ Set a New Reminder
-      </h2>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
-        <input
-          type="text"
-          placeholder="Reminder Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="border border-blue-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-        />
-        <input
-          type="date"
-          placeholder="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="border border-blue-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-        />
-        <input
-          type="time"
-          placeholder="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          className="border border-blue-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-        />
-
-        {/* Repeat Days */}
-        <div className="col-span-full flex flex-wrap gap-2 items-center">
-          {daysOfWeek.map((day) => (
-            <button
-              key={day}
-              type="button"
-              className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-all ${
-                repeatDays.includes(day)
-                  ? "bg-[#0f4c81] text-white border-[#0f4c81]"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-blue-50"
-              }`}
-              onClick={() => toggleDay(day)}
-            >
-              {day}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex justify-center mb-6">
-        <button
-          onClick={addReminder}
-          className="bg-[#0f4c81] hover:bg-[#0c3a66] text-white font-medium px-6 py-2.5 rounded-full shadow-md transition-all"
-        >
-          ➕ Add Reminder
-        </button>
-      </div>
-
-      {/* --- Enhanced Reminder List --- */}
-      <div className="space-y-4">
-        {reminders.length === 0 ? (
-          <p className="text-gray-500 text-center">No reminders set yet.</p>
-        ) : (
-          reminders.map((r) => (
-            <div
-              key={r.id}
-              className="w-full bg-white rounded-3xl p-6 shadow-md hover:shadow-lg transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center border-l-4 border-[#0f4c81]"
-            >
-              <div className="flex items-start gap-3">
-                <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
-                  ⏰
-                </div>
-                <div>
-                  <h3 className="font-semibold text-[#0f4c81] text-lg">
-                    {r.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    {r.date} at {r.time}{" "}
-                    {r.repeatDays?.length > 0 && (
-                      <span className="text-gray-500">
-                        | {r.repeatDays.join(", ")}
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => deleteReminder(r.id)}
-                className="text-red-500 font-bold hover:text-red-700 transition mt-4 sm:mt-0"
-              >
-                ✖ Delete
-              </button>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+    <MedicineReminder />
   </div>
 )}
         {user.role === "admin" && (

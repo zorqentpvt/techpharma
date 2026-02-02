@@ -13,6 +13,7 @@ export default function ProfilePage() {
     active: true,
   });
 
+  const [tempData, setTempData] = useState(userData);
   const [editMode, setEditMode] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -20,11 +21,12 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
+  // Load user from localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem("userdata");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      setUserData({
+      const initUser = {
         firstName: parsedUser.firstName || "",
         lastName: parsedUser.lastName || "",
         address: parsedUser.address?.address || "",
@@ -33,11 +35,13 @@ export default function ProfilePage() {
         profilePic: parsedUser.profilePic || "",
         role: parsedUser.role || "patient",
         active: parsedUser.active ?? true,
-      });
+      };
+      setUserData(initUser);
+      setTempData(initUser); // tempData for edits
     }
   }, []);
 
-  // Close dropdown when clicking outside
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -48,65 +52,78 @@ export default function ProfilePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  // Handle input changes in edit mode
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setUserData((prev) => ({ ...prev, [name]: value }));
+    setTempData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle profile pic upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const reader = new FileReader();
-      reader.onload = () => {
-        setUserData((prev) => ({ ...prev, profilePic: reader.result as string }));
-      };
+      reader.onload = () => setTempData((prev) => ({ ...prev, profilePic: reader.result as string }));
       reader.readAsDataURL(e.target.files[0]);
     }
   };
 
+  // Save profile changes
   const handleSubmit = (e: React.FormEvent) => {
+    console.log("editmode",editMode)
+    if(editMode){
+      console.log("editing")
+      e.preventDefault();
+    }
+    else{
     e.preventDefault();
     const storedUser = localStorage.getItem("userdata");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      const updatedUser = { ...parsedUser, ...userData };
-      localStorage.setItem("userdata", JSON.stringify(updatedUser));
-      setEditMode(false);
-      alert("Profile updated successfully!");
+    const parsedUser = storedUser ? JSON.parse(storedUser) : {};
+    const updatedUser = { ...parsedUser, ...tempData };
+    localStorage.setItem("userdata", JSON.stringify(updatedUser));
+    setUserData(updatedUser);
+    setEditMode(false);
+    alert("Profile updated successfully!");
     }
+   
   };
 
+  // Cancel edits
+  const handleCancel = () => {
+    setTempData(userData);
+    setEditMode(false);
+  };
+
+  // Save password
   const handleSavePassword = () => {
     if (newPassword && newPassword !== confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-
     const storedUser = localStorage.getItem("userdata");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      const updatedUser = {
-        ...parsedUser,
-        password: newPassword || parsedUser.password,
-      };
-      localStorage.setItem("userdata", JSON.stringify(updatedUser));
-      setUserData(updatedUser);
-      setShowChangePassword(false);
-      alert("Password changed successfully!");
-      setNewPassword("");
-      setConfirmPassword("");
-    }
+    const parsedUser = storedUser ? JSON.parse(storedUser) : {};
+    const updatedUser = {
+      ...parsedUser,
+      password: newPassword || parsedUser.password,
+    };
+    localStorage.setItem("userdata", JSON.stringify(updatedUser));
+    setUserData(updatedUser);
+    setTempData(updatedUser);
+    setShowChangePassword(false);
+    alert("Password changed successfully!");
+    setNewPassword("");
+    setConfirmPassword("");
   };
 
+  // Doctor active toggle
   const toggleActiveMode = () => {
     const updated = { ...userData, active: !userData.active };
     setUserData(updated);
+    setTempData(updated);
     localStorage.setItem("userdata", JSON.stringify(updated));
   };
 
   const isDoctor = userData.role?.toLowerCase() === "doctor";
-  const ispharma =  userData.role?.toLowerCase() === "pharmacy";
+  const isPharma = userData.role?.toLowerCase() === "pharmacy";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-100 relative">
@@ -140,8 +157,7 @@ export default function ProfilePage() {
                   }}
                   className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-100 transition"
                 >
-                  <Power size={16} />{" "}
-                  {userData.active ? "Set Inactive" : "Set Active"}
+                  <Power size={16} /> {userData.active ? "Set Inactive" : "Set Active"}
                 </button>
               )}
 
@@ -155,16 +171,12 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <h2 className="text-3xl font-bold text-center text-blue-600 mb-6">
-          Your Profile
-        </h2>
+        <h2 className="text-3xl font-bold text-center text-blue-600 mb-6">Your Profile</h2>
 
-        {/* ✅ Active Mode Toggle (Visible for Doctors) */}
+        {/* ✅ Active Mode Toggle (Doctor) */}
         {isDoctor && (
           <div className="flex items-center justify-between mb-6 bg-blue-50 px-4 py-3 rounded-lg border border-blue-200">
-            <span className="text-gray-700 font-medium">
-              Active for Consulting:
-            </span>
+            <span className="text-gray-700 font-medium">Active for Consulting:</span>
             <label className="inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
@@ -172,11 +184,7 @@ export default function ProfilePage() {
                 checked={userData.active}
                 onChange={toggleActiveMode}
               />
-              <div
-                className={`w-12 h-6 rounded-full p-1 transition-all ${
-                  userData.active ? "bg-green-500" : "bg-gray-400"
-                }`}
-              >
+              <div className={`w-12 h-6 rounded-full p-1 transition-all ${userData.active ? "bg-green-500" : "bg-gray-400"}`}>
                 <div
                   className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-all ${
                     userData.active ? "translate-x-6" : ""
@@ -191,34 +199,25 @@ export default function ProfilePage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="flex flex-col items-center gap-3">
             <img
-              src={
-                userData.profilePic ||
-                "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
-              }
+              src={tempData.profilePic || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
               alt="Profile"
               className="w-24 h-24 rounded-full object-cover border-2 border-blue-500 shadow-md"
             />
-            {editMode && (
-              <input type="file" accept="image/*" onChange={handleFileChange} />
-            )}
+            {editMode && <input type="file" accept="image/*" onChange={handleFileChange} />}
           </div>
 
           {/* User Info */}
           {["firstName", "lastName", "address", "phoneNumber"].map((field) => (
             <div key={field}>
-              <label className="block mb-1 font-medium capitalize">
-                {field.replace(/([A-Z])/g, " $1")}
-              </label>
+              <label className="block mb-1 font-medium capitalize">{field.replace(/([A-Z])/g, " $1")}</label>
               <input
                 type="text"
                 name={field}
-                value={(userData as any)[field]}
+                value={tempData[field as keyof typeof tempData] || ""}
                 onChange={handleChange}
                 readOnly={!editMode}
                 className={`w-full p-2 border rounded-lg focus:outline-none ${
-                  editMode
-                    ? "border-blue-400 focus:ring-2 focus:ring-blue-500"
-                    : "border-gray-300 bg-gray-100"
+                  editMode ? "border-blue-400 focus:ring-2 focus:ring-blue-500" : "border-gray-300 bg-gray-100"
                 }`}
               />
             </div>
@@ -240,82 +239,59 @@ export default function ProfilePage() {
           <div className="flex justify-between gap-4">
             {editMode ? (
               <>
-                <button
-                  type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
-                >
+                <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
                   Save
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setEditMode(false)}
-                  className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 rounded-lg transition"
-                >
+                <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 rounded-lg transition">
                   Cancel
                 </button>
               </>
             ) : (
-              <button
-                type="button"
-                onClick={() => setEditMode(true)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
-              >
+              <button type="button" onClick={() => setEditMode(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
                 Edit Profile
               </button>
             )}
           </div>
         </form>
-      </div>
 
-      {/* 🔐 Change Password Modal */}
-      {showChangePassword && (
-        <div className="fixed inset-0 bg-gray-100 bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-[#22549a] w-150 rounded-xl shadow-blue-400 shadow-xl  p-6 space-y-5 relative">
-            <h3 className="text-xl font-semibold text-white text-center mb-4">
-              🔒 Change Password
-            </h3>
+        {/* 🔐 Change Password Modal */}
+        {showChangePassword && (
+          <div className="fixed inset-0 bg-gray-100 bg-opacity-40 flex justify-center items-center z-50">
+            <div className="bg-[#22549a] w-150 rounded-xl shadow-blue-400 shadow-xl p-6 space-y-5 relative">
+              <h3 className="text-xl font-semibold text-white text-center mb-4">🔒 Change Password</h3>
 
-            <div>
-              <label className="block text-sm text-white font-medium mb-1">
-                New Password
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full p-2 border bg-white rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
+              <div>
+                <label className="block text-sm text-white font-medium mb-1">New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full p-2 border bg-white rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
 
-            <div>
-              <label className="block text-white text-sm font-medium mb-1">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full p-2 border bg-white rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
+              <div>
+                <label className="block text-white text-sm font-medium mb-1">Confirm Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full p-2 border bg-white rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
 
-            <div className="flex justify-between mt-6">
-              <button
-                onClick={handleSavePassword}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg mr-2"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setShowChangePassword(false)}
-                className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 rounded-lg ml-2"
-              >
-                Cancel
-              </button>
+              <div className="flex justify-between mt-6">
+                <button onClick={handleSavePassword} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg mr-2">
+                  Save
+                </button>
+                <button onClick={() => setShowChangePassword(false)} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 rounded-lg ml-2">
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

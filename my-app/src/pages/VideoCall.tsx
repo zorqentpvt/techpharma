@@ -31,6 +31,7 @@ const VideoCall = () => {
     name,
     date,
     time,
+    reason,
   } = consultation;
 
   const isDoctor =
@@ -43,13 +44,14 @@ const VideoCall = () => {
   };
 
   const otherUser = isDoctor
-    ? { id: patientId, name: consultation.name, role: "patient" }
+    ? { id: patientId, name: name, role: "patient" }
     : { id: doctorId, name: doctorName, role: "doctor", specialization: doctorSpecialization };
 
   const [now, setNow] = useState(new Date());
   const [canJoin, setCanJoin] = useState(false);
-  const [joinedCall, setJoinedCall] = useState(false); // track iframe loaded
+  const [joinedCall, setJoinedCall] = useState(false);
   const [opData, setOpData] = useState<OpChartData>({});
+  const [paid, setPaid] = useState(false);
 
   // Update current time every second
   useEffect(() => {
@@ -80,15 +82,12 @@ const VideoCall = () => {
       .slice(0, 16);
   }, [doctorId, patientId, date, time]);
 
-  const handleLeave = () => {
-    navigate("/dashboard");
-  };
+  const handleLeave = () => navigate("/dashboard");
 
   const handleOpChange = (field: keyof OpChartData, value: string) => {
     setOpData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Submit OP chart
   const handleopsubmit = async () => {
     const payload = {
       appointmentId: consultation.id,
@@ -101,6 +100,7 @@ const VideoCall = () => {
     try {
       console.log("Submitting:", payload);
       const response = await completeConsultation(payload);
+      alert("OP submitted successfully");
       console.log("Response:", response);
     } catch (error) {
       console.error(error);
@@ -108,14 +108,18 @@ const VideoCall = () => {
     }
   };
 
+  // Payment function
+  const handlePayment = () => {
+    setPaid(true);
+    alert("Payment successful!");
+  };
+
   return (
-    <div className="w-full h-screen flex bg-gray-900 text-white">
+    <div className="w-full h-screen flex bg-gray-900 text-white overflow-hidden">
       {!canJoin ? (
         <div className="m-auto text-center px-6">
           <h2 className="text-2xl font-bold mb-3">Not Time Yet</h2>
-          <p className="text-gray-400">
-            Scheduled for {date} at {time}
-          </p>
+          <p className="text-gray-400">Scheduled for {date} at {time}</p>
           <p className="mt-2 text-gray-500">
             You can join 5 minutes early and up to 2 hours after start time.
           </p>
@@ -123,94 +127,106 @@ const VideoCall = () => {
       ) : (
         <>
           {/* 🎥 Jitsi */}
-          <div className="flex-1 bg-black">
+          <div className="flex-1 bg-black relative">
             <iframe
               title="Jitsi Call"
               allow="camera; microphone; fullscreen; autoplay"
-              src={`https://meet.jit.si/${roomName}#userInfo.displayName="${encodeURIComponent(
-                me.name
-              )}"`}
+              src={`https://meet.jit.si/${roomName}#userInfo.displayName="${encodeURIComponent(me.name)}"`}
               style={{ width: "100%", height: "100%", border: 0 }}
-              onLoad={() => setJoinedCall(true)} // mark as joined
+              onLoad={() => setJoinedCall(true)}
             />
           </div>
 
           {/* ℹ️ Sidebar */}
-          <div className="w-96 bg-gray-800 p-6 space-y-6 shadow-xl overflow-y-auto">
-            <div className="bg-gray-700 p-4 rounded-xl">
-              <h3 className="text-lg font-semibold mb-2">You are meeting</h3>
-              <p className="text-xl font-bold">{otherUser.name}</p>
-              <p className="text-sm text-gray-300 capitalize">
-                {otherUser.role}
-                {otherUser.specialization && ` • ${otherUser.specialization}`}
-              </p>
-            </div>
-
-            <div className="text-sm text-gray-300 space-y-1">
-              <p>
-                <strong>Your role:</strong> {me.role}
-              </p>
-              <p>
-                <strong>Date:</strong> {date}
-              </p>
-              <p>
-                <strong>Time:</strong> {time}
-              </p>
-            </div>
-
-            <button
-              onClick={handleLeave}
-              className="w-full bg-red-600 hover:bg-red-700 py-2 rounded-lg font-semibold transition"
-            >
-              Leave Call
-            </button>
-
-            {/* OP Chart form */}
-            {isDoctor && (
-              <div className="bg-gray-700 p-4 rounded-xl mt-4 space-y-3">
-                <h3 className="text-lg font-semibold text-[#002E6E] mb-2">OP Chart</h3>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300">Diagnosis</label>
-                  <textarea
-                    value={opData.diagnosis || ""}
-                    onChange={e => handleOpChange("diagnosis", e.target.value)}
-                    disabled={!joinedCall}
-                    className="w-full mt-1 px-3 py-2 rounded-md border border-gray-600 bg-gray-900 text-white resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300">Prescription</label>
-                  <textarea
-                    value={opData.prescription || ""}
-                    onChange={e => handleOpChange("prescription", e.target.value)}
-                    disabled={!joinedCall}
-                    className="w-full mt-1 px-3 py-2 rounded-md border border-gray-600 bg-gray-900 text-white resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300">Doctor Notes</label>
-                  <textarea
-                    value={opData.doctorNotes || ""}
-                    onChange={e => handleOpChange("doctorNotes", e.target.value)}
-                    disabled={!joinedCall}
-                    className="w-full mt-1 px-3 py-2 rounded-md border border-gray-600 bg-gray-900 text-white resize-none"
-                  />
-                </div>
-
-                <button
-                  onClick={handleopsubmit}
-                  disabled={!joinedCall}
-                  className={`w-full mt-2 py-2 rounded-lg font-semibold transition ${
-                    joinedCall ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                  Submit OP
-                </button>
+          <div className="w-96 bg-gray-800 p-6 flex flex-col justify-between overflow-y-auto shadow-xl">
+            <div className="space-y-6">
+              <div className="bg-gray-700 p-4 rounded-xl">
+                <h3 className="text-lg font-semibold mb-2">Meeting With</h3>
+                <p className="text-xl font-bold">{otherUser.name}</p>
+                <p className="text-sm text-gray-300 capitalize">
+                  {otherUser.role}
+                  {otherUser.specialization && ` • ${otherUser.specialization}`}
+                </p>
               </div>
-            )}
+
+              <div className="bg-gray-700 p-4 rounded-xl space-y-2">
+                <p className="text-sm text-gray-300"><strong>Reason:</strong> {reason}</p>
+                <p className="text-sm text-gray-300"><strong>Date:</strong> {date}</p>
+                <p className="text-sm text-gray-300"><strong>Time:</strong> {time}</p>
+                <p className="text-sm text-gray-300"><strong>Your role:</strong> {me.role}</p>
+              </div>
+
+              <button
+                onClick={handleLeave}
+                className="w-full bg-red-600 hover:bg-red-700 py-2 rounded-lg font-semibold transition"
+              >
+                Leave Call
+              </button>
+
+              {/* OP Chart form */}
+              {isDoctor && (
+                <div className="bg-gray-700 p-4 rounded-xl mt-4 space-y-3">
+                  <h3 className="text-lg font-semibold text-[#00C7FF] mb-2">OP Chart</h3>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300">Diagnosis</label>
+                    <textarea
+                      value={opData.diagnosis || ""}
+                      onChange={e => handleOpChange("diagnosis", e.target.value)}
+                      disabled={!joinedCall}
+                      className="w-full mt-1 px-3 py-2 rounded-md border border-gray-600 bg-gray-900 text-white resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300">Prescription</label>
+                    <textarea
+                      value={opData.prescription || ""}
+                      onChange={e => handleOpChange("prescription", e.target.value)}
+                      disabled={!joinedCall}
+                      className="w-full mt-1 px-3 py-2 rounded-md border border-gray-600 bg-gray-900 text-white resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300">Doctor Notes</label>
+                    <textarea
+                      value={opData.doctorNotes || ""}
+                      onChange={e => handleOpChange("doctorNotes", e.target.value)}
+                      disabled={!joinedCall}
+                      className="w-full mt-1 px-3 py-2 rounded-md border border-gray-600 bg-gray-900 text-white resize-none"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleopsubmit}
+                    disabled={!joinedCall}
+                    className={`w-full mt-2 py-2 rounded-lg font-semibold transition ${
+                      joinedCall ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-500 cursor-not-allowed"
+                    }`}
+                  >
+                    Submit OP
+                  </button>
+                </div>
+              )}
+
+              {/* 💳 Payment button */}
+              {joinedCall && !paid && !isDoctor && (
+                <button
+                  onClick={handlePayment}
+                  className="w-full mt-4 bg-green-600 hover:bg-green-700 py-2 rounded-lg font-semibold transition"
+                >
+                  Pay Now
+                </button>
+              )}
+
+              {/* Paid badge */}
+              {paid && (
+                <div className="mt-4 inline-block px-3 py-1 bg-green-500 text-white rounded-full font-semibold text-center">
+                  Paid ✅
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}

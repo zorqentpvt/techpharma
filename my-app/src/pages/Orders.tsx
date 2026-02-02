@@ -123,48 +123,51 @@ export default function Orders() {
 
   /* ---------------- UI ---------------- */
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#F5FAFF] p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
 
         {/* HEADER */}
-        <div className="flex flex-col sm:flex-row justify-between mb-6 gap-2">
-          <h1 className="text-xl sm:text-2xl font-semibold">
+        <div className="flex flex-col sm:flex-row justify-between mb-6 gap-2 items-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#0F4FA8]">
             Order Management
           </h1>
-          <span className="text-sm text-gray-600">
+
+          <span className="bg-white px-4 py-2 rounded-xl shadow text-sm font-medium text-[#0F4FA8]">
             {user.username}
           </span>
         </div>
 
         {/* SEARCH */}
         <input
-          className="w-full mb-4 border px-4 py-2 rounded-md text-sm"
+          className="w-full mb-4 border px-4 py-3 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-[#00B9F1] outline-none"
           placeholder="Search by order ID, name or phone"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
 
         {/* TABLE */}
-        <div className="bg-white border rounded-lg overflow-x-auto">
+        <div className="bg-white rounded-2xl shadow-lg overflow-x-auto">
           <table className="min-w-[900px] w-full divide-y">
-            <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+          <thead className="bg-[#002E6E] text-white text-sm">
               <tr>
-                <th className="px-4 py-3 text-left">Order ID</th>
-                <th className="px-4 py-3 text-left">Customer</th>
-                <th className="px-4 py-3 text-left">Medicines</th>
-                <th className="px-4 py-3 text-left">Amount</th>
-                <th className="px-4 py-3 text-left">Date</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-right">Update</th>
+                <th className="px-4 py-4 text-left">Order ID</th>
+                <th className="px-4 py-4 text-left">Customer</th>
+                <th className="px-4 py-4 text-left">Medicines</th>
+                <th className="px-4 py-4 text-left">Amount</th>
+                <th className="px-4 py-4 text-left">Date</th>
+                <th className="px-4 py-4 text-left">Status</th>
+                <th className="px-4 py-4 text-right">Update</th>
               </tr>
             </thead>
 
             <tbody className="divide-y">
               {filteredOrders.length > 0 ? (
                 filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-
-                    <td className="px-4 py-3 text-sm font-medium">
+                  <tr
+                    key={order.id}
+                    className="hover:bg-[#F0F9FF] transition"
+                  >
+                    <td className="px-4 py-3 text-sm font-medium text-[#0F4FA8]">
                       {order.id}
                     </td>
 
@@ -183,7 +186,7 @@ export default function Orders() {
                       ))}
                     </td>
 
-                    <td className="px-4 py-3 text-sm">
+                    <td className="px-4 py-3 text-sm font-semibold text-[#0F4FA8]">
                       ₹{order.totalAmount}
                     </td>
 
@@ -200,7 +203,7 @@ export default function Orders() {
                             e.target.value as OrderStatus
                           )
                         }
-                        className="border rounded px-2 py-1 text-sm"
+                        className="border rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-[#00B9F1] outline-none"
                       >
                         {Object.keys(statusConfig).map((s) => (
                           <option key={s} value={s}>
@@ -214,14 +217,13 @@ export default function Orders() {
                       <button
                         onClick={() => handleUpdate(order)}
                         disabled={updatingId === order.id}
-                        className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                        className="px-4 py-2 text-sm rounded-lg bg-[#00B9F1] text-white hover:bg-[#009AD6] shadow disabled:opacity-50"
                       >
                         {updatingId === order.id
                           ? "Updating..."
                           : "Update"}
                       </button>
                     </td>
-
                   </tr>
                 ))
               ) : (
@@ -239,11 +241,10 @@ export default function Orders() {
         </div>
 
         {filteredOrders.length > 0 && (
-          <div className="mt-3 text-sm text-gray-600">
+          <div className="mt-4 text-sm text-gray-600 font-medium">
             Showing {filteredOrders.length} orders
           </div>
         )}
-
       </div>
     </div>
   );

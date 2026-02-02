@@ -125,6 +125,30 @@ export async function bookAppointment(payload: BookAppointmentPayload): Promise<
   }
 }
 
+//doc pay
+export async function paydoc(appointmentId: string): Promise<ApiResponse> {
+  if (!appointmentId) return { success: false, message: "Appointment ID required" };
+
+  try {
+    const { data } = await api.put(`api/user/consultation/ispaid/${appointmentId}`);
+    return { success: true, message: "Payment processed", data };
+  } catch (err: any) {
+    return { success: false, message: err.response?.data?.message || err.message };
+  }
+}
+
+//pay check
+export async function checkpay(appointmentId: string): Promise<ApiResponse> {
+  if (!appointmentId) return { success: false, message: "Appointment ID required" };
+
+  try {
+    const { data } = await api.get(`api/user/consultation/ispaid/${appointmentId}`);
+    return { success: true, message: "Payment processed", data };
+  } catch (err: any) {
+    return { success: false, message: err.response?.data?.message || err.message };
+  }
+}
+
 // SCHEDULE APPOINTMENT (doctor side)
 export async function scheduleAppointment(payload: ScheduleAppointmentPayload): Promise<ApiResponse> {
   console.log("API Payload (scheduleAppointment):", payload);

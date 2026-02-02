@@ -166,7 +166,7 @@ export default function Dashboard() {
       )}
 
       {/* Main content */}
-      <main className="flex-1 p-4 lg:p-6 z-10 relative overflow-y-auto">
+      <main className="flex-1  lg z-10 relative overflow-y-auto">
         
           {location.pathname === "/dashboard" ? <Home /> : <Outlet />}
        

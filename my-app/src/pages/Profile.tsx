@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronDown, Lock, Power, X } from "lucide-react";
+import EditIcon from "@mui/icons-material/Edit";
+
 
 export default function ProfilePage() {
   const [userData, setUserData] = useState({
@@ -197,14 +199,44 @@ export default function ProfilePage() {
 
         {/* Profile Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="flex flex-col items-center gap-3">
-            <img
-              src={tempData.profilePic || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover border-2 border-blue-500 shadow-md"
-            />
-            {editMode && <input type="file" accept="image/*" onChange={handleFileChange} />}
-          </div>
+                <div className="relative flex flex-col items-center group">
+              {/* Profile Image */}
+              <img
+                src={
+                  tempData.profilePic ||
+                  "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
+                }
+                alt="Profile"
+                className="w-24 h-24 rounded-full object-cover border-2 border-blue-500 shadow-md cursor-pointer"
+              />
+
+              {/* Hidden File Input */}
+              {editMode && (
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="profile-upload"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              )}
+
+              {/* Hover Overlay */}
+              {editMode && (
+                <label
+                  htmlFor="profile-upload"
+                  className="absolute flex items-center justify-center
+                            ml-64
+                            w-24
+                            inset-0 bg-gray-400
+                            rounded-full
+                            opacity-0 group-hover:opacity-100
+                            transition-all cursor-pointer"
+                >
+                  <EditIcon className="text-gray-800 " />
+                </label>
+              )}
+            </div>
 
           {/* User Info */}
           {["firstName", "lastName", "address", "phoneNumber"].map((field) => (
@@ -223,7 +255,7 @@ export default function ProfilePage() {
             </div>
           ))}
 
-          {/* Password */}
+          {/* Password
           <div>
             <label className="block mb-1 font-medium">Password</label>
             <input
@@ -233,7 +265,7 @@ export default function ProfilePage() {
               readOnly
               className="w-full p-2 border rounded-lg border-gray-300 bg-gray-100"
             />
-          </div>
+          </div> */}
 
           {/* Buttons */}
           <div className="flex justify-between gap-4">

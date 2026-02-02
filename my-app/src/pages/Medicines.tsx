@@ -110,6 +110,15 @@ export default function Medicines() {
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
+      <div className="w-full aspect-[3.5/.7]  overflow-hidden shadow-md hover:shadow-xl transition-all">
+
+  <img
+    src={'/images/meds.jpg'}
+    alt="img"
+    className="w-full h-full object-cover "
+  />
+
+</div>
       {/* Top Bar */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

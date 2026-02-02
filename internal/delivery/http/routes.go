@@ -70,6 +70,11 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 	protectedRoutes := api.Group("/")
 	protectedRoutes.Use(middleware.JWTAuth(container.TokenService))
 	{
+		protectedRoutes.PUT("/profile", userHandler.UpdateUserProfile)
+		protectedRoutes.PATCH("/profile/avatar", userHandler.UpdateAvatar)
+		protectedRoutes.DELETE("/profile/avatar/delete", userHandler.DeleteAvatar)
+		protectedRoutes.GET("profile", userHandler.GetUserProfile)
+
 		// User profile and account management routes (authenticated users)
 		patientRoutes := protectedRoutes.Group("/user")
 		{

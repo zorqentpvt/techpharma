@@ -90,7 +90,7 @@ const handleJoinCall = (consultation) => {
 
   const bgMap: Record<string, string> = {
   admin: "/images/admin.jpg",
-  doctor: "/images/doc.jpg",
+  doctor: "/images/cons.jpg",
   pharmacy: "/images/pharma1.png",
   normal: "/images/cons.jpg",
 };

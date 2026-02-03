@@ -249,7 +249,7 @@ export default function Store() {
               </label>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition">
+              <label className="flex items-center gap-2 cursor-pointer bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 rounded-md text-sm transition">
                 {image ? "Change Image" : "Upload Image"}
                 <input
                   type="file"

@@ -156,9 +156,22 @@ const ViewPharm: React.FC = () => {
                     <span className="font-semibold capitalize">{key.replace(/([A-Z])/g, " $1")}:</span>{" "}
                     {String(value)}
                   </p>
+                  
                 ))
               : <p className="text-gray-500 col-span-2">No pharmacy data available.</p>
             }
+            <button
+    onClick={toggleStatus}
+    className={`relative w-20 h-10 rounded-full transition-colors duration-300 ${
+      user.isActive ? "bg-green-600" : "bg-red-600"
+    }`}
+  >
+    <span
+      className={`absolute top-1 left-1 w-8 h-8 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+        user.isActive ? "translate-x-10" : "translate-x-0"
+      }`}
+    />
+  </button> 
           </div>
         </div>
 
@@ -174,16 +187,6 @@ const ViewPharm: React.FC = () => {
           )}
         </div>
 
-        {/* ACTION BUTTON */}
-        <div className="bg-white rounded-3xl shadow-md p-8">
-          <button
-            onClick={toggleStatus}
-            className={`w-full py-4 text-xl rounded-2xl font-bold text-white transition-all duration-300
-              ${user.isActive ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}`}
-          >
-            {user.isActive ? "🚫 Deactivate Pharmacy" : "✅ Activate Pharmacy"}
-          </button>
-        </div>
 
       </div>
     </div>

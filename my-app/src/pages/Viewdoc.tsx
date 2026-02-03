@@ -190,6 +190,18 @@ const ViewDoctor: React.FC = () => {
                   {user.doctor.isActive ? "Yes" : "No"}
                 </span>
               </li>
+              <button
+  onClick={toggleStatus}
+  className={`relative w-16 h-8 flex items-center rounded-full transition-colors duration-300 ${
+    user.isActive ? "bg-green-600" : "bg-red-600"
+  }`}
+>
+  <span
+    className={`inline-block w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+      user.isActive ? "translate-x-8" : "translate-x-1"
+    }`}
+  />
+</button>
             </ul>
           </div>
         ) : (
@@ -215,16 +227,7 @@ const ViewDoctor: React.FC = () => {
         </div>
 
         {/* Action */}
-        <button
-          onClick={toggleStatus}
-          className={`w-full py-4 rounded-full text-lg font-semibold shadow-md transition-all ${
-            user.isActive
-              ? "bg-red-600 hover:bg-red-700"
-              : "bg-green-600 hover:bg-green-700"
-          }`}
-        >
-          {user.isActive ? "🚫 Deactivate Doctor" : "✅ Activate Doctor"}
-        </button>
+        
       </div>
     </div>
   );

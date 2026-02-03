@@ -39,6 +39,7 @@ export default function Appointments() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 sm:p-6">
+      
       <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700 text-center">📅 My Appointments</h1>
 
       {loading && <p className="text-center text-gray-500">Loading appointments...</p>}

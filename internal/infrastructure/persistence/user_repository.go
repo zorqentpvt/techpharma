@@ -237,6 +237,37 @@ func (r *userRepository) CreatePharmacy(ctx context.Context, pharmacy *entity.Ph
 	}
 	return pharmacy, nil
 }
+
+func (r *userRepository) UpdateDoctor(ctx context.Context, doctor *entity.Doctor) (*entity.Doctor, error) {
+	// Use Updates to only update non-zero fields from the doctor struct
+	if err := r.db.WithContext(ctx).Model(&entity.Doctor{}).Where("user_id = ?", doctor.UserID).Updates(doctor).Error; err != nil {
+		return nil, err
+	}
+
+	// Fetch the updated record to return it
+	var updatedDoctor entity.Doctor
+	if err := r.db.WithContext(ctx).Where("user_id = ?", doctor.UserID).First(&updatedDoctor).Error; err != nil {
+		return nil, err // Can be gorm.ErrRecordNotFound if no doctor profile exists
+	}
+
+	return &updatedDoctor, nil
+}
+
+func (r *userRepository) UpdatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error) {
+	// Use Updates to only update non-zero fields from the pharmacy struct
+	if err := r.db.WithContext(ctx).Model(&entity.Pharmacy{}).Where("user_id = ?", pharmacy.UserID).Updates(pharmacy).Error; err != nil {
+		return nil, err
+	}
+
+	// Fetch the updated record to return it
+	var updatedPharmacy entity.Pharmacy
+	if err := r.db.WithContext(ctx).Where("user_id = ?", pharmacy.UserID).First(&updatedPharmacy).Error; err != nil {
+		return nil, err // Can be gorm.ErrRecordNotFound if no pharmacy profile exists
+	}
+
+	return &updatedPharmacy, nil
+}
+
 func (r *userRepository) CountActiveDoctors(ctx context.Context) (int64, error) {
 	var count int64
 	if err := r.db.WithContext(ctx).Model(&entity.User{}).

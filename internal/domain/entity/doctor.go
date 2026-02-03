@@ -21,6 +21,8 @@ type Doctor struct {
 	Experience      int     `gorm:"default:0" json:"experience"` // in years
 	ConsultationFee float64 `gorm:"default:0" json:"consultationFee"`
 
+	Qualification string `gorm:"type:varchar(100)" json:"qualification"`
+
 	// Availability
 	AvailableFrom *time.Time `json:"availableFrom,omitempty"`
 	AvailableTo   *time.Time `json:"availableTo,omitempty"`
@@ -30,5 +32,3 @@ type Doctor struct {
 	DeactivatedAt *time.Time `json:"deactivatedAt,omitempty"`
 	DeactivatedBy *uuid.UUID `gorm:"type:uuid" json:"deactivatedBy,omitempty"`
 }
-
-// Specialization represents a medical field or specialization

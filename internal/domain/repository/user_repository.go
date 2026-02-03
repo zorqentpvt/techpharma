@@ -23,6 +23,9 @@ type UserRepository interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	CreateDoctor(ctx context.Context, user *entity.Doctor) (*entity.Doctor, error)
 	CreatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error)
+
+	UpdateDoctor(ctx context.Context, doctor *entity.Doctor) (*entity.Doctor, error)
+	UpdatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error)
 	//dashboard stats
 	CountActiveDoctors(ctx context.Context) (int64, error)
 	CountInactiveDoctors(ctx context.Context) (int64, error)

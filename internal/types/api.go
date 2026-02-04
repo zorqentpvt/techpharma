@@ -317,15 +317,15 @@ type UpdateAvatarRequest struct {
 }
 
 type UpdateProfileRequest struct {
-	FirstName   *string         `json:"firstName,omitempty"`
-	LastName    *string         `json:"lastName,omitempty"`
-	PhoneNumber *string         `json:"phoneNumber,omitempty"`
-	Language    string          `json:"language,omitempty"`
-	Avatar      *string         `json:"avatar,omitempty"`
-	DateOfBirth *time.Time      `json:"dateOfBirth,omitempty"`
-	Gender      *string         `json:"gender,omitempty"`
-	Address     *AddressRequest `json:"address,omitempty"`
-	ContactInfo *ContactRequest `json:"contactInfo,omitempty"`
+	FirstName   *string             `json:"firstName,omitempty"`
+	LastName    *string             `json:"lastName,omitempty"`
+	PhoneNumber *string             `json:"phoneNumber,omitempty"`
+	Language    string              `json:"language,omitempty"`
+	Avatar      *string             `json:"avatar,omitempty"`
+	DateOfBirth *time.Time          `json:"dateOfBirth,omitempty"`
+	Gender      *string             `json:"gender,omitempty"`
+	Address     *entity.GeoLocation `json:"address,omitempty"`
+	ContactInfo *entity.ContactInfo `json:"contactInfo,omitempty"`
 
 	// Doctor-specific fields
 	SpecializationID *string `json:"specializationId,omitempty"`

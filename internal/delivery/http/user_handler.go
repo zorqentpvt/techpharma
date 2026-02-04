@@ -887,7 +887,166 @@ func (h *UserHandlerClean) GetUserProfile(c *gin.Context) {
 		return
 	}
 
-	// Convert user entity to profile response format matching the required structure
+	profileResponse := h.buildProfileResponse(user)
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Data:    profileResponse,
+		Message: "User profile fetched successfully",
+	})
+}
+
+// UpdateUserProfile handles updating the current authenticated user's profile,
+// including role-specific data for doctors and pharmacies.
+func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
+			Error:   "Unauthorized",
+			Message: "User not authenticated",
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid user ID",
+			Message: "Failed to parse user ID from token",
+		})
+		return
+	}
+
+	// NOTE: The `types.UpdateProfileRequest` is assumed to be extended
+	// with fields from your request struct, like FirstName, LastName,
+	// and role-specific fields (SpecializationID, PharmacyName, etc.).
+	// These fields should be optional (e.g., using pointers) for updates.
+	var req types.UpdateProfileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "Request body validation failed",
+		})
+		return
+	}
+
+	ctx := c.Request.Context()
+
+	// Get current user to know their role
+	currentUser, err := h.userUseCase.GetUserByID(ctx, userID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, types.ErrorResponse{Error: "User not found", Message: "The authenticated user no longer exists"})
+		} else {
+			c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to fetch user", Message: "Could not retrieve user information", Details: err.Error()})
+		}
+		return
+	}
+
+	// --- Update User Profile ---
+	userUpdate := &entity.User{}
+	// We assume `req` fields are pointers for optionality
+	if req.FirstName != nil {
+		userUpdate.FirstName = *req.FirstName
+	}
+	if req.LastName != nil {
+		userUpdate.LastName = *req.LastName
+	}
+
+	if req.DateOfBirth != nil {
+		userUpdate.DateOfBirth = req.DateOfBirth
+	}
+	if req.Gender != nil {
+		userUpdate.Gender = req.Gender
+	}
+	if req.Address != nil {
+		userUpdate.Address = *req.Address
+	}
+	if req.ContactInfo != nil {
+		userUpdate.ContactInfo = *req.ContactInfo
+	}
+
+	if _, err := h.userUseCase.UpdateUserProfile(ctx, userID, userUpdate); err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   "Failed to update profile",
+			Message: "Profile update failed",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	// --- Handle Role-Specific Updates ---
+	roleName := strings.ToLower(strings.TrimSpace(currentUser.RoleID))
+	switch roleName {
+	case "doctor":
+		doctorUpdate := &entity.Doctor{UserID: userID}
+		updateNeeded := false
+		if req.SpecializationID != nil {
+			doctorUpdate.SpecializationID = *req.SpecializationID
+			updateNeeded = true
+		}
+		if req.LicenseNumber != nil {
+			doctorUpdate.LicenseNumber = *req.LicenseNumber
+			updateNeeded = true
+		}
+		if req.Qualification != nil {
+			doctorUpdate.Qualification = *req.Qualification
+			updateNeeded = true
+		}
+		if updateNeeded {
+			// Assumes use case has UpdateDoctor method
+			if _, err := h.userUseCase.UpdateDoctor(ctx, doctorUpdate); err != nil {
+				c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to update doctor profile", Message: err.Error()})
+				return
+			}
+		}
+	case "pharmacy":
+		pharmacyUpdate := &entity.Pharmacy{UserID: userID}
+		updateNeeded := false
+		if req.PharmacyName != nil {
+			pharmacyUpdate.Name = *req.PharmacyName
+			updateNeeded = true
+		}
+		if req.PharmacyAddress != nil {
+			pharmacyUpdate.Address = *req.PharmacyAddress
+			updateNeeded = true
+		}
+		if req.LicenseNumber != nil { // Assuming same field for pharmacy license
+			pharmacyUpdate.LicenseNumber = *req.LicenseNumber
+			updateNeeded = true
+		}
+		if req.PharmacyPhone != nil {
+			pharmacyUpdate.PhoneNumber = *req.PharmacyPhone
+			updateNeeded = true
+		}
+		if updateNeeded {
+			// Assumes use case has UpdatePharmacy method
+			if _, err := h.userUseCase.UpdatePharmacy(ctx, pharmacyUpdate); err != nil {
+				c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to update pharmacy profile", Message: err.Error()})
+				return
+			}
+		}
+	}
+
+	// --- Fetch Final Profile and Respond ---
+	finalUpdatedUser, err := h.userUseCase.GetUserByID(ctx, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to fetch updated profile", Message: "Could not retrieve final user profile after update", Details: err.Error()})
+		return
+	}
+
+	profileResponse := h.buildProfileResponse(finalUpdatedUser)
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Data:    profileResponse,
+		Message: "Profile updated successfully",
+	})
+}
+
+// buildProfileResponse constructs the user profile response map.
+// This helper can be used by GetUserProfile and UpdateUserProfile to avoid code duplication.
+func (h *UserHandlerClean) buildProfileResponse(user *entity.User) map[string]interface{} {
 	profileResponse := map[string]interface{}{
 		"id":              user.ID,
 		"firstName":       user.FirstName,
@@ -911,7 +1070,7 @@ func (h *UserHandlerClean) GetUserProfile(c *gin.Context) {
 
 	// Add college information if available
 
-	// Add address information from embedded GeoLocation
+	// Add address information
 	if user.Address.Address != "" {
 		profileResponse["address"] = map[string]interface{}{
 			"address":    user.Address.Address,
@@ -922,15 +1081,11 @@ func (h *UserHandlerClean) GetUserProfile(c *gin.Context) {
 		}
 	} else {
 		profileResponse["address"] = map[string]interface{}{
-			"address":    "",
-			"city":       "",
-			"state":      "",
-			"country":    "",
-			"postalCode": "",
+			"address": "", "city": "", "state": "", "country": "", "postalCode": "",
 		}
 	}
 
-	// Add contact information from embedded ContactInfo
+	// Add contact information
 	profileResponse["contactInfo"] = map[string]interface{}{
 		"primaryPhone":    user.ContactInfo.PrimaryPhone,
 		"secondaryPhone":  getSecondaryPhone(user),
@@ -939,7 +1094,7 @@ func (h *UserHandlerClean) GetUserProfile(c *gin.Context) {
 		"isPhoneVerified": user.IsPhoneVerified,
 	}
 
-	// Add additional profile fields if they exist
+	// Add additional profile fields
 	if user.DateOfBirth != nil {
 		profileResponse["dateOfBirth"] = user.DateOfBirth.Format("2006-01-02")
 	} else {
@@ -952,175 +1107,7 @@ func (h *UserHandlerClean) GetUserProfile(c *gin.Context) {
 		profileResponse["gender"] = ""
 	}
 
-	c.JSON(http.StatusOK, response.Response{
-		Success: true,
-		Data:    profileResponse,
-		Message: "User profile fetched successfully",
-	})
-}
-func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
-	userIDStr := c.GetString("userID")
-	if userIDStr == "" {
-		c.JSON(http.StatusUnauthorized, types.ErrorResponse{
-			Error:   "Unauthorized",
-			Message: "User not authenticated",
-		})
-		return
-	}
-
-	// Parse UUID properly
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error:   "Invalid user ID",
-			Message: "Failed to parse user ID from token",
-			Details: err.Error(),
-		})
-		return
-	}
-
-	var req types.UpdateProfileRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, types.ErrorResponse{
-			Error:   "Invalid request",
-			Message: "Request body validation failed",
-			Details: err.Error(),
-		})
-		return
-	}
-
-	ctx := context.WithValue(c.Request.Context(), "userID", userIDStr)
-
-	// Prepare user entity for profile update (excluding restricted fields)
-	user := &entity.User{}
-
-	// Updatable fields
-
-	if req.Language != "" {
-		user.Language = req.Language
-	}
-
-	if req.Avatar != nil {
-		user.Avatar = req.Avatar
-	}
-
-	if req.DateOfBirth != nil {
-		user.DateOfBirth = req.DateOfBirth
-	}
-
-	if req.Gender != nil {
-		user.Gender = req.Gender
-	}
-
-	// Update address information if provided
-	if req.Address != nil {
-		user.Address = entity.GeoLocation{
-			Address:    req.Address.Address,
-			City:       req.Address.City,
-			State:      req.Address.State,
-			Country:    req.Address.Country,
-			PostalCode: req.Address.PostalCode,
-		}
-	}
-
-	// Update contact information if provided (excluding primary email and phone which are restricted)
-	if req.ContactInfo != nil {
-		user.ContactInfo = entity.ContactInfo{
-			SecondaryPhone: req.ContactInfo.SecondaryPhone,
-			Email:          req.ContactInfo.Email,
-			// Note: Primary phone and email are restricted and handled elsewhere
-		}
-	}
-
-	// Call use case to update user profile
-	updatedUser, err := h.userUseCase.UpdateUserProfile(ctx, userID, user)
-	if err != nil {
-		// Handle specific error types
-		if strings.Contains(err.Error(), "not found") {
-			c.JSON(http.StatusNotFound, types.ErrorResponse{
-				Error:   "User not found",
-				Message: "The authenticated user no longer exists",
-				Details: err.Error(),
-			})
-			return
-		}
-
-		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
-			Error:   "Failed to update profile",
-			Message: "Profile update failed",
-			Details: err.Error(),
-		})
-		return
-	}
-
-	// Convert updated user to response format
-	profileResponse := map[string]interface{}{
-		"id":              updatedUser.ID,
-		"firstName":       updatedUser.FirstName,
-		"lastName":        updatedUser.LastName,
-		"displayName":     updatedUser.DisplayName,
-		"email":           getStringValue(updatedUser.Email),
-		"isEmailVerified": updatedUser.IsEmailVerified,
-		"phoneNumber":     updatedUser.PhoneNumber,
-		"isPhoneVerified": updatedUser.IsPhoneVerified,
-		"status":          updatedUser.Status,
-		"language":        updatedUser.Language,
-		"image":           getStringValue(updatedUser.Avatar),
-		"createdAt":       updatedUser.CreatedAt.Format("2006-01-02"),
-		"updatedAt":       updatedUser.UpdatedAt.Format("2006-01-02"),
-		"lastLoginAt":     formatLastLogin(updatedUser.LastLoginAt),
-		"isActive":        updatedUser.IsActive,
-		"firstTimeLogin":  updatedUser.FirstTimeLogin,
-	}
-
-	// Add college information if available
-
-	// Add address information
-	if updatedUser.Address.Address != "" {
-		profileResponse["address"] = map[string]interface{}{
-			"address":    updatedUser.Address.Address,
-			"city":       updatedUser.Address.City,
-			"state":      updatedUser.Address.State,
-			"country":    updatedUser.Address.Country,
-			"postalCode": updatedUser.Address.PostalCode,
-		}
-	} else {
-		profileResponse["address"] = map[string]interface{}{
-			"address":    "",
-			"city":       "",
-			"state":      "",
-			"country":    "",
-			"postalCode": "",
-		}
-	}
-
-	// Add contact information
-	profileResponse["contactInfo"] = map[string]interface{}{
-		"primaryPhone":    updatedUser.ContactInfo.PrimaryPhone,
-		"secondaryPhone":  getSecondaryPhone(updatedUser),
-		"email":           getStringValue(updatedUser.ContactInfo.Email),
-		"isEmailVerified": updatedUser.IsEmailVerified,
-		"isPhoneVerified": updatedUser.IsPhoneVerified,
-	}
-
-	// Add additional profile fields
-	if updatedUser.DateOfBirth != nil {
-		profileResponse["dateOfBirth"] = updatedUser.DateOfBirth.Format("2006-01-02")
-	} else {
-		profileResponse["dateOfBirth"] = ""
-	}
-
-	if updatedUser.Gender != nil {
-		profileResponse["gender"] = *updatedUser.Gender
-	} else {
-		profileResponse["gender"] = ""
-	}
-
-	c.JSON(http.StatusOK, response.Response{
-		Success: true,
-		Data:    profileResponse,
-		Message: "Profile updated successfully",
-	})
+	return profileResponse
 }
 
 // UpdateAvatar handles PUT /users/avatar

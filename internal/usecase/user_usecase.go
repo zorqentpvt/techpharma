@@ -28,6 +28,8 @@ type UserUseCase interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	CreateDoctor(ctx context.Context, doctor *entity.Doctor) (*entity.Doctor, error)
 	CreatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error)
+	UpdateDoctor(ctx context.Context, doctor *entity.Doctor) (*entity.Doctor, error)
+	UpdatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error)
 
 	GetDashboardStats(ctx context.Context) (*types.DashboardStatsResponse, error)
 }
@@ -568,6 +570,26 @@ func (u *userUseCase) CreateDoctor(ctx context.Context, user *entity.Doctor) (*e
 
 func (u *userUseCase) CreatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error) {
 	return u.userRepo.CreatePharmacy(ctx, pharmacy)
+}
+
+func (u *userUseCase) UpdateDoctor(ctx context.Context, doctor *entity.Doctor) (*entity.Doctor, error) {
+	if doctor == nil {
+		return nil, &errors.DomainError{
+			Code:    "DOCTOR_VALIDATION_ERROR",
+			Message: "Doctor data cannot be empty",
+		}
+	}
+	return u.userRepo.UpdateDoctor(ctx, doctor)
+}
+
+func (u *userUseCase) UpdatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error) {
+	if pharmacy == nil {
+		return nil, &errors.DomainError{
+			Code:    "PHARMACY_VALIDATION_ERROR",
+			Message: "Pharmacy data cannot be empty",
+		}
+	}
+	return u.userRepo.UpdatePharmacy(ctx, pharmacy)
 }
 
 func (h *userUseCase) GetDashboardStats(ctx context.Context) (*types.DashboardStatsResponse, error) {

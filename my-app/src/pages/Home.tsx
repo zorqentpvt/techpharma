@@ -1,575 +1,564 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-
-import Box from '@mui/material/Box';
-import Fab from '@mui/material/Fab';
-import AddIcon from '@mui/icons-material/Add';
-import FormControlLabel from "@mui/material/FormControlLabel";
-
-import AnalyticsComponent from "../components/AnalyticsComponent";
-
 import { motion, AnimatePresence } from "framer-motion";
 
-import Checkbox from '@mui/material/Checkbox';
+// MUI Components
+import Box from "@mui/material/Box";
+import Fab from "@mui/material/Fab";
+import AddIcon from "@mui/icons-material/Add";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+
+// Custom Components
+import AnalyticsComponent from "../components/AnalyticsComponent";
+import MedicineReminder from "../components/MedicineReminder";
+
+// API Functions
 import { getUserStats } from "../api/adminapi";
 import { fetchUserOrders } from "../api/medapir";
 import { fetchprofit } from "../api/pharmastoreapi";
 import { fetchConsultations, getdocstat } from "../api/docApi";
-import MedicineReminder from "../components/MedicineReminder";
 
-const label = { slotProps: { input: { 'aria-label': 'Checkbox demo' } } };
-
-
+// ==================== TYPES ====================
 interface User {
   username: string;
-  role: string;
+  role: "admin" | "doctor" | "pharmacy" | "normal";
 }
 
 interface Reminder {
   id: string;
   title: string;
-  date: string; // YYYY-MM-DD
-  time: string; // HH:MM
-  repeatDays: string[]; // ["Mon", "Tue", ...]
+  date: string;
+  time: string;
+  repeatDays: string[];
 }
 
-const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-export default function Home() {
-  const navigate = useNavigate();
-  const user: User = JSON.parse(localStorage.getItem("user") || "{}");
-  const [stats, setStats] = useState({
-    activeDoctors: 0,
-    inactiveDoctors: 0,
-    activePharmacies: 0,
-    inactivePharmacies: 0,
-    totalUsers: 0,
-  });
-  
-
-  // ✅ Health Tips (auto changing)
-  const tips: string[] = [
-    "Stay hydrated! Drink at least 8 glasses of water a day.",
-    "Get at least 7–8 hours of sleep for better recovery.",
-    "Take short breaks when working or studying to rest your eyes.",
-    "Eat more fruits and vegetables for essential nutrients.",
-    "Exercise at least 30 minutes a day to stay active.",
-  ];
-
-  const [currentTipIndex, setCurrentTipIndex] = useState<number>(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTipIndex((prev) => (prev + 1) % tips.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [tips.length]);
-
-  // ✅ Reminder logic
-  const [reminders, setReminders] = useState<Reminder[]>(() => {
-    const stored = localStorage.getItem("reminders");
-    if (!stored) return [];
-    try {
-      const parsed = JSON.parse(stored);
-      return parsed.map((r: any) => ({
-        id: r.id,
-        title: r.title || "",
-        date: r.date || "",
-        time: r.time || "",
-        repeatDays: Array.isArray(r.repeatDays) ? r.repeatDays : [],
-      }));
-    } catch {
-      return [];
-    }
-  });
-  const [torder,settorder]=useState(0);
-  const [trev,settrev]=useState(0);
-  const [upcoming, setUpcoming] = useState<any[]>([]);
-  const [todayapp, setTodayapp] = useState(0);
-  const [tp, setTp] = useState(0);
-
-  useEffect(() => {
-    if (!user?.role) return;
-  
-    const loadData = async () => {
-      try {
-        console.log("Fetching user data...", user.role);
-  
-        if (user.role === "pharmacy") {
-          const profit = await fetchprofit();
-          console.log("Profit Data:", profit.data);
-          settrev(profit.data.totalRevenue);
-          settorder(profit.data.totalOrders);
-  
-        } else if (user.role === "normal") {
-          const myorder = await fetchUserOrders();
-          console.log("My Orders Data:", myorder);
-  
-        } else if (user.role === "doctor") {
-          const consult = await getdocstat();
-  
-          const {
-            upcomingAppointments,
-            totalPatientsCount,
-            todayAppointmentsCount,
-          } = consult.data;
-  
-          setUpcoming(upcomingAppointments || []);
-          setTp(totalPatientsCount || 0);
-          setTodayapp(todayAppointmentsCount || 0);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
+interface Order {
+  id: string;
+  orderNumber: string;
+  createdAt: string;
+  orderItems: Array<{
+    medicine: {
+      name: string;
     };
-  
-    loadData();
-  
-  }, [user?.role]);
-  
-  
-
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [repeatDays, setRepeatDays] = useState<string[]>([]);
-
-  const [addtab,setaddtab] = useState(true)
-  const [lastOrder,setlastOrder] = useState(false)
-  const [ActiveP,setActiveP] = useState(false)
-  const [Htips,setHtips] = useState(true)
-  const [Well,setWell] = useState(false)
-
-
-
-  // Schedule Notifications
-  const scheduleNotification = (reminder: Reminder) => {
-    if (!("Notification" in window)) return;
-    Notification.requestPermission().then((permission) => {
-      if (permission !== "granted") return;
-
-      const now = new Date();
-      const reminderDate = new Date(`${reminder.date}T${reminder.time}`);
-      const timeout = reminderDate.getTime() - now.getTime();
-
-      if (timeout > 0) {
-        setTimeout(() => {
-          new Notification(reminder.title, {
-            body: `Reminder at ${reminder.time}`,
-            icon: "/medication-icon.png",
-          });
-        }, timeout);
-      }
-    });
+  }>;
+  payment: {
+    amount: number;
   };
-  useEffect(() => {
-    if (user.role === "admin") {
-      const fetchAdminStats = async () => {
-        try {
-          const res = await getUserStats();
-          console.log("Admin stats:", res);
-          setStats(res)
-        } catch (err) {
-          console.error("Failed to load admin stats", err);
-        }
-      };
-  
-      fetchAdminStats();
-    }
-  }, [user.role]);
+}
 
-  const fetchAdminStats = async () => {
-  try {
-    const res = await getUserStats();
- 
-  } catch (err) {
-    console.error("Failed to load pharmacies", err);
-  } finally {
-    
-  }
-};
+interface AdminStats {
+  activeDoctors: number;
+  inactiveDoctors: number;
+  activePharmacies: number;
+  inactivePharmacies: number;
+  totalUsers: number;
+}
 
-  useEffect(() => {
-    reminders.forEach(scheduleNotification);
-  }, [reminders]);
+interface Appointment {
+  id: string;
+  patientName: string;
+  startTime: string;
+}
 
-  const toggleDay = (day: string) => {
-    if (repeatDays.includes(day)) {
-      setRepeatDays(repeatDays.filter((d) => d !== day));
-    } else {
-      setRepeatDays([...repeatDays, day]);
-    }
-  };
+// ==================== CONSTANTS ====================
+const HEALTH_TIPS = [
+  "Stay hydrated! Drink at least 8 glasses of water a day.",
+  "Get at least 7–8 hours of sleep for better recovery.",
+  "Take short breaks when working or studying to rest your eyes.",
+  "Eat more fruits and vegetables for essential nutrients.",
+  "Exercise at least 30 minutes a day to stay active.",
+];
 
-  const addReminder = () => {
-    if (!title || !date || !time) return;
-
-    const newReminder: Reminder = {
-      id: Date.now().toString(),
-      title,
-      date,
-      time,
-      repeatDays,
-    };
-
-    const updatedReminders = [...reminders, newReminder];
-    setReminders(updatedReminders);
-    localStorage.setItem("reminders", JSON.stringify(updatedReminders));
-    scheduleNotification(newReminder);
-
-    setTitle("");
-    setDate("");
-    setTime("");
-    setRepeatDays([]);
-  };
-
-  const deleteReminder = (id: string) => {
-    const updatedReminders = reminders.filter((r) => r.id !== id);
-    setReminders(updatedReminders);
-    localStorage.setItem("reminders", JSON.stringify(updatedReminders));
-  };
-
-  const bgMap: Record<string, string> = {
+const ROLE_BACKGROUNDS: Record<string, string> = {
   admin: "/images/admin.jpg",
   doctor: "/images/doc.jpg",
   pharmacy: "/images/pharma1.png",
   normal: "/images/user.png",
 };
 
+const TIP_CHANGE_INTERVAL = 4000; // 4 seconds
+const INITIAL_VISIBLE_ORDERS = 1;
+const LOAD_MORE_COUNT = 3;
 
+// ==================== HELPER FUNCTIONS ====================
+const getStoredReminders = (): Reminder[] => {
+  const stored = localStorage.getItem("reminders");
+  if (!stored) return [];
+  
+  try {
+    const parsed = JSON.parse(stored);
+    return parsed.map((r: any) => ({
+      id: r.id,
+      title: r.title || "",
+      date: r.date || "",
+      time: r.time || "",
+      repeatDays: Array.isArray(r.repeatDays) ? r.repeatDays : [],
+    }));
+  } catch (error) {
+    console.error("Error parsing reminders:", error);
+    return [];
+  }
+};
 
-  // ✅ JSX
-  return (
-    <div className="min-h-screen bg-center bg-no-repeat opacity-90 rounded-2xl bg-blue-50">
+const getStoredUser = (): User => {
+  const stored = localStorage.getItem("user");
+  try {
+    return stored ? JSON.parse(stored) : { username: "", role: "normal" };
+  } catch (error) {
+    console.error("Error parsing user:", error);
+    return { username: "", role: "normal" };
+  }
+};
 
-      
-<div className="w-full aspect-[3.5/.8]  overflow-hidden shadow-md hover:shadow-xl transition-all">
+// ==================== MAIN COMPONENT ====================
+export default function Home() {
+  const navigate = useNavigate();
+  const user = getStoredUser();
 
-  <img
-    src={bgMap[user.role]}
-    alt="img"
-    className="w-full h-full object-cover "
-  />
+  // ===== Admin State =====
+  const [adminStats, setAdminStats] = useState<AdminStats>({
+    activeDoctors: 0,
+    inactiveDoctors: 0,
+    activePharmacies: 0,
+    inactivePharmacies: 0,
+    totalUsers: 0,
+  });
 
-</div>
+  // ===== Pharmacy State =====
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
 
+  // ===== Doctor State =====
+  const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>([]);
+  const [totalPatients, setTotalPatients] = useState(0);
+  const [todayAppointments, setTodayAppointments] = useState(0);
 
-      <div className="max-w-7xl mx-auto pt-4 pb-10 px-6">
-        {/* Pharmacy Dashboard */}
-        {user.role === "pharmacy" && (
-          <div className="bg-[#e7f3ffd0] rounded-2xl shadow-lg p-6 mb-6 opacity-90" >
-            
-            <h2 className="text-xl font-semibold text-[#084377] mb-4">
-              Business Analytics
-            </h2>
-            <p>Total Orders{torder}</p>
-            <p>Total Revenue{trev}</p>
-            <AnalyticsComponent
-              totalOrders={torder}
-              totalRevenue={trev}
-              currency="INR"
+  // ===== Normal User State =====
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const [visibleOrderCount, setVisibleOrderCount] = useState(INITIAL_VISIBLE_ORDERS);
 
-            />
+  // ===== UI State =====
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const [showHealthTips, setShowHealthTips] = useState(true);
+  const [showWellness, setShowWellness] = useState(false);
+
+  // ===== Reminders State =====
+  const [reminders, setReminders] = useState<Reminder[]>(getStoredReminders);
+
+  // ==================== EFFECTS ====================
+
+  // Health Tips Rotation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTipIndex((prev) => (prev + 1) % HEALTH_TIPS.length);
+    }, TIP_CHANGE_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Load Role-Specific Data
+  useEffect(() => {
+    if (!user?.role) return;
+
+    const loadData = async () => {
+      try {
+        switch (user.role) {
+          case "admin":
+            await loadAdminData();
+            break;
+          case "pharmacy":
+            await loadPharmacyData();
+            break;
+          case "doctor":
+            await loadDoctorData();
+            break;
+          case "normal":
+            await loadUserData();
+            break;
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    loadData();
+  }, [user?.role]);
+
+  // ==================== DATA LOADING FUNCTIONS ====================
+
+  const loadAdminData = async () => {
+    try {
+      const stats = await getUserStats();
+      setAdminStats(stats);
+    } catch (error) {
+      console.error("Failed to load admin stats:", error);
+    }
+  };
+
+  const loadPharmacyData = async () => {
+    try {
+      const profitData = await fetchprofit();
+      setTotalRevenue(profitData.data.totalRevenue || 0);
+      setTotalOrders(profitData.data.totalOrders || 0);
+    } catch (error) {
+      console.error("Failed to load pharmacy data:", error);
+    }
+  };
+
+  const loadDoctorData = async () => {
+    try {
+      const docStats = await getdocstat();
+      const {
+        upcomingAppointments = [],
+        totalPatientsCount = 0,
+        todayAppointmentsCount = 0,
+      } = docStats.data;
+
+      setUpcomingAppointments(upcomingAppointments);
+      setTotalPatients(totalPatientsCount);
+      setTodayAppointments(todayAppointmentsCount);
+    } catch (error) {
+      console.error("Failed to load doctor data:", error);
+    }
+  };
+
+  const loadUserData = async () => {
+    try {
+      const ordersData = await fetchUserOrders();
+      const sorted = [...ordersData.data].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setUserOrders(sorted);
+      setVisibleOrderCount(INITIAL_VISIBLE_ORDERS);
+    } catch (error) {
+      console.error("Failed to load user orders:", error);
+    }
+  };
+
+  // ==================== EVENT HANDLERS ====================
+
+  const handleViewMoreOrders = useCallback(() => {
+    setVisibleOrderCount((prev) => prev + LOAD_MORE_COUNT);
+  }, []);
+
+  // ==================== RENDER FUNCTIONS ====================
+
+  const renderPharmacyDashboard = () => (
+    <div className="bg-white/90 rounded-2xl shadow-lg p-6 mb-6 backdrop-blur-sm">
+      <h2 className="text-2xl font-semibold text-[#084377] mb-4">
+        Business Analytics
+      </h2>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="bg-blue-50 rounded-lg p-4">
+          <p className="text-sm text-gray-600">Total Orders</p>
+          <p className="text-2xl font-bold text-[#084377]">{totalOrders}</p>
+        </div>
+        <div className="bg-green-50 rounded-lg p-4">
+          <p className="text-sm text-gray-600">Total Revenue</p>
+          <p className="text-2xl font-bold text-green-600">₹{totalRevenue.toLocaleString()}</p>
+        </div>
+      </div>
+      <AnalyticsComponent
+        totalOrders={totalOrders}
+        totalRevenue={totalRevenue}
+        currency="INR"
+      />
+    </div>
+  );
+
+  const renderDoctorDashboard = () => (
+    <div className="grid gap-6 md:grid-cols-2">
+      {/* Upcoming Appointments */}
+      <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow">
+        <h2 className="text-xl font-semibold text-[#0f4c81] mb-4">
+          Upcoming Appointments
+        </h2>
+        {upcomingAppointments.length > 0 ? (
+          <ul className="divide-y divide-gray-100">
+            {upcomingAppointments.slice(0, 3).map((appointment) => (
+              <li key={appointment.id} className="py-3 flex justify-between items-center">
+                <span className="font-medium text-gray-800">
+                  {appointment.patientName}
+                </span>
+                <span className="text-gray-500 text-sm">
+                  {new Date(appointment.startTime).toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-400 text-sm">No upcoming appointments</p>
+        )}
+      </div>
+
+      {/* Patient Overview */}
+      <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow">
+        <h2 className="text-xl font-semibold text-[#0f4c81] mb-4">
+          Patient Overview
+        </h2>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+            <span className="text-gray-700">Total Patients</span>
+            <span className="font-semibold text-[#0f4c81] text-lg">
+              {totalPatients}
+            </span>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+            <span className="text-gray-700">Today's Appointments</span>
+            <span className="font-semibold text-green-600 text-lg">
+              {todayAppointments}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderNormalUserDashboard = () => {
+    const visibleOrders = userOrders.slice(0, visibleOrderCount);
+    const hasMoreOrders = visibleOrderCount < userOrders.length;
+
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto">
+        {/* Health Tips */}
+        {showHealthTips && (
+          <div className="bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
+                  💡 Daily Health Tip
+                </h2>
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={currentTipIndex}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-gray-700 leading-relaxed text-lg"
+                  >
+                    {HEALTH_TIPS[currentTipIndex]}
+                  </motion.p>
+                </AnimatePresence>
+                <p className="text-sm text-gray-500 mt-3">
+                  Source: World Health Organization
+                </p>
+              </div>
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/2966/2966481.png"
+                alt="Health tip icon"
+                className="w-24 h-24 object-contain"
+              />
+            </div>
           </div>
         )}
 
-        {user.role === "doctor" && (
-           <div className="grid gap-6 md:grid-cols-2"> 
-                <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
-                  <h2 className="text-xl font-semibold text-[#0f4c81] mb-4">Upcoming Appointments</h2>
-
-                            {upcoming.length > 0 ? (
-                        <ul className="divide-y divide-gray-100">
-                          {upcoming.slice(0, 3).map((appointment) => (
-                            <li key={appointment.id} className="py-3 flex justify-between">
-                              <span className="font-medium">
-                                {appointment.patientName}
-                              </span>
-
-                              <span className="text-gray-500 text-sm">
-                                {new Date(appointment.startTime).toLocaleString()}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-gray-400 text-sm">No upcoming appointments</p>
-                      )}
-
-                </div>
-
-                                          <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
-                            <h2 className="text-xl font-semibold text-[#0f4c81] mb-4">
-                              Patient Overview
-                            </h2>
-
-                            <div className="space-y-3 text-gray-700">
-                              <p className="flex justify-between">
-                                <span>Total Patients</span>
-                                <span className="font-semibold text-[#0f4c81]">
-                                  {tp}
-                                </span>
-                              </p>
-
-                              <p className="flex justify-between">
-                                <span>Today's Appointments</span>
-                                <span className="font-semibold text-[#0f4c81]">
-                                  {todayapp}
-                                </span>
-                              </p>
-                            </div>
-                          </div>
-                          </div> 
-                       )}
-
-        {/* Normal User Dashboard */}
-        {user.role === "normal" && (
-  <div className="space-y-10 max-w-4xl mx-auto opacity-90" >
-
-
-          {/* mui */}
-          {/* <Box sx={{ '& > :not(style)': { m: 1 } }}>
-      <Fab color="primary"  aria-label="add" onClick={()=>setaddtab((prev) => !prev)}>
-        <AddIcon 
-        sx={{cursor:"pointer", }}
-        
-        />
-      </Fab>
-
-    </Box> */}
-
-    {/* {addtab && (
-        <div className=" mt-1 " >
-          
-          <FormControlLabel className=" text-[#0f4c81] "
-            control={<Checkbox checked ={Htips}  size="small" onChange={()=>setHtips((prev)=>!prev)} />}
-            label="Daily Health Tip"
+        {/* Orders Section */}
+        {userOrders.length > 0 && (
+            <div className="bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8">
+            <h2 className="text-2xl font-bold text-[#0f4c81] mb-6 flex items-center gap-2">
+              📦 Your Orders
+            </h2>
             
-          />
-          <FormControlLabel className=" text-[#0f4c81]"
-            control={<Checkbox checked ={lastOrder}  size="small" onChange={()=>setlastOrder((prev)=>!prev)}/>}
-            label="Last Order"
-          />
-
-          <FormControlLabel className=" text-[#0f4c81]"
-            control={<Checkbox checked ={ActiveP}  size="small" onChange={()=>setActiveP((prev)=>!prev)}/>}
-            label="Active Prescriptions"
-          />
-
-          <FormControlLabel className=" text-[#0f4c81]"
-            control={<Checkbox checked ={Well}  size="small" onChange={()=>setWell((prev)=>!prev)}/>}
-            label="Wellness Goals"
-          />
-        </div>
-      )} */}
-
-          {/* --- 🔔 Notifications --- */}
-        <div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8  flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <div className="flex items-start gap-3">
-            <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
-              🔔
+            <div className="space-y-4">
+              {visibleOrders.map((order, index) => (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex justify-between items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-sm font-semibold">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">
+                        {order.orderItems[0]?.medicine.name || "N/A"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(order.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-[#0f4c81]">
+                      ₹{order.payment.amount}
+                    </p>
+                    <p className="text-xs text-gray-500">{order.orderNumber}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
-            <div>
-              <h3 className="font-bold text-[#0f4c81] text-xl">Notifications</h3>
-              <p className="text-gray-600">3 unread alerts — one about a prescription refill.</p>
-              <p className="text-sm text-gray-500 mt-1">Last updated 2 hours ago</p>
+
+            {hasMoreOrders && (
+              <button
+                onClick={handleViewMoreOrders}
+                className="mt-6 w-full py-3 text-[#0f4c81] font-semibold hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                View More Orders →
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Wellness Goals (Optional) */}
+        {showWellness && (
+          <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-12 h-12 flex items-center justify-center rounded-full text-2xl">
+                  🧘
+                </div>
+                <div>
+                  <h3 className="font-bold text-[#0f4c81] text-xl">Wellness Goals</h3>
+                  <p className="text-gray-600 mt-1">Goal: Walk 6,000 steps daily</p>
+                  <div className="mt-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-xs">
+                        <div 
+                          className="bg-green-500 h-2 rounded-full" 
+                          style={{ width: "72%" }}
+                        ></div>
+                      </div>
+                      <span className="text-sm text-gray-600">4,320/6,000</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button className="text-[#0f4c81] font-semibold hover:underline">
+                Update Goals →
+              </button>
             </div>
           </div>
-          <button className="text-[#0f4c81] font-semibold hover:underline mt-4 sm:mt-0">
-            View All →
-          </button>
-        </div>
+        )}
 
-
-
-
-        {/* --- 💡 Health Tip Section --- */}
-  { Htips &&  (<div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10 flex flex-col sm:flex-row items-center justify-between">
-        <div className="flex-1">
-          <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
-            💡 Daily Health Tip
-          </h2>
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={currentTipIndex}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-gray-700 leading-relaxed text-lg"
-            >
-              {tips[currentTipIndex]}
-            </motion.p>
-          </AnimatePresence>
-          <p className="text-sm text-gray-500 mt-2">
-            Source: World Health Organization
-          </p>
-        </div>
-        <img
-          src="https://cdn-icons-png.flaticon.com/512/2966/2966481.png"
-          alt="Health tip"
-          className="w-28 h-28 mt-6 sm:mt-0"
-        />
-      </div>)}
-
-
-    {/* --- 📦 Last Order Section --- */}
-    { lastOrder &&  (<div className="w-full bg-white/90 backdrop-blur-sm rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-      <div>
-        <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
-          📦 Last Order
-        </h2>
-        <p className="text-gray-700 text-lg">
-          <span className="font-semibold">Medicines:</span> Paracetamol 500mg, Vitamin C
-        </p>
-        <p className="text-sm text-gray-500 mt-2">
-          Delivered on <strong>Oct 10, 2025</strong> | Order ID: #PHM10234
-        </p>
+        {/* Medicine Reminder */}
+        <MedicineReminder />
       </div>
-      <div className="mt-5 sm:mt-0 flex flex-col items-end">
-        <span className="text-sm font-medium text-green-600 bg-green-100 px-3 py-1 rounded-full">
-          ✅ Delivered
-        </span>
-        <button className="mt-3 text-[#0f4c81] font-semibold hover:underline">
-          View Invoice →
-        </button>
-      </div>
-    </div>)}
+    );
+  };
 
-    
-
-    {/* --- 💊 Active Prescriptions ---
-      { ActiveP && (<div className="w-full bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10  flex flex-col sm:flex-row justify-between items-start sm:items-center">
-        <div className="flex items-start gap-3">
-          <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
-            💊
-          </div>
-          <div>
-            <h3 className="font-bold text-[#0f4c81] text-xl">Active Prescriptions</h3>
-            <p className="text-gray-600">
-              2 ongoing — <strong>Amoxicillin</strong> and <strong>Vitamin D3</strong>
-            </p>
-            <p className="text-sm text-gray-500 mt-1">Next refill due: Oct 25, 2025</p>
-          </div>
-        </div>
-        <button className="text-[#0f4c81] font-semibold hover:underline mt-4 sm:mt-0">
-          Manage →
-        </button>
-      </div>)} */}
-
-
-          {/* --- 🧘 Wellness Goals --- */}
-        {Well &&(<div className="w-full bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10  flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <div className="flex items-start gap-3">
-            <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
-              🧘
-            </div>
-            <div>
-              <h3 className="font-bold text-[#0f4c81] text-xl">Wellness Goals</h3>
-              <p className="text-gray-600">Goal: Walk 6,000 steps daily</p>
-              <p className="text-sm text-gray-500 mt-1">Progress: 4,320 steps today</p>
-            </div>
-          </div>
-          <button className="text-[#0f4c81] font-semibold hover:underline mt-4 sm:mt-0">
-            Update Goals →
-          </button>
-        </div>)}
-
-          
-
-    {/* --- ⏰ Reminder Setup Section --- */}
-    <MedicineReminder />
-  </div>
-)}
-        {user.role === "admin" && (
-          <div className=" min-h-screen bg-blue-50 rounded-2xl opacity-90">
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
-
+  const renderAdminDashboard = () => (
+    <div className="min-h-screen bg-blue-50/50 rounded-2xl p-6">
+      <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md p-8">
           <h1 className="text-3xl font-bold text-[#0f4c81] flex items-center gap-2">
-             Admin Dashboard
+            🎯 Admin Dashboard
           </h1>
           <p className="text-gray-600 mt-2">
             System-wide user and service statistics
           </p>
         </div>
 
-        {/* Stats */}
+        {/* Stats Grid */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-
           {/* Active Doctors */}
-          <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
-            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-100 text-green-600 text-xl">
-              
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-medium">Active Doctors</h3>
-              <p className="text-3xl font-bold text-[#0f4c81]">
-                {stats.activeDoctors}
-              </p>
-            </div>
-          </div>
+          <StatCard
+            icon="✅"
+            label="Active Doctors"
+            value={adminStats.activeDoctors}
+            bgColor="bg-green-100"
+            iconColor="text-green-600"
+          />
 
           {/* Inactive Doctors */}
-          <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
-            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-100 text-red-600 text-xl">
-              
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-medium">Inactive Doctors</h3>
-              <p className="text-3xl font-bold text-[#0f4c81]">
-                {stats.inactiveDoctors}
-              </p>
-            </div>
-          </div>
+          <StatCard
+            icon="⏸️"
+            label="Inactive Doctors"
+            value={adminStats.inactiveDoctors}
+            bgColor="bg-red-100"
+            iconColor="text-red-600"
+          />
 
           {/* Active Pharmacies */}
-          <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
-            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-100 text-green-600 text-xl">
-              
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-medium">Active Pharmacies</h3>
-              <p className="text-3xl font-bold text-[#0f4c81]">
-                {stats.activePharmacies}
-              </p>
-            </div>
-          </div>
+          <StatCard
+            icon="✅"
+            label="Active Pharmacies"
+            value={adminStats.activePharmacies}
+            bgColor="bg-green-100"
+            iconColor="text-green-600"
+          />
 
           {/* Inactive Pharmacies */}
-          <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
-            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-100 text-red-600 text-xl">
-              
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-medium">Inactive Pharmacies</h3>
-              <p className="text-3xl font-bold text-[#0f4c81]">
-                {stats.inactivePharmacies}
-              </p>
-            </div>
-          </div>
+          <StatCard
+            icon="⏸️"
+            label="Inactive Pharmacies"
+            value={adminStats.inactivePharmacies}
+            bgColor="bg-red-100"
+            iconColor="text-red-600"
+          />
 
           {/* Total Users */}
           <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4 border-2 border-[#0f4c81] sm:col-span-2 lg:col-span-1">
-            <div className="w-14 h-14 flex items-center justify-center rounded-full bg-[#0f4c81]/10 text-[#0f4c81] text-xl">
-              👤
+            <div className="w-14 h-14 flex items-center justify-center rounded-full bg-[#0f4c81]/10 text-[#0f4c81] text-2xl">
+              👥
             </div>
             <div>
               <h3 className="text-gray-600 font-medium">Total Users</h3>
               <p className="text-3xl font-bold text-[#0f4c81]">
-                {stats.totalUsers}
+                {adminStats.totalUsers}
               </p>
             </div>
           </div>
-
         </div>
       </div>
     </div>
-                       )}
+  );
 
+  // ==================== RENDER ====================
+  return (
+    <div className="min-h-screen bg-blue-50">
+      {/* Hero Banner */}
+      <div className="w-full aspect-[3.5/0.8] overflow-hidden shadow-md">
+        <img
+          src={ROLE_BACKGROUNDS[user.role] || ROLE_BACKGROUNDS.normal}
+          alt={`${user.role} dashboard banner`}
+          className="w-full h-full object-cover"
+        />
+      </div>
 
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto pt-6 pb-10 px-6">
+        {user.role === "pharmacy" && renderPharmacyDashboard()}
+        {user.role === "doctor" && renderDoctorDashboard()}
+        {user.role === "normal" && renderNormalUserDashboard()}
+        {user.role === "admin" && renderAdminDashboard()}
       </div>
     </div>
   );
 }
+
+// ==================== SUB-COMPONENTS ====================
+
+interface StatCardProps {
+  icon: string;
+  label: string;
+  value: number;
+  bgColor: string;
+  iconColor: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ icon, label, value, bgColor, iconColor }) => (
+  <div className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex items-center gap-4">
+    <div className={`w-12 h-12 flex items-center justify-center rounded-full ${bgColor} ${iconColor} text-xl`}>
+      {icon}
+    </div>
+    <div>
+      <h3 className="text-gray-600 font-medium">{label}</h3>
+      <p className="text-3xl font-bold text-[#0f4c81]">{value}</p>
+    </div>
+  </div>
+);

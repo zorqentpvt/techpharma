@@ -91,16 +91,16 @@ export async function signup(payload: any) {
 // --- PROFILE APIs ---
 
 // Update Profile
-export async function updateProfile(payload: { username?: string; email?: string; password?: string }) {
+export async function updateProfile(payload: any) {
   console.log("API Payload (updateProfile):", payload);
 
   try {
-    const response = await api.put("/user/profile", payload);
+    const response = await api.put("api/profile", payload);
     console.log("API Response (updateProfile):", response.data);
 
     // Update user info in localStorage
     if (response.data.user) {
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      localStorage.setItem("userData", JSON.stringify(response.data.user));
     }
 
     return response.data;
@@ -109,6 +109,7 @@ export async function updateProfile(payload: { username?: string; email?: string
     return { success: false, message: error.response?.data?.message || error.message };
   }
 }
+
 
 // --- HELPER FUNCTIONS ---
 

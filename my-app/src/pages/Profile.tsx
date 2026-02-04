@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronDown, Lock, Power, X } from "lucide-react";
 import EditIcon from "@mui/icons-material/Edit";
+import { updateProfile } from "../api/authapir";
 
 interface Address {
   latitude?: number;
@@ -10,6 +11,38 @@ interface Address {
   state?: string;
   country?: string;
   postalCode?: string;
+}
+
+interface ContactInfo {
+  primaryPhone?: string;
+}
+
+interface DoctorInfo {
+  id?: string;
+  userId?: string;
+  specializationId?: string;
+  licenseNumber?: string;
+  experience?: number;
+  consultationFee?: number;
+  qualification?: string;
+  isActive?: boolean;
+}
+
+interface PharmacyInfo {
+  id?: string;
+  userId?: string;
+  name?: string;
+  email?: string;
+  phoneNumber?: string;
+  licenseNumber?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
+  isActive?: boolean;
 }
 
 interface ProfileData {
@@ -24,22 +57,63 @@ interface ProfileData {
   gender: string;
   roleId: string;
   fileURL?: string;
-  address?: Address;
   displayName?: string;
   isActive?: boolean;
-  
-  // Doctor fields
-  specialization?: string;
-  licenseNumber?: string;
-  qualification?: string;
-  consultation_fee?: number;
-  
-  // Pharmacy fields
-  pharmacyName?: string;
-  pharmacyAddress?: string;
-  gstNumber?: string;
-  pharmacyPhone?: string;
+  address?: Address;
+  contactInfo?: ContactInfo;
+  doctor?: DoctorInfo;
+  pharmacy?: PharmacyInfo;
+  status?: string;
+  language?: string;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
+  firsttime?: boolean;
 }
+
+// Separate InputField component OUTSIDE the main component
+const InputField = ({ 
+  label, 
+  name, 
+  value,
+  type = "text", 
+  required = false, 
+  disabled = false,
+  textarea = false,
+  onChange
+}: {
+  label: string;
+  name: string;
+  value: string;
+  type?: string;
+  required?: boolean;
+  disabled?: boolean;
+  textarea?: boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+}) => {
+  const Component = textarea ? 'textarea' : 'input';
+  
+  return (
+    <div>
+      <label className="block mb-1 font-medium text-gray-700">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <Component
+        type={!textarea ? type : undefined}
+        name={name}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        required={required}
+        rows={textarea ? 3 : undefined}
+        className={`w-full p-2 border rounded-lg focus:outline-none ${
+          disabled 
+            ? "border-gray-300 bg-gray-100 cursor-not-allowed text-gray-600" 
+            : "border-blue-400 focus:ring-2 focus:ring-blue-500"
+        }`}
+      />
+    </div>
+  );
+};
 
 export default function ProfilePage() {
   const [userData, setUserData] = useState<ProfileData>({
@@ -77,6 +151,7 @@ export default function ProfilePage() {
       const parsedUser = JSON.parse(storedUser);
       
       const populated: ProfileData = {
+        id: parsedUserData.id,
         username: parsedUser.username,
         password: parsedUser.password,
         email: parsedUserData.email || parsedUser.email,
@@ -85,20 +160,19 @@ export default function ProfilePage() {
         phoneNumber: parsedUserData.phoneNumber || "",
         dateOfBirth: parsedUserData.dateOfBirth?.split('T')[0] || "",
         gender: parsedUserData.gender || "",
-        roleId: parsedUserData.roleId || parsedUser.role || "patient",
+        roleId: parsedUserData.roleId || parsedUser.role || "normal",
         fileURL: parsedUserData.fileURL || "",
-        address: parsedUserData.address,
         displayName: parsedUserData.displayName,
         isActive: parsedUserData.isActive ?? true,
-        id: parsedUserData.id,
-        specialization: parsedUserData.specialization || "",
-        licenseNumber: parsedUserData.licenseNumber || "",
-        qualification: parsedUserData.qualification || "",
-        consultation_fee: parsedUserData.consultation_fee || 0,
-        pharmacyName: parsedUserData.pharmacyName || "",
-        pharmacyAddress: parsedUserData.pharmacyAddress || "",
-        gstNumber: parsedUserData.gstNumber || "",
-        pharmacyPhone: parsedUserData.pharmacyPhone || "",
+        address: parsedUserData.address || {},
+        contactInfo: parsedUserData.contactInfo || {},
+        status: parsedUserData.status,
+        language: parsedUserData.language,
+        isEmailVerified: parsedUserData.isEmailVerified,
+        isPhoneVerified: parsedUserData.isPhoneVerified,
+        firsttime: parsedUserData.firsttime,
+        doctor: parsedUserData.doctor,
+        pharmacy: parsedUserData.pharmacy,
       };
 
       console.log("✅ Data loaded:", populated);
@@ -123,11 +197,48 @@ export default function ProfilePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  // Use useCallback to memoize handlers
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    console.log(`📝 ${name} = ${value}`);
     setTempData((prev) => ({ ...prev, [name]: value }));
-  };
+  }, []);
+
+  const handleAddressChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    const field = name.replace('address.', '');
+    setTempData((prev) => ({
+      ...prev,
+      address: { ...prev.address, [field]: value }
+    }));
+  }, []);
+
+  const handleDoctorChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    const field = name.replace('doctor.', '');
+    const parsedValue = (field === 'consultationFee' || field === 'experience') 
+      ? parseFloat(value) || 0 
+      : value;
+    
+    setTempData((prev) => ({
+      ...prev,
+      doctor: {
+        ...prev.doctor,
+        [field]: parsedValue
+      }
+    }));
+  }, []);
+
+  const handlePharmacyChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    const field = name.replace('pharmacy.', '');
+    setTempData((prev) => ({
+      ...prev,
+      pharmacy: {
+        ...prev.pharmacy,
+        [field]: value
+      }
+    }));
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -142,7 +253,7 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("💾 Saving...", { current: userData, updated: tempData });
     
@@ -151,7 +262,9 @@ export default function ProfilePage() {
       alert("Please fill required fields!");
       return;
     }
-
+    const res = await updateProfile(tempData);
+    console.log(res);
+    if(res.success){
     const storedUserData = localStorage.getItem("userdata");
     const parsedUserData = storedUserData ? JSON.parse(storedUserData) : {};
     
@@ -165,28 +278,34 @@ export default function ProfilePage() {
       displayName: `${tempData.firstName} ${tempData.lastName}`,
       phoneNumber: tempData.phoneNumber,
       address: tempData.address,
+      contactInfo: tempData.contactInfo,
       fileURL: tempData.fileURL,
       updatedAt: new Date().toISOString(),
-      ...(isDoctor && {
-        specialization: tempData.specialization,
-        licenseNumber: tempData.licenseNumber,
-        qualification: tempData.qualification,
-        consultation_fee: tempData.consultation_fee,
+      ...(isDoctor && tempData.doctor && {
+        doctor: {
+          ...parsedUserData.doctor,
+          ...tempData.doctor,
+        }
       }),
-      ...(isPharmacy && {
-        pharmacyName: tempData.pharmacyName,
-        pharmacyAddress: tempData.pharmacyAddress,
-        gstNumber: tempData.gstNumber,
-        pharmacyPhone: tempData.pharmacyPhone,
+      ...(isPharmacy && tempData.pharmacy && {
+        pharmacy: {
+          ...parsedUserData.pharmacy,
+          ...tempData.pharmacy,
+        }
       }),
     };
     
-    localStorage.setItem("userdata", JSON.stringify(updatedUserData));
+    
+    
     console.log("✅ Saved:", updatedUserData);
     
     setUserData({ ...tempData, ...updatedUserData });
     setEditMode(false);
-    alert("Profile updated!");
+    alert("Profile updated successfully!");
+  }
+    else{
+      alert("Profile updation failed!");
+    }
   };
 
   const handleCancel = () => {
@@ -199,7 +318,7 @@ export default function ProfilePage() {
     console.log("🔐 Changing password...");
     
     if (!newPassword || !confirmPassword) {
-      alert("Enter both password fields!");
+      alert("Please enter both password fields!");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -207,7 +326,7 @@ export default function ProfilePage() {
       return;
     }
     if (newPassword.length < 6) {
-      alert("Password must be 6+ characters!");
+      alert("Password must be at least 6 characters!");
       return;
     }
 
@@ -229,20 +348,42 @@ export default function ProfilePage() {
     setShowChangePassword(false);
     setNewPassword("");
     setConfirmPassword("");
-    alert("Password changed!");
+    alert("Password changed successfully!");
   };
 
   const toggleActiveMode = () => {
-    console.log(`🔄 Toggling active: ${userData.isActive} → ${!userData.isActive}`);
+    const isDoctor = userData.roleId?.toLowerCase() === "doctor";
+    const newActiveState = !userData.isActive;
+    
+    console.log(`🔄 Toggling active: ${userData.isActive} → ${newActiveState}`);
     
     const storedUserData = localStorage.getItem("userdata");
     if (storedUserData) {
       const parsed = JSON.parse(storedUserData);
-      const updated = { ...parsed, isActive: !userData.isActive, updatedAt: new Date().toISOString() };
+      const updated = {
+        ...parsed,
+        isActive: newActiveState,
+        updatedAt: new Date().toISOString(),
+        ...(isDoctor && {
+          doctor: {
+            ...parsed.doctor,
+            isActive: newActiveState
+          }
+        })
+      };
       localStorage.setItem("userdata", JSON.stringify(updated));
       console.log("✅ Active updated:", updated.isActive);
       
-      const newData = { ...userData, isActive: !userData.isActive };
+      const newData = {
+        ...userData,
+        isActive: newActiveState,
+        ...(isDoctor && {
+          doctor: {
+            ...userData.doctor,
+            isActive: newActiveState
+          }
+        })
+      };
       setUserData(newData);
       setTempData(newData);
     }
@@ -251,45 +392,27 @@ export default function ProfilePage() {
   const isDoctor = userData.roleId?.toLowerCase() === "doctor";
   const isPharmacy = userData.roleId?.toLowerCase() === "pharmacy";
 
-  const InputField = ({ label, name, type = "text", required = false, editable = true, textarea = false }: any) => {
-    const isReadOnly = !editMode || !editable;
-    const value = name.includes('.') 
-      ? tempData.address?.[name.split('.')[1] as keyof Address] || ""
-      : (tempData[name as keyof ProfileData] as string) || "";
-    
-    const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const addressField = name.split('.')[1];
-      console.log(`📝 address.${addressField} = ${e.target.value}`);
-      setTempData((prev) => ({
-        ...prev,
-        address: { ...prev.address, [addressField]: e.target.value }
-      }));
-    };
+  // Helper function to get value from nested objects
+  const getValue = (name: string): string => {
+    if (name.includes('address.')) {
+      const field = name.replace('address.', '') as keyof Address;
+      return tempData.address?.[field]?.toString() || "";
+    } else if (name.includes('doctor.')) {
+      const field = name.replace('doctor.', '') as keyof DoctorInfo;
+      return tempData.doctor?.[field]?.toString() || "";
+    } else if (name.includes('pharmacy.')) {
+      const field = name.replace('pharmacy.', '') as keyof PharmacyInfo;
+      return tempData.pharmacy?.[field]?.toString() || "";
+    }
+    return (tempData[name as keyof ProfileData] as string) || "";
+  };
 
-    const Component = textarea ? 'textarea' : 'input';
-    
-    return (
-      <div>
-        <label className="block mb-1 font-medium text-gray-700">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-        <Component
-          type={!textarea ? type : undefined}
-          name={name}
-          value={value}
-          onChange={name.includes('.') ? handleAddressChange : handleChange}
-          readOnly={isReadOnly}
-          required={required}
-          rows={textarea ? 2 : undefined}
-          className={`w-full p-2 border rounded-lg focus:outline-none ${
-            isReadOnly 
-              ? "border-gray-300 bg-gray-100 cursor-not-allowed" 
-              : "border-blue-400 focus:ring-2 focus:ring-blue-500"
-          }`}
-          title={!editable ? `${label} cannot be changed` : ""}
-        />
-      </div>
-    );
+  // Helper to get correct onChange handler
+  const getOnChange = (name: string) => {
+    if (name.includes('address.')) return handleAddressChange;
+    if (name.includes('doctor.')) return handleDoctorChange;
+    if (name.includes('pharmacy.')) return handlePharmacyChange;
+    return handleChange;
   };
 
   return (
@@ -344,9 +467,9 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between mb-6 bg-blue-50 px-4 py-3 rounded-lg border border-blue-200">
             <span className="text-gray-700 font-medium">Active for Consulting:</span>
             <label className="inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only" checked={userData.isActive} onChange={toggleActiveMode} />
-              <div className={`w-12 h-6 rounded-full p-1 transition ${userData.isActive ? "bg-green-500" : "bg-gray-400"}`}>
-                <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition ${userData.isActive ? "translate-x-6" : ""}`} />
+              <input type="checkbox" className="sr-only" checked={userData.doctor?.isActive ?? userData.isActive} onChange={toggleActiveMode} />
+              <div className={`w-12 h-6 rounded-full p-1 transition ${(userData.doctor?.isActive ?? userData.isActive) ? "bg-green-500" : "bg-gray-400"}`}>
+                <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition ${(userData.doctor?.isActive ?? userData.isActive) ? "translate-x-6" : ""}`} />
               </div>
             </label>
           </div>
@@ -377,17 +500,103 @@ export default function ProfilePage() {
 
           {/* Basic Fields */}
           <div className="grid grid-cols-2 gap-4">
-            <InputField label="First Name" name="firstName" required editable />
-            <InputField label="Last Name" name="lastName" required editable />
+            <InputField 
+              label="First Name" 
+              name="firstName" 
+              value={getValue('firstName')}
+              onChange={getOnChange('firstName')}
+              required 
+              disabled={!editMode}
+            />
+            <InputField 
+              label="Last Name" 
+              name="lastName" 
+              value={getValue('lastName')}
+              onChange={getOnChange('lastName')}
+              required 
+              disabled={!editMode}
+            />
           </div>
           
-          <InputField label="Username" name="username" required editable={false} />
-          <InputField label="Email" name="email" type="email" required editable={false} />
-          <InputField label="Phone Number" name="phoneNumber" type="tel" required editable />
-          <InputField label="Address" name="address.address" textarea editable />
+          <InputField 
+            label="Username" 
+            name="username" 
+            value={getValue('username')}
+            onChange={getOnChange('username')}
+            required 
+            disabled={true}
+          />
+          <InputField 
+            label="Email" 
+            name="email" 
+            value={getValue('email')}
+            onChange={getOnChange('email')}
+            type="email" 
+            required 
+            disabled={true}
+          />
+          <InputField 
+            label="Phone Number" 
+            name="phoneNumber" 
+            value={getValue('phoneNumber')}
+            onChange={getOnChange('phoneNumber')}
+            type="tel" 
+            required 
+            disabled={!editMode}
+          />
+          <InputField 
+            label="Address" 
+            name="address.address" 
+            value={getValue('address.address')}
+            onChange={getOnChange('address.address')}
+            textarea 
+            disabled={!editMode}
+          />
           
           <div className="grid grid-cols-2 gap-4">
-            <InputField label="Date of Birth" name="dateOfBirth" type="date" required editable={false} />
+            <InputField 
+              label="City" 
+              name="address.city" 
+              value={getValue('address.city')}
+              onChange={getOnChange('address.city')}
+              disabled={!editMode}
+            />
+            <InputField 
+              label="State" 
+              name="address.state" 
+              value={getValue('address.state')}
+              onChange={getOnChange('address.state')}
+              disabled={!editMode}
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <InputField 
+              label="Postal Code" 
+              name="address.postalCode" 
+              value={getValue('address.postalCode')}
+              onChange={getOnChange('address.postalCode')}
+              disabled={!editMode}
+            />
+            <InputField 
+              label="Country" 
+              name="address.country" 
+              value={getValue('address.country')}
+              onChange={getOnChange('address.country')}
+              disabled={!editMode}
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <InputField 
+              label="Date of Birth" 
+              name="dateOfBirth" 
+              value={getValue('dateOfBirth')}
+              onChange={getOnChange('dateOfBirth')}
+              type="date" 
+              required 
+              disabled={true}
+            />
             <div>
               <label className="block mb-1 font-medium text-gray-700">
                 Gender <span className="text-red-500">*</span>
@@ -395,14 +604,9 @@ export default function ProfilePage() {
               <select
                 name="gender"
                 value={tempData.gender}
-                readOnly={!editMode}
-                className={`w-full p-2 border rounded-lg ${
-                  !editMode 
-                    ? "border-gray-300 bg-gray-100 cursor-not-allowed" 
-                    : "border-blue-400 focus:ring-2 focus:ring-blue-500"
-                }`}
-                title="Gender cannot be changed"
-                style={{ pointerEvents: 'none' }}
+                onChange={handleChange}
+                disabled={true}
+                className="w-full p-2 border border-gray-300 bg-gray-100 rounded-lg cursor-not-allowed text-gray-600"
               >
                 <option value="">Select</option>
                 <option value="Male">Male</option>
@@ -416,10 +620,45 @@ export default function ProfilePage() {
           {isDoctor && (
             <div className="border-t pt-4 mt-4 space-y-4">
               <h3 className="text-lg font-semibold text-blue-600">Doctor Information</h3>
-              <InputField label="Specialization" name="specialization" editable />
-              <InputField label="License Number" name="licenseNumber" editable />
-              <InputField label="Qualification" name="qualification" editable />
-              <InputField label="Consultation Fee" name="consultation_fee" type="number" editable />
+              <InputField 
+                label="Specialization ID" 
+                name="doctor.specializationId" 
+                value={getValue('doctor.specializationId')}
+                onChange={getOnChange('doctor.specializationId')}
+                disabled={!editMode}
+              />
+              <InputField 
+                label="License Number" 
+                name="doctor.licenseNumber" 
+                value={getValue('doctor.licenseNumber')}
+                onChange={getOnChange('doctor.licenseNumber')}
+                disabled={!editMode}
+              />
+              <InputField 
+                label="Qualification" 
+                name="doctor.qualification" 
+                value={getValue('doctor.qualification')}
+                onChange={getOnChange('doctor.qualification')}
+                disabled={!editMode}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <InputField 
+                  label="Experience (years)" 
+                  name="doctor.experience" 
+                  value={getValue('doctor.experience')}
+                  onChange={getOnChange('doctor.experience')}
+                  type="number" 
+                  disabled={!editMode}
+                />
+                <InputField 
+                  label="Consultation Fee" 
+                  name="doctor.consultationFee" 
+                  value={getValue('doctor.consultationFee')}
+                  onChange={getOnChange('doctor.consultationFee')}
+                  type="number" 
+                  disabled={!editMode}
+                />
+              </div>
             </div>
           )}
 
@@ -427,10 +666,76 @@ export default function ProfilePage() {
           {isPharmacy && (
             <div className="border-t pt-4 mt-4 space-y-4">
               <h3 className="text-lg font-semibold text-blue-600">Pharmacy Information</h3>
-              <InputField label="Pharmacy Name" name="pharmacyName" editable />
-              <InputField label="Pharmacy Address" name="pharmacyAddress" textarea editable />
-              <InputField label="GST Number" name="gstNumber" editable />
-              <InputField label="Pharmacy Phone" name="pharmacyPhone" type="tel" editable />
+              <InputField 
+                label="Pharmacy Name" 
+                name="pharmacy.name" 
+                value={getValue('pharmacy.name')}
+                onChange={getOnChange('pharmacy.name')}
+                disabled={!editMode}
+              />
+              <InputField 
+                label="Pharmacy Email" 
+                name="pharmacy.email" 
+                value={getValue('pharmacy.email')}
+                onChange={getOnChange('pharmacy.email')}
+                type="email" 
+                disabled={!editMode}
+              />
+              <InputField 
+                label="Pharmacy Phone" 
+                name="pharmacy.phoneNumber" 
+                value={getValue('pharmacy.phoneNumber')}
+                onChange={getOnChange('pharmacy.phoneNumber')}
+                type="tel" 
+                disabled={!editMode}
+              />
+              <InputField 
+                label="License Number" 
+                name="pharmacy.licenseNumber" 
+                value={getValue('pharmacy.licenseNumber')}
+                onChange={getOnChange('pharmacy.licenseNumber')}
+                disabled={!editMode}
+              />
+              <InputField 
+                label="Pharmacy Address" 
+                name="pharmacy.address" 
+                value={getValue('pharmacy.address')}
+                onChange={getOnChange('pharmacy.address')}
+                textarea 
+                disabled={!editMode}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <InputField 
+                  label="City" 
+                  name="pharmacy.city" 
+                  value={getValue('pharmacy.city')}
+                  onChange={getOnChange('pharmacy.city')}
+                  disabled={!editMode}
+                />
+                <InputField 
+                  label="State" 
+                  name="pharmacy.state" 
+                  value={getValue('pharmacy.state')}
+                  onChange={getOnChange('pharmacy.state')}
+                  disabled={!editMode}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <InputField 
+                  label="Postal Code" 
+                  name="pharmacy.postalCode" 
+                  value={getValue('pharmacy.postalCode')}
+                  onChange={getOnChange('pharmacy.postalCode')}
+                  disabled={!editMode}
+                />
+                <InputField 
+                  label="Country" 
+                  name="pharmacy.country" 
+                  value={getValue('pharmacy.country')}
+                  onChange={getOnChange('pharmacy.country')}
+                  disabled={!editMode}
+                />
+              </div>
             </div>
           )}
 

@@ -134,7 +134,7 @@ export default function Home() {
   const [time, setTime] = useState("");
   const [repeatDays, setRepeatDays] = useState<string[]>([]);
 
-  const [addtab,setaddtab] = useState(false)
+  const [addtab,setaddtab] = useState(true)
   const [lastOrder,setlastOrder] = useState(false)
   const [ActiveP,setActiveP] = useState(false)
   const [Htips,setHtips] = useState(true)
@@ -328,7 +328,7 @@ export default function Home() {
 
 
           {/* mui */}
-          <Box sx={{ '& > :not(style)': { m: 1 } }}>
+          {/* <Box sx={{ '& > :not(style)': { m: 1 } }}>
       <Fab color="primary"  aria-label="add" onClick={()=>setaddtab((prev) => !prev)}>
         <AddIcon 
         sx={{cursor:"pointer", }}
@@ -336,9 +336,9 @@ export default function Home() {
         />
       </Fab>
 
-    </Box>
+    </Box> */}
 
-    {addtab && (
+    {/* {addtab && (
         <div className=" mt-1 " >
           
           <FormControlLabel className=" text-[#0f4c81] "
@@ -361,7 +361,7 @@ export default function Home() {
             label="Wellness Goals"
           />
         </div>
-      )}
+      )} */}
 
           {/* --- 🔔 Notifications --- */}
         <div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8  flex flex-col sm:flex-row justify-between items-start sm:items-center">
@@ -384,7 +384,7 @@ export default function Home() {
 
 
         {/* --- 💡 Health Tip Section --- */}
-  { Htips &&  (<div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-8 flex flex-col sm:flex-row items-center justify-between">
+  { Htips &&  (<div className="w-full bg-gradient-to-r from-blue-50 to-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10 flex flex-col sm:flex-row items-center justify-between">
         <div className="flex-1">
           <h2 className="text-2xl font-bold text-[#0f4c81] mb-3 flex items-center gap-2">
             💡 Daily Health Tip
@@ -438,7 +438,7 @@ export default function Home() {
 
     
 
-    {/* --- 💊 Active Prescriptions --- */}
+    {/* --- 💊 Active Prescriptions ---
       { ActiveP && (<div className="w-full bg-white rounded-3xl shadow-md hover:shadow-xl transition-all p-10  flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div className="flex items-start gap-3">
           <div className="bg-[#0f4c81]/10 text-[#0f4c81] w-10 h-10 flex items-center justify-center rounded-full text-lg">
@@ -455,7 +455,7 @@ export default function Home() {
         <button className="text-[#0f4c81] font-semibold hover:underline mt-4 sm:mt-0">
           Manage →
         </button>
-      </div>)}
+      </div>)} */}
 
 
           {/* --- 🧘 Wellness Goals --- */}

@@ -56,7 +56,7 @@ interface ProfileData {
   dateOfBirth: string;
   gender: string;
   roleId: string;
-  fileURL?: string;
+  Avatar?: string;
   displayName?: string;
   isActive?: boolean;
   address?: Address;
@@ -161,7 +161,7 @@ export default function ProfilePage() {
         dateOfBirth: parsedUserData.dateOfBirth?.split('T')[0] || "",
         gender: parsedUserData.gender || "",
         roleId: parsedUserData.roleId || parsedUser.role || "normal",
-        fileURL: parsedUserData.fileURL || "",
+        Avatar: parsedUserData.Avatar || "",
         displayName: parsedUserData.displayName,
         isActive: parsedUserData.isActive ?? true,
         address: parsedUserData.address || {},
@@ -248,7 +248,7 @@ export default function ProfilePage() {
     const reader = new FileReader();
     reader.onload = () => {
       console.log("✅ Image loaded");
-      setTempData((prev) => ({ ...prev, fileURL: reader.result as string }));
+      setTempData((prev) => ({ ...prev, Avatar: reader.result as string }));
     };
     reader.readAsDataURL(file);
   };
@@ -279,7 +279,7 @@ export default function ProfilePage() {
       phoneNumber: tempData.phoneNumber,
       address: tempData.address,
       contactInfo: tempData.contactInfo,
-      fileURL: tempData.fileURL,
+      Avatar: tempData.Avatar,
       updatedAt: new Date().toISOString(),
       ...(isDoctor && tempData.doctor && {
         doctor: {
@@ -480,7 +480,7 @@ export default function ProfilePage() {
           <div className="relative flex justify-center">
             <div className="relative group">
               <img
-                src={tempData.fileURL || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
+                src={tempData.Avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
                 alt="Profile"
                 className="w-24 h-24 rounded-full object-cover border-2 border-blue-500 shadow-md"
               />

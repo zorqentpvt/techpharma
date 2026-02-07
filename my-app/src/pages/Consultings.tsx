@@ -98,6 +98,7 @@ const handleJoinCall = (consultation) => {
 
 
   const handleViewOpChart = (consultation?: Consultation, isUpcoming = false) => {
+    console.log(consultation);
     if (isUpcoming) {
       setOpChartData({});
     } else if (consultation) {
@@ -108,6 +109,7 @@ const handleJoinCall = (consultation) => {
         diagnosis: consultation.opChart.diagnosis,
         prescription: consultation.opChart.prescription,
         notes: consultation.opChart.doctorNotes,
+        doctor:consultation.doctorName,
       });
     }
     setShowOpChart(true);

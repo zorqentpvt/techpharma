@@ -111,7 +111,37 @@ export async function updateProfile(payload: any) {
 }
 
 
-// --- HELPER FUNCTIONS ---
+export async function updateProfilepic(file: File) {
+  console.log("Avatar file:", file);
+
+  try {
+    const formData = new FormData();
+    formData.append("avatar", file); // key must be "avatar"
+
+    const response = await api.patch(
+      "api/profile/avatar",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    console.log("API Response (updateProfilepic):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.log(
+      "API Response (updateProfilepic) Error:",
+      error.response?.data || error.message
+    );
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message,
+    };
+  }
+}
+
 
 
 export interface Role {

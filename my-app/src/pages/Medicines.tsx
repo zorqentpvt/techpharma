@@ -77,6 +77,7 @@ export default function Medicines() {
   };
 
   const handleBuy = (med: Medicine) => {
+    console.log(med);
     localStorage.setItem("transaction", JSON.stringify(med));
     navigate("/dashboard/pay"); // Navigate to pay page
   };

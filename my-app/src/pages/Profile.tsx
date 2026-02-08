@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronDown, Lock, Power, X } from "lucide-react";
 import EditIcon from "@mui/icons-material/Edit";
-import { updateProfile } from "../api/authapir";
+import { updateProfile, updateProfilepic } from "../api/authapir";
 
 interface Address {
   latitude?: number;
@@ -115,6 +115,23 @@ const InputField = ({
   );
 };
 
+// ✅ Use your backend base URL here
+const BASE_URL = "http://localhost:8080";
+
+// ✅ Utility to correctly resolve image URLs
+const resolveImageUrl = (img: string | undefined | null): string => {
+  if (!img) return "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+  
+  // If it's already a data URL (blob/preview), return as-is
+  if (img.startsWith("data:")) return img;
+  
+  // If it's already a full HTTP URL, return as-is
+  if (img.startsWith("http://") || img.startsWith("https://")) return img;
+  
+  // Otherwise, prepend the backend URL
+  return `${BASE_URL}/${img.replace(/^\/?/, "")}`;
+};
+
 export default function ProfilePage() {
   const [userData, setUserData] = useState<ProfileData>({
     username: "",
@@ -135,6 +152,8 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const [image, setImage] = useState<File | null>(null);
+  const [previewAvatar, setPreviewAvatar] = useState<string>("");
 
   const populateUserData = () => {
     console.log("🔄 Populating user data...");
@@ -161,7 +180,7 @@ export default function ProfilePage() {
         dateOfBirth: parsedUserData.dateOfBirth?.split('T')[0] || "",
         gender: parsedUserData.gender || "",
         roleId: parsedUserData.roleId || parsedUser.role || "normal",
-        Avatar: parsedUserData.Avatar || "",
+        Avatar: parsedUserData.avatar || parsedUserData.Avatar || "",
         displayName: parsedUserData.displayName,
         isActive: parsedUserData.isActive ?? true,
         address: parsedUserData.address || {},
@@ -178,6 +197,8 @@ export default function ProfilePage() {
       console.log("✅ Data loaded:", populated);
       setUserData(populated);
       setTempData(populated);
+      // Set preview avatar using the resolved URL
+      setPreviewAvatar(populated.Avatar || "");
     } catch (error) {
       console.error("❌ Error parsing data:", error);
     }
@@ -244,11 +265,15 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    console.log("📷 Profile picture:", file.name);
+    setImage(file);
+    console.log("📷 Profile picture selected:", file.name);
+    
+    // Create preview using FileReader (this creates a data URL)
     const reader = new FileReader();
     reader.onload = () => {
-      console.log("✅ Image loaded");
-      setTempData((prev) => ({ ...prev, Avatar: reader.result as string }));
+      console.log("✅ Image preview loaded");
+      // Set the data URL as preview (will be displayed directly)
+      setPreviewAvatar(reader.result as string);
     };
     reader.readAsDataURL(file);
   };
@@ -262,55 +287,100 @@ export default function ProfilePage() {
       alert("Please fill required fields!");
       return;
     }
-    const res = await updateProfile(tempData);
-    console.log(res);
-    if(res.success){
-    const storedUserData = localStorage.getItem("userdata");
-    const parsedUserData = storedUserData ? JSON.parse(storedUserData) : {};
-    
-    const isDoctor = userData.roleId?.toLowerCase() === "doctor";
-    const isPharmacy = userData.roleId?.toLowerCase() === "pharmacy";
-    
-    const updatedUserData = {
-      ...parsedUserData,
-      firstName: tempData.firstName,
-      lastName: tempData.lastName,
-      displayName: `${tempData.firstName} ${tempData.lastName}`,
-      phoneNumber: tempData.phoneNumber,
-      address: tempData.address,
-      contactInfo: tempData.contactInfo,
-      Avatar: tempData.Avatar,
-      updatedAt: new Date().toISOString(),
-      ...(isDoctor && tempData.doctor && {
-        doctor: {
-          ...parsedUserData.doctor,
-          ...tempData.doctor,
+
+    try {
+      let newAvatarUrl = userData.Avatar;
+
+      // Step 1: Upload avatar separately if changed
+      if (image) {
+        console.log("📤 Uploading avatar...");
+        const picres = await updateProfilepic(image);
+        if (picres.success && picres.data) {
+          newAvatarUrl = picres.data;
+          console.log("✅ Avatar uploaded:", newAvatarUrl);
+        } else {
+          console.error("❌ Avatar upload failed");
+          alert("Failed to upload profile picture!");
+          return;
         }
-      }),
-      ...(isPharmacy && tempData.pharmacy && {
-        pharmacy: {
-          ...parsedUserData.pharmacy,
-          ...tempData.pharmacy,
-        }
-      }),
-    };
-    
-    
-    
-    console.log("✅ Saved:", updatedUserData);
-    
-    setUserData({ ...tempData, ...updatedUserData });
-    setEditMode(false);
-    alert("Profile updated successfully!");
-  }
-    else{
-      alert("Profile updation failed!");
+      }
+
+      // Step 2: Prepare profile data WITHOUT avatar
+      const profileDataToUpdate = {
+        ...tempData,
+        // Explicitly exclude Avatar from the update payload
+        Avatar: undefined,
+      };
+
+      // Remove Avatar key completely
+      delete profileDataToUpdate.Avatar;
+
+      console.log("💾 Updating profile data (without avatar)...", profileDataToUpdate);
+
+      // Step 3: Update profile data
+      const res = await updateProfile(profileDataToUpdate);
+      console.log("📥 Update response:", res);
+
+      if (res.success) {
+        // Step 4: Update localStorage
+        const storedUserData = localStorage.getItem("userdata");
+        const parsedUserData = storedUserData ? JSON.parse(storedUserData) : {};
+        
+        const isDoctor = userData.roleId?.toLowerCase() === "doctor";
+        const isPharmacy = userData.roleId?.toLowerCase() === "pharmacy";
+        
+        const updatedUserData = {
+          ...parsedUserData,
+          firstName: tempData.firstName,
+          lastName: tempData.lastName,
+          displayName: `${tempData.firstName} ${tempData.lastName}`,
+          phoneNumber: tempData.phoneNumber,
+          address: tempData.address,
+          contactInfo: tempData.contactInfo,
+          avatar: newAvatarUrl, // Use lowercase 'avatar' to match backend
+          Avatar: newAvatarUrl, // Keep both for compatibility
+          updatedAt: new Date().toISOString(),
+          ...(isDoctor && tempData.doctor && {
+            doctor: {
+              ...parsedUserData.doctor,
+              ...tempData.doctor,
+            }
+          }),
+          ...(isPharmacy && tempData.pharmacy && {
+            pharmacy: {
+              ...parsedUserData.pharmacy,
+              ...tempData.pharmacy,
+            }
+          }),
+        };
+        
+        localStorage.setItem("userdata", JSON.stringify(updatedUserData));
+        console.log("✅ Profile saved:", updatedUserData);
+        
+        // Update state
+        const newUserData = { ...tempData, Avatar: newAvatarUrl };
+        setUserData(newUserData);
+        setTempData(newUserData);
+        // Set preview to the server URL (not data URL anymore)
+        setPreviewAvatar(newAvatarUrl || "");
+        setImage(null); // Clear image file
+        setEditMode(false);
+        
+        alert("Profile updated successfully!");
+      } else {
+        alert("Profile update failed!");
+      }
+    } catch (error) {
+      console.error("❌ Update error:", error);
+      alert("An error occurred while updating profile!");
     }
   };
 
   const handleCancel = () => {
     console.log("❌ Cancelled");
     setTempData(userData);
+    setPreviewAvatar(userData.Avatar || "");
+    setImage(null);
     setEditMode(false);
   };
 
@@ -480,7 +550,7 @@ export default function ProfilePage() {
           <div className="relative flex justify-center">
             <div className="relative group">
               <img
-                src={tempData.Avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
+                src={resolveImageUrl(previewAvatar)}
                 alt="Profile"
                 className="w-24 h-24 rounded-full object-cover border-2 border-blue-500 shadow-md"
               />

@@ -2,8 +2,13 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -59,12 +64,53 @@ func (h *PaymentHandler) CreateOrder(c *gin.Context) {
 
 	// Parse request
 	var req types.CreateOrderRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Validation Error",
 			Message: err.Error(),
 		})
 		return
+	}
+
+	// Handle prescription file upload
+	file, header, err := c.Request.FormFile("prescription")
+	if err == nil {
+		defer file.Close()
+
+		// Validate file extension
+		ext := strings.ToLower(filepath.Ext(header.Filename))
+		if ext != ".pdf" && ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+			c.JSON(http.StatusBadRequest, types.ErrorResponse{
+				Error:   "Invalid request",
+				Message: "Prescription must be a PDF, JPG, JPEG, or PNG file",
+			})
+			return
+		}
+
+		// Create directory
+		uploadDir := "uploads/prescriptions"
+		if err := os.MkdirAll(uploadDir, 0755); err != nil {
+			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+				Error:   "Internal server error",
+				Message: "Failed to create upload directory",
+			})
+			return
+		}
+
+		// Generate unique filename
+		filename := fmt.Sprintf("%s_%d%s", uuid.New().String(), time.Now().Unix(), ext)
+		filePath := filepath.Join(uploadDir, filename)
+
+		// Save file
+		if err := c.SaveUploadedFile(header, filePath); err != nil {
+			c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+				Error:   "File upload failed",
+				Message: "Could not save prescription file",
+			})
+			return
+		}
+
+		req.PrescriptionURL = filepath.ToSlash(filePath)
 	}
 
 	// Set default currency if not provided

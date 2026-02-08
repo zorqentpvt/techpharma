@@ -17,6 +17,7 @@ type Order struct {
 	TotalAmount     float64     `json:"totalAmount" gorm:"type:decimal(10,2);not null"`
 	Status          string      `json:"status" gorm:"default:'pending'"` // pending, confirmed, processing, shipped, delivered, cancelled
 	DeliveryAddress string      `json:"deliveryAddress"`
+	PrescriptionURL string      `json:"prescriptionURL" gorm:"type:text"`
 	OrderItems      []OrderItem `json:"orderItems" gorm:"foreignKey:OrderID"`
 }
 

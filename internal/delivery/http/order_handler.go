@@ -509,14 +509,15 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 	}
 
 	type OrderResponse struct {
-		ID            string             `json:"id"`
-		CustomerName  string             `json:"customerName"`
-		CustomerPhone string             `json:"customerPhone"`
-		Medicines     []MedicineResponse `json:"medicines"`
-		TotalAmount   float64            `json:"totalAmount"`
-		Status        string             `json:"status"`
-		OrderDate     time.Time          `json:"orderDate"`
-		Pharmacy      string             `json:"pharmacy"`
+		ID              string             `json:"id"`
+		CustomerName    string             `json:"customerName"`
+		CustomerPhone   string             `json:"customerPhone"`
+		PrescriptionURL string             `json:"prescriptionURL"`
+		Medicines       []MedicineResponse `json:"medicines"`
+		TotalAmount     float64            `json:"totalAmount"`
+		Status          string             `json:"status"`
+		OrderDate       time.Time          `json:"orderDate"`
+		Pharmacy        string             `json:"pharmacy"`
 	}
 
 	orderResponses := []OrderResponse{}
@@ -530,14 +531,15 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 		}
 
 		orderResponses = append(orderResponses, OrderResponse{
-			ID:            order.ID.String(),
-			CustomerName:  order.User.FirstName + " " + order.User.LastName,
-			CustomerPhone: order.User.PhoneNumber,
-			Medicines:     medicines,
-			TotalAmount:   order.TotalAmount,
-			Status:        order.Status,
-			OrderDate:     order.CreatedAt,
-			Pharmacy:      pharmacy.Name,
+			ID:              order.ID.String(),
+			CustomerName:    order.User.FirstName + " " + order.User.LastName,
+			CustomerPhone:   order.User.PhoneNumber,
+			PrescriptionURL: order.Payment.PrescriptionURL,
+			Medicines:       medicines,
+			TotalAmount:     order.TotalAmount,
+			Status:          order.Status,
+			OrderDate:       order.CreatedAt,
+			Pharmacy:        pharmacy.Name,
 		})
 	}
 

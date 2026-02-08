@@ -62,7 +62,6 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 		if req.Quantity == nil || *req.Quantity <= 0 {
 			return nil, errors.New("quantity is required and must be greater than 0 when cartId is not provided")
 		}
-
 		// You can fetch medicine details from the database here using req.MedicineID
 		// and perform any necessary stock validation or price calculation.
 	}
@@ -125,6 +124,7 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 		Description:     req.Description,
 		Notes:           notesJSON,
 		DeliveryAddress: req.DeliveryAddress,
+		PrescriptionURL: req.PrescriptionURL,
 	}
 
 	if err := u.paymentRepo.Create(ctx, payment); err != nil {
@@ -219,6 +219,7 @@ func (u *PaymentUseCase) VerifyPayment(ctx context.Context, req types.VerifyPaym
 			UserID:          payment.UserID,
 			PaymentID:       payment.ID,
 			DeliveryAddress: payment.DeliveryAddress,
+			PrescriptionURL: payment.PrescriptionURL,
 			Status:          "confirmed",
 			OrderNumber:     payment.OrderID,
 		}

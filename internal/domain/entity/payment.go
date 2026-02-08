@@ -42,6 +42,7 @@ type Payment struct {
 
 	// Delivery address (if needed)
 	DeliveryAddress string `json:"deliveryAddress"`
+	PrescriptionURL string `json:"prescriptionURL"`
 }
 
 func (p *Payment) BeforeCreate(tx *gorm.DB) error {

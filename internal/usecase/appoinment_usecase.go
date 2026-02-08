@@ -51,7 +51,7 @@ func (u *appoinmentUseCase) BookAppointment(ctx context.Context, req *types.Appo
 	if err != nil {
 		return nil, errors.NewDomainError("DOCTOR_NOT_FOUND", "Doctor not found", errors.ErrDoctorNotFound)
 	}
-	if !doctor.IsActive {
+	if doctor.IsActive == nil || !*doctor.IsActive {
 		return nil, errors.NewDomainError("DOCTOR_INACTIVE", "Doctor is not accepting appointments", errors.ErrForbidden)
 	}
 
@@ -372,7 +372,7 @@ func (u *appoinmentUseCase) ScheduleAppointment(ctx context.Context, req *types.
 	if err != nil {
 		return errors.NewDomainError("DOCTOR_NOT_FOUND", "Doctor not found", errors.ErrDoctorNotFound)
 	}
-	if !doctor.IsActive {
+	if doctor.IsActive == nil || !*doctor.IsActive {
 		return errors.NewDomainError("DOCTOR_INACTIVE", "Doctor is not accepting appointments", errors.ErrForbidden)
 	}
 

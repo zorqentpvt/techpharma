@@ -335,16 +335,30 @@ type UpdateProfileRequest struct {
 	ContactInfo     *entity.ContactInfo `json:"contactInfo,omitempty"`
 	RoleID          *string             `json:"roleId,omitempty"`
 
-	// Doctor-specific fields
-	SpecializationID *string `json:"specializationId,omitempty"`
-	LicenseNumber    *string `json:"licenseNumber,omitempty"`
-	Qualification    *string `json:"qualification,omitempty"`
-
 	// Pharmacy-specific fields
-	PharmacyName    *string `json:"pharmacyName,omitempty"`
-	PharmacyAddress *string `json:"pharmacyAddress,omitempty"`
-	GSTNumber       *string `json:"gstNumber,omitempty"`
-	PharmacyPhone   *string `json:"pharmacyPhone,omitempty"`
+	Pharmacy *Pharmacy `json:"pharmacy,omitempty"`
+	Doctor   *Doctor   `json:"doctor,omitempty"`
+}
+type Pharmacy struct {
+	PharmacyName    *string  `json:"pharmacyName,omitempty"`
+	PharmacyAddress *string  `json:"pharmacyAddress,omitempty"`
+	Latitude        *float64 `json:"latitude,omitempty"`
+	Longitude       *float64 `json:"longitude,omitempty"`
+	City            *string  `json:"city,omitempty"`
+	Country         *string  `json:"country,omitempty"`
+	PostalCode      *string  `json:"postalCode,omitempty"`
+	State           *string  `json:"state,omitempty"`
+	LicenseNumber   *string  `json:"licenseNumber,omitempty"`
+	GSTNumber       *string  `json:"gstNumber,omitempty"`
+	PharmacyPhone   *string  `json:"pharmacyPhone,omitempty"`
+}
+type Doctor struct {
+	IsActive         *bool    `json:"isActive,omitempty"`
+	SpecializationID *string  `json:"specializationId,omitempty"`
+	LicenseNumber    *string  `json:"licenseNumber,omitempty"`
+	Qualification    *string  `json:"qualification,omitempty"`
+	Experience       *int     `json:"experience,omitempty"`
+	ConsultationFee  *float64 `json:"consultationFee,omitempty"`
 }
 type MedicineRequest struct {
 	SearchQuery string  `json:"searchQuery"`
@@ -410,14 +424,15 @@ type MedicineFilters struct {
 	SortOrder            string
 }
 type CreateOrderRequest struct {
-	Amount          float64                `json:"amount" binding:"required,gt=0"`
-	Currency        string                 `json:"currency" binding:"required"`
-	MedicineID      *uuid.UUID             `json:"medicineId" binding:"omitempty"`
-	Quantity        *int64                 `json:"quantity" binding:"omitempty,gt=0"`
-	Description     string                 `json:"description"`
-	CartID          *string                `json:"cartId"`
-	DeliveryAddress string                 `json:"deliveryAddress"`
-	Notes           map[string]interface{} `json:"notes"`
+	Amount          float64                `form:"amount" json:"amount" binding:"required,gt=0"`
+	Currency        string                 `form:"currency" json:"currency" binding:"required"`
+	MedicineID      *uuid.UUID             `form:"medicineId" json:"medicineId" binding:"omitempty"`
+	Quantity        *int64                 `form:"quantity" json:"quantity" binding:"omitempty,gt=0"`
+	Description     string                 `form:"description" json:"description"`
+	CartID          *string                `form:"cartId" json:"cartId"`
+	DeliveryAddress string                 `form:"deliveryAddress" json:"deliveryAddress"`
+	PrescriptionURL string                 `form:"prescriptionURL" json:"prescriptionURL"`
+	Notes           map[string]interface{} `form:"notes" json:"notes"`
 }
 
 type VerifyPaymentRequest struct {

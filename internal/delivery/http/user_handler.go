@@ -925,7 +925,7 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "Invalid request",
-			Message: "Request body validation failed",
+			Message: fmt.Sprintf("Request body validation failed: %v", err), // Add actual error
 		})
 		return
 	}
@@ -954,7 +954,15 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 	}
 
 	if req.DateOfBirth != nil {
-		userUpdate.DateOfBirth = req.DateOfBirth
+		parsedDate, err := time.Parse("2006-01-02", *req.DateOfBirth)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, types.ErrorResponse{
+				Error:   "Invalid date format",
+				Message: "dateOfBirth must be in YYYY-MM-DD format",
+			})
+			return
+		}
+		userUpdate.DateOfBirth = &parsedDate
 	}
 	if req.Gender != nil {
 		userUpdate.Gender = req.Gender
@@ -964,6 +972,9 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 	}
 	if req.ContactInfo != nil {
 		userUpdate.ContactInfo = *req.ContactInfo
+	}
+	if req.PhoneNumber != nil {
+		userUpdate.PhoneNumber = *req.PhoneNumber
 	}
 
 	if _, err := h.userUseCase.UpdateUserProfile(ctx, userID, userUpdate); err != nil {

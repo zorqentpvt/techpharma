@@ -317,15 +317,23 @@ type UpdateAvatarRequest struct {
 }
 
 type UpdateProfileRequest struct {
-	FirstName   *string             `json:"firstName,omitempty"`
-	LastName    *string             `json:"lastName,omitempty"`
-	PhoneNumber *string             `json:"phoneNumber,omitempty"`
-	Language    string              `json:"language,omitempty"`
-	Avatar      *string             `json:"avatar,omitempty"`
-	DateOfBirth *time.Time          `json:"dateOfBirth,omitempty"`
-	Gender      *string             `json:"gender,omitempty"`
-	Address     *entity.GeoLocation `json:"address,omitempty"`
-	ContactInfo *entity.ContactInfo `json:"contactInfo,omitempty"`
+	FirstName       *string             `json:"firstName,omitempty"`
+	LastName        *string             `json:"lastName,omitempty"`
+	Email           *string             `json:"email,omitempty"`
+	UserName        *string             `json:"username,omitempty"`
+	Status          *string             `json:"status,omitempty"`
+	IsActive        *bool               `json:"isActive,omitempty"`
+	IsEmailVerified *bool               `json:"isEmailVerified,omitempty"`
+	IsPhoneVerified *bool               `json:"isPhoneVerified,omitempty"`
+	DisplayName     *string             `json:"displayName,omitempty"`
+	PhoneNumber     *string             `json:"phoneNumber,omitempty"`
+	Language        string              `json:"language,omitempty"`
+	Avatar          *string             `json:"avatar,omitempty"`
+	DateOfBirth     *string             `json:"dateOfBirth,omitempty"`
+	Gender          *string             `json:"gender,omitempty"`
+	Address         *entity.GeoLocation `json:"address,omitempty"`
+	ContactInfo     *entity.ContactInfo `json:"contactInfo,omitempty"`
+	RoleID          *string             `json:"roleId,omitempty"`
 
 	// Doctor-specific fields
 	SpecializationID *string `json:"specializationId,omitempty"`

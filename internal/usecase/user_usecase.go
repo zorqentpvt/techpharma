@@ -441,6 +441,14 @@ func (u *userUseCase) UpdateUserProfile(ctx context.Context, userID uuid.UUID, u
 			profileUpdated = true
 		}
 	}
+	if user.FirstName != "" && user.FirstName != existingUser.FirstName {
+		existingUser.FirstName = user.FirstName
+		profileUpdated = true
+	}
+	if user.LastName != "" && user.LastName != existingUser.LastName {
+		existingUser.LastName = user.LastName
+		profileUpdated = true
+	}
 
 	// Update date of birth if provided
 	if user.DateOfBirth != nil {
@@ -460,6 +468,12 @@ func (u *userUseCase) UpdateUserProfile(ctx context.Context, userID uuid.UUID, u
 		}
 	}
 
+	if user.PhoneNumber != "" {
+		if existingUser.PhoneNumber == "" || user.PhoneNumber != existingUser.PhoneNumber {
+			existingUser.PhoneNumber = user.PhoneNumber
+			profileUpdated = true
+		}
+	}
 	// Update address information if provided
 	if user.Address.Address != "" {
 		if existingUser.Address.Address == "" {

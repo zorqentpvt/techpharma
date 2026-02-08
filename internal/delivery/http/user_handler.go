@@ -309,6 +309,7 @@ func (h *UserHandlerClean) validateRoleSpecificFields(req *types.CreateUserReque
 // createDoctor creates a doctor profile linked to the user
 func (h *UserHandlerClean) createDoctor(ctx context.Context, userID uuid.UUID, req *types.CreateUserRequest) error {
 	// Parse specialization UUID
+	isActive := true
 
 	doctor := &entity.Doctor{
 		UserID:           userID,
@@ -316,7 +317,7 @@ func (h *UserHandlerClean) createDoctor(ctx context.Context, userID uuid.UUID, r
 		LicenseNumber:    req.LicenseNumber,
 		Experience:       0, // Default, can be added to form
 		ConsultationFee:  0, // Default, can be added to form
-		IsActive:         true,
+		IsActive:         &isActive,
 	}
 
 	_, err := h.userUseCase.CreateDoctor(ctx, doctor)
@@ -985,25 +986,40 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 		})
 		return
 	}
-
 	// --- Handle Role-Specific Updates ---
 	roleName := strings.ToLower(strings.TrimSpace(currentUser.RoleID))
 	switch roleName {
 	case "doctor":
+		if req.Doctor == nil {
+			break
+		}
 		doctorUpdate := &entity.Doctor{UserID: userID}
 		updateNeeded := false
-		if req.SpecializationID != nil {
-			doctorUpdate.SpecializationID = *req.SpecializationID
+		if req.Doctor.SpecializationID != nil {
+			doctorUpdate.SpecializationID = *req.Doctor.SpecializationID
 			updateNeeded = true
 		}
-		if req.LicenseNumber != nil {
-			doctorUpdate.LicenseNumber = *req.LicenseNumber
+		if req.Doctor.LicenseNumber != nil {
+			doctorUpdate.LicenseNumber = *req.Doctor.LicenseNumber
 			updateNeeded = true
 		}
-		if req.Qualification != nil {
-			doctorUpdate.Qualification = *req.Qualification
+		if req.Doctor.Qualification != nil {
+			doctorUpdate.Qualification = *req.Doctor.Qualification
 			updateNeeded = true
 		}
+		if req.Doctor.ConsultationFee != nil {
+			doctorUpdate.ConsultationFee = *req.Doctor.ConsultationFee
+			updateNeeded = true
+		}
+		if req.Doctor.Experience != nil {
+			doctorUpdate.Experience = *req.Doctor.Experience
+			updateNeeded = true
+		}
+		if req.Doctor.IsActive != nil {
+			doctorUpdate.IsActive = req.Doctor.IsActive
+			updateNeeded = true
+		}
+
 		if updateNeeded {
 			// Assumes use case has UpdateDoctor method
 			if _, err := h.userUseCase.UpdateDoctor(ctx, doctorUpdate); err != nil {
@@ -1012,22 +1028,42 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 			}
 		}
 	case "pharmacy":
+		if req.Pharmacy == nil {
+			break
+		}
 		pharmacyUpdate := &entity.Pharmacy{UserID: userID}
 		updateNeeded := false
-		if req.PharmacyName != nil {
-			pharmacyUpdate.Name = *req.PharmacyName
+		if req.Pharmacy.PharmacyName != nil {
+			pharmacyUpdate.Name = *req.Pharmacy.PharmacyName
 			updateNeeded = true
 		}
-		if req.PharmacyAddress != nil {
-			pharmacyUpdate.Address = *req.PharmacyAddress
+		if req.Pharmacy.PharmacyAddress != nil {
+			pharmacyUpdate.Address = *req.Pharmacy.PharmacyAddress
 			updateNeeded = true
 		}
-		if req.LicenseNumber != nil { // Assuming same field for pharmacy license
-			pharmacyUpdate.LicenseNumber = *req.LicenseNumber
+		if req.Pharmacy.City != nil {
+			pharmacyUpdate.City = *req.Pharmacy.City
 			updateNeeded = true
 		}
-		if req.PharmacyPhone != nil {
-			pharmacyUpdate.PhoneNumber = *req.PharmacyPhone
+		if req.Pharmacy.Country != nil {
+			pharmacyUpdate.Country = *req.Pharmacy.Country
+			updateNeeded = true
+		}
+		if req.Pharmacy.PostalCode != nil {
+			pharmacyUpdate.PostalCode = *req.Pharmacy.PostalCode
+			updateNeeded = true
+		}
+		if req.Pharmacy.State != nil {
+			pharmacyUpdate.State = *req.Pharmacy.State
+			updateNeeded = true
+		}
+		if req.Pharmacy.LicenseNumber != nil {
+			pharmacyUpdate.LicenseNumber = *req.Pharmacy.LicenseNumber
+			updateNeeded = true
+		}
+
+		if req.Pharmacy.PharmacyPhone != nil {
+			pharmacyUpdate.PhoneNumber = *req.Pharmacy.PharmacyPhone
 			updateNeeded = true
 		}
 		if updateNeeded {
@@ -1038,7 +1074,6 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 			}
 		}
 	}
-
 	// --- Fetch Final Profile and Respond ---
 	finalUpdatedUser, err := h.userUseCase.GetUserByID(ctx, userID)
 	if err != nil {

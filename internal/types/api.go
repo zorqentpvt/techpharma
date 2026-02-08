@@ -335,16 +335,30 @@ type UpdateProfileRequest struct {
 	ContactInfo     *entity.ContactInfo `json:"contactInfo,omitempty"`
 	RoleID          *string             `json:"roleId,omitempty"`
 
-	// Doctor-specific fields
-	SpecializationID *string `json:"specializationId,omitempty"`
-	LicenseNumber    *string `json:"licenseNumber,omitempty"`
-	Qualification    *string `json:"qualification,omitempty"`
-
 	// Pharmacy-specific fields
-	PharmacyName    *string `json:"pharmacyName,omitempty"`
-	PharmacyAddress *string `json:"pharmacyAddress,omitempty"`
-	GSTNumber       *string `json:"gstNumber,omitempty"`
-	PharmacyPhone   *string `json:"pharmacyPhone,omitempty"`
+	Pharmacy *Pharmacy `json:"pharmacy,omitempty"`
+	Doctor   *Doctor   `json:"doctor,omitempty"`
+}
+type Pharmacy struct {
+	PharmacyName    *string  `json:"pharmacyName,omitempty"`
+	PharmacyAddress *string  `json:"pharmacyAddress,omitempty"`
+	Latitude        *float64 `json:"latitude,omitempty"`
+	Longitude       *float64 `json:"longitude,omitempty"`
+	City            *string  `json:"city,omitempty"`
+	Country         *string  `json:"country,omitempty"`
+	PostalCode      *string  `json:"postalCode,omitempty"`
+	State           *string  `json:"state,omitempty"`
+	LicenseNumber   *string  `json:"licenseNumber,omitempty"`
+	GSTNumber       *string  `json:"gstNumber,omitempty"`
+	PharmacyPhone   *string  `json:"pharmacyPhone,omitempty"`
+}
+type Doctor struct {
+	IsActive         *bool    `json:"isActive,omitempty"`
+	SpecializationID *string  `json:"specializationId,omitempty"`
+	LicenseNumber    *string  `json:"licenseNumber,omitempty"`
+	Qualification    *string  `json:"qualification,omitempty"`
+	Experience       *int     `json:"experience,omitempty"`
+	ConsultationFee  *float64 `json:"consultationFee,omitempty"`
 }
 type MedicineRequest struct {
 	SearchQuery string  `json:"searchQuery"`

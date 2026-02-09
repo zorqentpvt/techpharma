@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -53,13 +54,16 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 	if len(orderID) > 40 {
 		orderID = orderID[:40]
 	}
-
+	quantity, err := strconv.Atoi(*req.Quantity)
+	if err != nil {
+		return nil, fmt.Errorf("invalid quantity format: %w", err)
+	}
 	// Validate MedicineID and Quantity if CartID is not provided
 	if req.CartID == nil || *req.CartID == "" {
 		if req.MedicineID == nil {
 			return nil, errors.New("medicineId is required when cartId is not provided")
 		}
-		if req.Quantity == nil || *req.Quantity <= 0 {
+		if quantity <= 0 {
 			return nil, errors.New("quantity is required and must be greater than 0 when cartId is not provided")
 		}
 		// You can fetch medicine details from the database here using req.MedicineID
@@ -67,7 +71,11 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 	}
 
 	// Convert amount to paise
-	amountInPaise := int(req.Amount * 100)
+	amountInPaise, err := strconv.Atoi(req.Amount)
+	if err != nil {
+		return nil, fmt.Errorf("invalid amount format: %w", err)
+	}
+	amountInPaise *= 100
 
 	// Prepare Razorpay order data
 	data := map[string]interface{}{
@@ -98,7 +106,7 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 	}
 
 	// Convert notes to JSON string
-	notesJSON := ""
+	notesJSON := "{}"
 	if req.Notes != nil {
 		notesBytes, _ := json.Marshal(req.Notes)
 		notesJSON = string(notesBytes)
@@ -106,14 +114,14 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 
 	var paymentQuantity *int
 	if req.Quantity != nil {
-		q := int(*req.Quantity)
+		q := quantity
 		paymentQuantity = &q
 	}
 
 	// Save payment record in database
 	payment := &entity.Payment{
 		OrderID:         orderID,
-		Amount:          req.Amount,
+		Amount:          float64(amountInPaise) / 100,
 		Currency:        req.Currency,
 		UserID:          userID,
 		CartID:          cartID,
@@ -142,7 +150,7 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 		RazorpayOrderID: razorpayOrderID,
 		MedicineID:      payment.MedicineID,
 		Quantity:        responseQuantity,
-		Amount:          req.Amount,
+		Amount:          float64(amountInPaise),
 		Currency:        req.Currency,
 		RazorpayKeyID:   u.razorpayKey,
 		Notes:           req.Notes,

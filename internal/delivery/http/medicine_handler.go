@@ -538,7 +538,7 @@ func (h *MedicineHandlerClean) UpdateMedicine(c *gin.Context) {
 				medicine.Quantity = quantity
 			}
 		}
-		if prescriptionRequiredStr := c.PostForm("prescription_required"); prescriptionRequiredStr != "" {
+		if prescriptionRequiredStr := c.PostForm("prescriptionRequired"); prescriptionRequiredStr != "" {
 			if prescriptionRequired, err := strconv.ParseBool(prescriptionRequiredStr); err == nil {
 				medicine.PrescriptionRequired = prescriptionRequired
 			}

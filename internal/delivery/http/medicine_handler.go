@@ -200,6 +200,7 @@ func (h *MedicineHandlerClean) AddMedicine(c *gin.Context) {
 	// Set pharmacy ID from user's pharmacy (override any value from request for security)
 	req.PharmacyID = user.Pharmacy.ID
 
+	isActive := true
 	// Create medicine entity
 	newMedicine := &entity.Medicine{
 		Name:                 req.Name,
@@ -208,8 +209,8 @@ func (h *MedicineHandlerClean) AddMedicine(c *gin.Context) {
 		Quantity:             req.Quantity,
 		Description:          &req.Description,
 		PharmacyID:           req.PharmacyID,
-		PrescriptionRequired: req.PrescriptionRequired,
-		IsActive:             true,
+		PrescriptionRequired: &req.PrescriptionRequired,
+		IsActive:             &isActive,
 		ImageURL:             &imageURL,
 	}
 
@@ -540,12 +541,12 @@ func (h *MedicineHandlerClean) UpdateMedicine(c *gin.Context) {
 		}
 		if prescriptionRequiredStr := c.PostForm("prescriptionRequired"); prescriptionRequiredStr != "" {
 			if prescriptionRequired, err := strconv.ParseBool(prescriptionRequiredStr); err == nil {
-				medicine.PrescriptionRequired = prescriptionRequired
+				medicine.PrescriptionRequired = &prescriptionRequired
 			}
 		}
 		if isActiveStr := c.PostForm("is_active"); isActiveStr != "" {
 			if isActive, err := strconv.ParseBool(isActiveStr); err == nil {
-				medicine.IsActive = isActive
+				medicine.IsActive = &isActive
 			}
 		}
 

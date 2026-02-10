@@ -73,7 +73,7 @@ func (h *PaymentHandler) CreateOrder(c *gin.Context) {
 	}
 
 	// Handle prescription file upload
-	file, header, err := c.Request.FormFile("prescription")
+	file, header, err := c.Request.FormFile("prescriptionURL")
 	if err == nil {
 		defer file.Close()
 

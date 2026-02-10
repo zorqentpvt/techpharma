@@ -1066,6 +1066,14 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 			pharmacyUpdate.PhoneNumber = *req.Pharmacy.PharmacyPhone
 			updateNeeded = true
 		}
+		if req.Pharmacy.Latitude != nil {
+			pharmacyUpdate.Latitude = *req.Pharmacy.Latitude
+			updateNeeded = true
+		}
+		if req.Pharmacy.Longitude != nil {
+			pharmacyUpdate.Longitude = *req.Pharmacy.Longitude
+			updateNeeded = true
+		}
 		if updateNeeded {
 			// Assumes use case has UpdatePharmacy method
 			if _, err := h.userUseCase.UpdatePharmacy(ctx, pharmacyUpdate); err != nil {

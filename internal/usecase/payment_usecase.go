@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -54,13 +55,29 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 	if len(orderID) > 40 {
 		orderID = orderID[:40]
 	}
-	quantity, err := strconv.Atoi(*req.Quantity)
-	if err != nil {
-		return nil, fmt.Errorf("invalid quantity format: %w", err)
+
+	var quantity int
+	if req.Quantity != nil {
+		var err error
+		quantity, err = strconv.Atoi(*req.Quantity)
+		if err != nil {
+			return nil, fmt.Errorf("invalid quantity format: %w", err)
+		}
 	}
+
+	var medicineID *uuid.UUID
+	if req.MedicineID != nil && *req.MedicineID != "" {
+		cleanID := strings.Trim(*req.MedicineID, "[]\"")
+		mid, err := uuid.Parse(cleanID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid medicine ID format: %w", err)
+		}
+		medicineID = &mid
+	}
+
 	// Validate MedicineID and Quantity if CartID is not provided
 	if req.CartID == nil || *req.CartID == "" {
-		if req.MedicineID == nil {
+		if medicineID == nil {
 			return nil, errors.New("medicineId is required when cartId is not provided")
 		}
 		if quantity <= 0 {
@@ -84,8 +101,12 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 		"receipt":  orderID,
 	}
 
-	if req.Notes != nil {
-		data["notes"] = req.Notes
+	var notesMap map[string]interface{}
+	if req.Notes != "" {
+		if err := json.Unmarshal([]byte(req.Notes), &notesMap); err != nil {
+			return nil, fmt.Errorf("invalid notes format: %w", err)
+		}
+		data["notes"] = notesMap
 	}
 
 	// Create order in Razorpay
@@ -99,7 +120,8 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 	// Parse cart ID if provided
 	var cartID *uuid.UUID
 	if req.CartID != nil && *req.CartID != "" {
-		cid, err := uuid.Parse(*req.CartID)
+		cleanID := strings.Trim(*req.CartID, "[]\"")
+		cid, err := uuid.Parse(cleanID)
 		if err == nil {
 			cartID = &cid
 		}
@@ -107,8 +129,8 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 
 	// Convert notes to JSON string
 	notesJSON := "{}"
-	if req.Notes != nil {
-		notesBytes, _ := json.Marshal(req.Notes)
+	if len(notesMap) > 0 {
+		notesBytes, _ := json.Marshal(notesMap)
 		notesJSON = string(notesBytes)
 	}
 
@@ -125,7 +147,7 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 		Currency:        req.Currency,
 		UserID:          userID,
 		CartID:          cartID,
-		MedicineID:      req.MedicineID,
+		MedicineID:      medicineID,
 		Quantity:        paymentQuantity,
 		RazorpayOrderID: razorpayOrderID,
 		Status:          "pending",
@@ -153,7 +175,7 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 		Amount:          float64(amountInPaise),
 		Currency:        req.Currency,
 		RazorpayKeyID:   u.razorpayKey,
-		Notes:           req.Notes,
+		Notes:           notesMap,
 	}, nil
 }
 

@@ -424,15 +424,15 @@ type MedicineFilters struct {
 	SortOrder            string
 }
 type CreateOrderRequest struct {
-	Amount          string                 `form:"amount" json:"amount" binding:"required,gt=0"`
-	Currency        string                 `form:"currency" json:"currency" binding:"required"`
-	MedicineID      *uuid.UUID             `form:"medicineId" json:"medicineId" binding:"omitempty"`
-	Quantity        *string                `form:"quantity" json:"quantity" binding:"omitempty,gt=0"`
-	Description     string                 `form:"description" json:"description"`
-	CartID          *string                `form:"cartId" json:"cartId"`
-	DeliveryAddress string                 `form:"deliveryAddress" json:"deliveryAddress"`
-	PrescriptionURL string                 `form:"prescriptionURL" json:"prescriptionURL"`
-	Notes           map[string]interface{} `form:"notes" json:"notes"`
+	Amount          string  `form:"amount" json:"amount" binding:"required,gt=0"`
+	Currency        string  `form:"currency" json:"currency" binding:"required"`
+	MedicineID      *string `form:"medicineId" json:"medicineId" binding:"omitempty"`
+	Quantity        *string `form:"quantity" json:"quantity" binding:"omitempty,gt=0"`
+	Description     string  `form:"description" json:"description"`
+	CartID          *string `form:"cartId" json:"cartId"`
+	DeliveryAddress string  `form:"deliveryAddress" json:"deliveryAddress"`
+	PrescriptionURL string  `form:"-" json:"prescriptionURL"`
+	Notes           string  `form:"notes" json:"notes"`
 }
 
 type VerifyPaymentRequest struct {

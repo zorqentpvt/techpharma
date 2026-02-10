@@ -74,7 +74,24 @@ func (r *OrderRepository) CreateOrder(ctx context.Context, order *entity.Order) 
 }
 
 func (r *OrderRepository) CreateOrderItem(ctx context.Context, orderItems *entity.OrderItem) error {
-	return r.db.WithContext(ctx).Create(orderItems).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(orderItems).Error; err != nil {
+			return err
+		}
+
+		// Update medicine stock
+		result := tx.Model(&entity.Medicine{}).
+			Where("id = ? AND quantity >= ?", orderItems.MedicineID, orderItems.Quantity).
+			UpdateColumn("quantity", gorm.Expr("quantity - ?", orderItems.Quantity))
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return fmt.Errorf("insufficient stock for medicine %s", orderItems.MedicineID)
+		}
+
+		return nil
+	})
 }
 func (r *OrderRepository) GetCartByUserID(ctx context.Context, userID uuid.UUID) (*entity.Cart, error) {
 	var cart entity.Cart
@@ -194,12 +211,13 @@ func (r *OrderRepository) recalculateTotal(ctx context.Context, cartID uuid.UUID
 		Update("total_amount", total).Error
 }
 func (r *OrderRepository) CreateOrderFromCart(ctx context.Context, cart *entity.Cart, paymentID uuid.UUID, deliveryAddress string) (*entity.Order, error) {
-	return nil, r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	var order *entity.Order
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Generate order number
 		orderNumber := fmt.Sprintf("ORD-%s", uuid.New().String()[:8])
 
 		// Create order
-		order := &entity.Order{
+		order = &entity.Order{
 			OrderNumber:     orderNumber,
 			UserID:          cart.UserID,
 			PaymentID:       paymentID,
@@ -225,6 +243,17 @@ func (r *OrderRepository) CreateOrderFromCart(ctx context.Context, cart *entity.
 			if err := tx.Create(orderItem).Error; err != nil {
 				return err
 			}
+
+			// Update medicine stock
+			result := tx.Model(&entity.Medicine{}).
+				Where("id = ? AND quantity >= ?", cartMedicine.MedicineID, cartMedicine.Quantity).
+				UpdateColumn("quantity", gorm.Expr("quantity - ?", cartMedicine.Quantity))
+			if result.Error != nil {
+				return result.Error
+			}
+			if result.RowsAffected == 0 {
+				return fmt.Errorf("insufficient stock for medicine %s", cartMedicine.MedicineID)
+			}
 		}
 
 		// Reload with relationships
@@ -236,6 +265,7 @@ func (r *OrderRepository) CreateOrderFromCart(ctx context.Context, cart *entity.
 
 		return nil
 	})
+	return order, err
 }
 
 // ClearCart clears all items from user's cart

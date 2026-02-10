@@ -69,7 +69,7 @@ func (uc *orderUseCase) UpdateCart(ctx context.Context, userID uuid.UUID, medici
 	if medicine == nil {
 		return nil, errors.New("medicine not found")
 	}
-	if !medicine.IsActive {
+	if medicine.IsActive == nil || !*medicine.IsActive {
 		return nil, errors.New("medicine is not active")
 	}
 

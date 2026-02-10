@@ -11,6 +11,8 @@ export interface OrderData {
   amount: number;
   currency: string;
   notes?: Record<string, any>;
+  prescriptionRequired?: boolean;
+  prescriptionURL?: File | string;
 }
 
 export interface RazorpayResponse {
@@ -27,6 +29,8 @@ export interface ApiResponse<T> {
 
 // ✅ Updated to include medicineId and quantity
 export interface CreateOrderPayload {
+  prescriptionRequired: undefined;
+  prescriptionURL: { new(fileBits: BlobPart[], fileName: string, options?: FilePropertyBag): File; prototype: File; };
   amount: number;
   currency: string;
   description: string;
@@ -43,11 +47,9 @@ export async function createOrder(
 
   const formData = new FormData();
 
-  // REQUIRED
   formData.append("amount", String(orderData.amount));
-  formData.append("currency", orderData.currency || "INR");
+  formData.append("currency", orderData.currency ?? "INR");
 
-  // OPTIONAL
   if (orderData.description)
     formData.append("description", orderData.description);
 
@@ -57,38 +59,38 @@ export async function createOrder(
   if (orderData.medicineId)
     formData.append("medicineId", orderData.medicineId);
 
-  if (orderData.quantity !== undefined)
+  if (orderData.quantity != null)
     formData.append("quantity", String(orderData.quantity));
 
-  if (orderData.prescriptionRequired !== undefined)
+  if (orderData.prescriptionRequired != null)
     formData.append(
       "prescriptionRequired",
       String(orderData.prescriptionRequired)
     );
 
-  // FILE (must be File)
-  if (orderData.prescription instanceof File) {
-    formData.append("prescription", orderData.prescription);
+  if (orderData.prescriptionURL instanceof File) {
+    formData.append("prescriptionURL", orderData.prescriptionURL);
   }
 
-  try {
-    const response = await api.post<ApiResponse<OrderData>>(
-      "/api/payment/create-order",
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    return response.data;
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to create order"
-    );
+  // DEBUG (keep while testing)
+  for (const [k, v] of formData.entries()) {
+    console.log("FormData →", k, v);
   }
+
+  const response = await api.post<ApiResponse<OrderData>>(
+    "/api/payment/create-order",
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return response.data;
 }
+
 
 
 export async function verifyPayment(

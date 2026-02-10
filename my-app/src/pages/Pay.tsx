@@ -21,7 +21,9 @@ export default function RazorpayPayment() {
   const [cartId, setCartId] = useState<string | null>(null);
   const [medicineId, setMedicineId] = useState<string | undefined>();
   const [prescriptionRequired, setPrescriptionRequired] = useState(false);
-  const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
+  const [prescriptionURL, setprescriptionURL] = useState<File | null>(null);
+
+
 
   const [status, setStatus] = useState<{ type: string; message: string }>({
     type: "",
@@ -37,8 +39,7 @@ export default function RazorpayPayment() {
       const userRaw = localStorage.getItem("userdata");
       const trxRaw = localStorage.getItem("transaction");
 
-      console.log("📦 Raw user data:", userRaw);
-      console.log("📦 Raw transaction data:", trxRaw);
+
 
       if (userRaw) {
         const u = JSON.parse(userRaw);
@@ -170,12 +171,19 @@ export default function RazorpayPayment() {
       setLoading(false);
     }
   };
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      
+      setprescriptionURL(file);
+      console.log("📷 file selected:", file.name);
 
+    };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("📝 Form submitted");
   
-    if (prescriptionRequired && !prescriptionFile) {
+    if (prescriptionRequired && !prescriptionURL) {
       console.warn("⚠️ Prescription required but not provided");
       showStatus("Prescription required", "error");
       return;
@@ -203,8 +211,8 @@ export default function RazorpayPayment() {
         orderPayload.medicineId = medicineId;
       }
 
-      if (prescriptionRequired && prescriptionFile) {
-        orderPayload.prescription = prescriptionFile;
+      if (prescriptionRequired && prescriptionURL) {
+        orderPayload.prescriptionURL = prescriptionURL;
       }
   
       console.log("📤 Creating order with payload:");
@@ -214,11 +222,11 @@ export default function RazorpayPayment() {
       console.log("  - Medicine ID:", medicineId);
       console.log("  - Prescription Required:", prescriptionRequired);
   
-      if (prescriptionRequired && prescriptionFile) {
+      if (prescriptionRequired && prescriptionURL) {
         console.log("📎 Attaching prescription file:", {
-          name: prescriptionFile.name,
-          size: prescriptionFile.size,
-          type: prescriptionFile.type,
+          name: prescriptionURL.name,
+          size: prescriptionURL.size,
+          type: prescriptionURL.type,
         });
       }
   
@@ -260,15 +268,7 @@ export default function RazorpayPayment() {
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null;
-                console.log("📁 File selected:", file ? {
-                  name: file.name,
-                  size: file.size,
-                  type: file.type,
-                } : "none");
-                setPrescriptionFile(file);
-              }}
+              onChange={handleFileChange}
               required
               className="w-full border p-2"
             />

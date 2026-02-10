@@ -54,7 +54,7 @@ type User = {
   doctor?: Doctor | null;
   isActive: boolean;
   firsttime?: boolean;
-};
+}; 
 
 const BASE_URL = "http://localhost:8080"; // your backend host
 

@@ -5,6 +5,23 @@ import { Search, X } from "lucide-react";
 import PatientAppointment, { AppointmentSlot } from "../components/PatientAppointment";
 import docImage from "../assets/doc.png";
 
+
+// ✅ Use your backend base URL here
+const BASE_URL = "http://localhost:8080";
+
+// ✅ Utility to correctly resolve image URLs
+const resolveImageUrl = (img: string | undefined | null): string => {
+  if (!img) return "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+  
+  // If it's already a data URL (blob/preview), return as-is
+  if (img.startsWith("data:")) return img;
+  
+  // If it's already a full HTTP URL, return as-is
+  if (img.startsWith("http://") || img.startsWith("https://")) return img;
+  
+  // Otherwise, prepend the backend URL
+  return `${BASE_URL}/${img.replace(/^\/?/, "")}`;
+};
 // Doctor card component
 function DoctorCard({
   doctor,
@@ -19,7 +36,7 @@ function DoctorCard({
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 transition-transform transform hover:-translate-y-1 p-5 flex flex-row items-center space-x-6">
       <div className="flex-shrink-0">
         <img
-          src={doctor.photo || docImage}
+          src={resolveImageUrl(doctor.user.avatar) || docImage}
           alt={doctor.user.displayName}
           className="w-32 h-32 rounded-full object-cover"
           onError={(e) => { e.currentTarget.src = docImage; }}

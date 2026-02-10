@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchOrders, updateOrderStatus } from "../api/pharmastoreapi";
 
 /* ---------------- USER ---------------- */
+
 const getUserFromStorage = () => {
   return { username: "Central Pharmacy", role: "pharmacy" };
 };
@@ -20,6 +21,7 @@ interface Order {
   id: string;
   customerName: string;
   customerPhone: string;
+  prescriptionURL?: string;
   medicines: { name: string; quantity: number }[];
   totalAmount: number;
   status: OrderStatus;
@@ -46,6 +48,7 @@ const STATUS_TO_API: Record<OrderStatus, string> = {
   completed: "completed",
   cancelled: "cancelled",
 };
+const BASE_URL = "http://localhost:8080";
 
 /* ---------------- COMPONENT ---------------- */
 export default function Orders() {
@@ -66,7 +69,7 @@ export default function Orders() {
     };
     loadOrders();
   }, []);
-
+  
   /* ---------------- AUTH ---------------- */
   useEffect(() => {
     if (!user || user.role !== "pharmacy") {
@@ -148,7 +151,7 @@ export default function Orders() {
         {/* TABLE */}
         <div className="bg-white rounded-2xl shadow-lg overflow-x-auto">
           <table className="min-w-[900px] w-full divide-y">
-          <thead className="bg-[#002E6E] text-white text-sm">
+            <thead className="bg-[#002E6E] text-white text-sm">
               <tr>
                 <th className="px-4 py-4 text-left">Order ID</th>
                 <th className="px-4 py-4 text-left">Customer</th>
@@ -179,6 +182,31 @@ export default function Orders() {
                     </td>
 
                     <td className="px-4 py-3 text-xs">
+                      {order.prescriptionURL ? (
+                        <div className="mb-2">
+                          <a
+                            href={`${BASE_URL}/${order.prescriptionURL}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[#00B9F1] hover:text-[#009AD6] font-medium"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                            View Prescription
+                          </a>
+                        </div>
+                      ) : null}
                       {order.medicines.map((m, i) => (
                         <div key={i}>
                           {m.name} × {m.quantity}

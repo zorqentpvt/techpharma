@@ -18,7 +18,7 @@ type Medicine struct {
 	ExpiryDate           *time.Time `json:"expiryDate,omitempty"`
 	Price                float64    `gorm:"not null" json:"price"`
 	Quantity             int        `gorm:"default:0" json:"quantity"`
-	PrescriptionRequired bool       `gorm:"default:false" json:"prescriptionRequired"`
+	PrescriptionRequired *bool      `gorm:"default:false" json:"prescriptionRequired"`
 	ImageURL             *string    `gorm:"type:varchar(500)" json:"image,omitempty"`
 
 	// Relations
@@ -26,7 +26,7 @@ type Medicine struct {
 	Pharmacy   *Pharmacy `gorm:"foreignKey:PharmacyID" json:"pharmacy,omitempty"`
 
 	// Audit fields
-	IsActive      bool       `gorm:"default:true;index" json:"isActive"`
+	IsActive      *bool      `gorm:"default:true;index" json:"isActive"`
 	DeactivatedAt *time.Time `json:"deactivatedAt,omitempty"`
 	DeactivatedBy *uuid.UUID `gorm:"type:uuid" json:"deactivatedBy,omitempty"`
 }

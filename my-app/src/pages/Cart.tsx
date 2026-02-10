@@ -41,7 +41,7 @@ const Cart: React.FC<CartProps> = ({ userId }) => {
             name: item.medicine.name,
             description: item.medicine.description,
             price: item.medicine.price,
-            image: "",
+            image: item.medicine.image,
             pharmacyId: item.medicine.pharmacyId,
             quantity: item.quantity,
           }));

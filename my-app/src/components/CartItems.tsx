@@ -15,8 +15,24 @@ type CartItemsProps = {
   onQuantityChange: (productId: string, quantity: number) => void;
   onRemove: (productId: string) => void;
 };
+// ✅ Use your backend base URL here
+const BASE_URL = "http://localhost:8080";
 
+// ✅ Utility to correctly resolve image URLs
+const resolveImageUrl = (img: string | undefined | null): string => {
+  if (!img) return "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+  
+  // If it's already a data URL (blob/preview), return as-is
+  if (img.startsWith("data:")) return img;
+  
+  // If it's already a full HTTP URL, return as-is
+  if (img.startsWith("http://") || img.startsWith("https://")) return img;
+  
+  // Otherwise, prepend the backend URL
+  return `${BASE_URL}/${img.replace(/^\/?/, "")}`;
+};
 const CartItems: React.FC<CartItemsProps> = ({ products, onQuantityChange, onRemove }) => {
+  console.log("Rendering CartItems with products:", products);
   return (
     <>
       <ul className="p-6 bg-gradient-to-br from-white to-blue-50 border-2 border-blue-100 rounded-2xl">
@@ -27,7 +43,7 @@ const CartItems: React.FC<CartItemsProps> = ({ products, onQuantityChange, onRem
           >
 <img
   className="rounded-xs mr-5 w-32 h-32 object-cover shrink-0" // limit width & height
-  src={product.image || medpic} // fallback image
+  src={resolveImageUrl(product.image) || medpic} // fallback image
   alt={product.name}
 />
 
@@ -62,7 +78,7 @@ const CartItems: React.FC<CartItemsProps> = ({ products, onQuantityChange, onRem
 
       <div className="flex items-center gap-3 text-left px-4 py-2 rounded-lg hover:shadow-xl pt-3 mt-6 w-40 font-medium transition-all
       bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md">
-        <a className="text-sm font-medium text-blue-50" href="#0">
+        <a className="text-sm font-medium text-blue-50" href="/dashboard/medicine">
           Back To Shopping
         </a>
       </div>

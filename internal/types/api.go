@@ -340,8 +340,8 @@ type UpdateProfileRequest struct {
 	Doctor   *Doctor   `json:"doctor,omitempty"`
 }
 type Pharmacy struct {
-	PharmacyName    *string  `json:"pharmacyName,omitempty"`
-	PharmacyAddress *string  `json:"pharmacyAddress,omitempty"`
+	PharmacyName    *string  `json:"name,omitempty"`
+	PharmacyAddress *string  `json:"address,omitempty"`
 	Latitude        *float64 `json:"latitude,omitempty"`
 	Longitude       *float64 `json:"longitude,omitempty"`
 	City            *string  `json:"city,omitempty"`

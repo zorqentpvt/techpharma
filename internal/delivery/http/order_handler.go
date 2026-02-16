@@ -1,7 +1,10 @@
 package http
 
 import (
+	"context"
+	"fmt"
 	"net/http"
+	"net/smtp"
 	"strconv"
 	"time"
 
@@ -9,19 +12,25 @@ import (
 	"github.com/google/uuid"
 	"github.com/skryfon/collex/internal/delivery/http/response"
 	"github.com/skryfon/collex/internal/domain/entity"
+	"github.com/skryfon/collex/internal/domain/repository"
 	"github.com/skryfon/collex/internal/types"
 	"github.com/skryfon/collex/internal/usecase"
+	"github.com/skryfon/collex/pkg/config"
 )
 
 type OrderHandlerClean struct {
 	orderUseCase   usecase.OrderUseCase
 	paymentUseCase *usecase.PaymentUseCase
+	userRepo       repository.UserRepository
+	config         *config.Config
 }
 
-func NewOrderHandlerClean(orderUseCase usecase.OrderUseCase, paymentUseCase *usecase.PaymentUseCase) *OrderHandlerClean {
+func NewOrderHandlerClean(orderUseCase usecase.OrderUseCase, paymentUseCase *usecase.PaymentUseCase, userRepo repository.UserRepository, config *config.Config) *OrderHandlerClean {
 	return &OrderHandlerClean{
 		orderUseCase:   orderUseCase,
 		paymentUseCase: paymentUseCase,
+		userRepo:       userRepo,
+		config:         config,
 	}
 }
 
@@ -604,6 +613,23 @@ func (o *OrderHandlerClean) UpdateOrderStatus(c *gin.Context) {
 		return
 	}
 
+	// Fetch existing order to check for status change
+	existingOrder, err := o.paymentUseCase.GetOrderByID(c.Request.Context(), orderID)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		if err.Error() == "order not found" {
+			statusCode = http.StatusNotFound
+		}
+		c.JSON(statusCode, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "FETCH_ERROR",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
 	// Call use case
 	if err := o.orderUseCase.UpdateOrderStatus(c.Request.Context(), orderID, req.Status, userID); err != nil {
 		statusCode := http.StatusInternalServerError
@@ -629,6 +655,35 @@ func (o *OrderHandlerClean) UpdateOrderStatus(c *gin.Context) {
 			},
 		})
 		return
+	}
+
+	// Send email notification (Async)
+	if existingOrder.Status != req.Status {
+		go func() {
+			// Fetch order details to get user ID and other info
+			order, err := o.paymentUseCase.GetOrderByID(context.Background(), orderID)
+			if err != nil {
+				fmt.Printf("Failed to get order '%s': %v\n", orderID, err)
+				return
+			}
+
+			// Fetch user details
+			user, err := o.userRepo.GetByID(context.Background(), order.UserID)
+			if err != nil {
+				fmt.Printf("Failed to get user '%s': %v\n", order.UserID, err)
+				return
+			}
+
+			if user.Email != nil && *user.Email != "" {
+				o.sendOrderStatusEmail(
+					*user.Email,
+					user.FirstName,
+					order.OrderNumber,
+					req.Status,
+					order.ID.String(),
+				)
+			}
+		}()
 	}
 
 	c.JSON(http.StatusOK, response.Response{
@@ -695,5 +750,139 @@ func (o *OrderHandlerClean) GetTotalRevenue(c *gin.Context) {
 			"totalRevenue": revenue,
 			"totalOrders":  orders,
 		},
+	})
+}
+
+func (o *OrderHandlerClean) sendOrderStatusEmail(to, name, orderNumber, status, orderID string) {
+	from := o.config.Email.FromEmail
+	password := o.config.Email.Password
+	const (
+		smtpHost = "smtp.gmail.com"
+		smtpPort = "587"
+	)
+
+	subject := fmt.Sprintf("Order Status Update - %s", status)
+	trackingURL := fmt.Sprintf("http://localhost:8080/static/track.html?order=%s", orderNumber)
+
+	body := fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<body>
+<p>Dear %s,</p>
+
+<p>Your order #%s status has been updated to: <strong>%s</strong></p>
+
+<p>You can track your order using the link below:</p>
+<a href="%s" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; border-radius: 4px;">Track Order</a>
+
+<p>If you have any questions, feel free to reach out!</p>
+
+<p>Best regards,<br>
+TechPharma Team</p>
+</body>
+</html>`, name, orderNumber, status, trackingURL)
+
+	msg := []byte("From: " + from + "\r\n" +
+		"To: " + to + "\r\n" +
+		"Subject: " + subject + "\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: text/html; charset=\"utf-8\"\r\n" +
+		"\r\n" +
+		body + "\r\n")
+
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, msg)
+	if err != nil {
+		fmt.Printf("Failed to send email: %v\n", err)
+	}
+}
+
+// TrackOrder handles GET /auth/track/:orderId
+func (o *OrderHandlerClean) TrackOrder(c *gin.Context) {
+	orderIDStr := c.Param("orderId")
+	if orderIDStr == "" {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_REQUEST",
+				Message: "Order ID is required",
+			},
+		})
+		return
+	}
+
+	var order *entity.Order
+	var err error
+
+	// Check if it's a UUID
+	if orderUUID, parseErr := uuid.Parse(orderIDStr); parseErr == nil {
+		order, err = o.paymentUseCase.GetOrderByID(c.Request.Context(), orderUUID)
+	} else {
+		// Assume it's a custom order number (string)
+		order, err = o.paymentUseCase.GetOrderByOrderID(c.Request.Context(), orderIDStr)
+	}
+
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		if err.Error() == "order not found" {
+			statusCode = http.StatusNotFound
+		}
+		c.JSON(statusCode, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "FETCH_ERROR",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	// Prepare response data
+	type OrderItemResponse struct {
+		MedicineName string  `json:"medicineName"`
+		Quantity     int     `json:"quantity"`
+		Price        float64 `json:"price"`
+		Subtotal     float64 `json:"subtotal"`
+		ImageURL     string  `json:"imageUrl,omitempty"`
+	}
+
+	type TrackOrderResponse struct {
+		ID              uuid.UUID           `json:"id"`
+		OrderNumber     string              `json:"orderNumber"`
+		Status          string              `json:"status"`
+		OrderDate       time.Time           `json:"orderDate"`
+		TotalAmount     float64             `json:"totalAmount"`
+		DeliveryAddress string              `json:"deliveryAddress"`
+		Items           []OrderItemResponse `json:"items"`
+	}
+
+	items := make([]OrderItemResponse, 0)
+	for _, item := range order.OrderItems {
+		imgURL := ""
+		if item.Medicine.ImageURL != nil {
+			imgURL = *item.Medicine.ImageURL
+		}
+		items = append(items, OrderItemResponse{
+			MedicineName: item.Medicine.Name,
+			Quantity:     item.Quantity,
+			Price:        item.Price,
+			Subtotal:     item.Subtotal,
+			ImageURL:     imgURL,
+		})
+	}
+
+	resp := TrackOrderResponse{
+		ID:              order.ID,
+		OrderNumber:     order.OrderNumber,
+		Status:          order.Status,
+		OrderDate:       order.CreatedAt,
+		TotalAmount:     order.Payment.Amount,
+		DeliveryAddress: order.DeliveryAddress,
+		Items:           items,
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Message: "Order details retrieved successfully",
+		Data:    resp,
 	})
 }

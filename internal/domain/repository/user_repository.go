@@ -67,6 +67,7 @@ type OrderRepository interface {
 	CreateOrderFromCart(ctx context.Context, cart *entity.Cart, paymentID uuid.UUID, deliveryAddress string) (*entity.Order, error)
 	ClearCart(ctx context.Context, userID uuid.UUID) error
 	GetOrderByID(ctx context.Context, orderID uuid.UUID) (*entity.Order, error)
+	GetOrderByOrderID(ctx context.Context, orderID string) (*entity.Order, error)
 	GetUserOrders(ctx context.Context, userID uuid.UUID, page, limit int) ([]*entity.Order, int64, error)
 	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error
 

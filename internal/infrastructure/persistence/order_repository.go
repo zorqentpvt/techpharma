@@ -426,3 +426,20 @@ func (r *OrderRepository) GetPharmacyOrders(ctx context.Context, pharmacyID uuid
 
 	return orders, total, err
 }
+func (r *OrderRepository) GetOrderByOrderID(ctx context.Context, orderID string) (*entity.Order, error) {
+	var order entity.Order
+	err := r.db.WithContext(ctx).
+		Joins("JOIN payments ON payments.id = orders.payment_id").
+		Where("payments.order_id = ?", orderID).
+		Preload("Payment").
+		Preload("OrderItems.Medicine.Pharmacy").
+		First(&order).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &order, nil
+}

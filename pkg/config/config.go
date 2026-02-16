@@ -90,6 +90,7 @@ type EmailConfig struct {
 	BatchConcurrency int           // Optional: for batch processing concurrency
 	TemplatePath     string        // Path to template files
 	DevBaseUrl       string
+	Password         string
 }
 type Payment struct {
 	RazorpayKey    string
@@ -138,7 +139,7 @@ func LoadConfig() *Config {
 		Email: EmailConfig{
 			Provider:         getEnv("EMAIL_PROVIDER", "resend"),
 			APIKey:           getEnv("RESEND_API_KEY", ""), // Remove the hardcoded key for security
-			FromEmail:        getEnv("EMAIL_FROM_EMAIL", "info@skryfon.com"),
+			FromEmail:        getEnv("SMTP_FROM", ""),
 			FromName:         getEnv("EMAIL_FROM_NAME", "Collex"),
 			Domain:           getEnv("EMAIL_DOMAIN", "skryfon.com"),
 			MaxRetries:       getIntEnv("EMAIL_MAX_RETRIES", 3),
@@ -152,6 +153,7 @@ func LoadConfig() *Config {
 			BatchConcurrency: getIntEnv("EMAIL_BATCH_CONCURRENCY", 6),
 			TemplatePath:     getEnv("EMAIL_TEMPLATE_PATH", "./templates"), // Added template path loading
 			DevBaseUrl:       getEnv("DEV_BASE_URL", "collex.com"),
+			Password:         getEnv("SMTP_PASSWORD", ""),
 		},
 
 		CORS: Cors{

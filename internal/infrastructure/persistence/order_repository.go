@@ -214,11 +214,17 @@ func (r *OrderRepository) CreateOrderFromCart(ctx context.Context, cart *entity.
 	var order *entity.Order
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Generate order number
-		orderNumber := fmt.Sprintf("ORD-%s", uuid.New().String()[:8])
+		payment, err := r.GetPaymentInfo(ctx, paymentID)
+		if err != nil {
+			return err
+		}
+		if payment == nil {
+			return errors.New("payment not found")
+		}
 
 		// Create order
 		order = &entity.Order{
-			OrderNumber:     orderNumber,
+			OrderNumber:     payment.OrderID,
 			UserID:          cart.UserID,
 			PaymentID:       paymentID,
 			TotalAmount:     cart.TotalAmount,
@@ -442,4 +448,14 @@ func (r *OrderRepository) GetOrderByOrderID(ctx context.Context, orderID string)
 		return nil, err
 	}
 	return &order, nil
+}
+func (r *OrderRepository) GetPaymentInfo(ctx context.Context, paymentID uuid.UUID) (*entity.Payment, error) {
+	var payment entity.Payment
+	if err := r.db.WithContext(ctx).First(&payment, "id = ?", paymentID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &payment, nil
 }

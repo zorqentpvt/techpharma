@@ -23,6 +23,7 @@ import DoctorPage from "./pages/DoctorPage";
 import PharmacyPage from "./pages/PharmacyPage";
 import Viewdoc from "./pages/Viewdoc";
 import Viewpharm from "./pages/Viewpharm";
+import TrackOrder from "./pages/TrackOrder";
 
 function App() {
   return (
@@ -66,6 +67,7 @@ function App() {
           <Route path="schedule" element={<Schedule />} />
           <Route path="appointments" element={<Appointments />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="track/:orderId" element={<TrackOrder />} />
 
           {/* Redirect /dashboard/logout to root */}
           <Route path="logout" element={<Navigate to="/" replace />} />

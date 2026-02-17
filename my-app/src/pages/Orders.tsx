@@ -35,7 +35,7 @@ const statusConfig: Record<OrderStatus, { label: string; color: string }> = {
   confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-800" },
   preparing: { label: "Preparing", color: "bg-purple-100 text-purple-800" },
   ready: { label: "Ready for Pickup", color: "bg-green-100 text-green-800" },
-  completed: { label: "Completed", color: "bg-gray-100 text-gray-800" },
+  completed: { label: "Delivered", color: "bg-gray-100 text-gray-800" },
   cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800" },
 };
 
@@ -44,7 +44,7 @@ const STATUS_TO_API: Record<OrderStatus, string> = {
   pending: "pending",
   confirmed: "confirmed",
   preparing: "preparing",
-  ready: "ready to pickup",
+  ready: "ready for pickup",
   completed: "completed",
   cancelled: "cancelled",
 };

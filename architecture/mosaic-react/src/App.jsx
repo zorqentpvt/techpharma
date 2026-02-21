@@ -88,6 +88,7 @@ function App() {
       <Routes>
         <Route exact path="/" element={<Dashboard />} />
         <Route path="/dashboard/analytics" element={<Analytics />} />
+        <Route path="/dashboard/agents" element={<Dashboard />} />
         <Route path="/dashboard/fintech" element={<Fintech />} />
         <Route path="/ecommerce/customers" element={<Customers />} />
         <Route path="/ecommerce/orders" element={<Orders />} />

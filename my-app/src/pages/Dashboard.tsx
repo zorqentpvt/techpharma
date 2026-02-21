@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { useNavigate, useLocation, Outlet, useMatch } from "react-router-dom";
 import {
   FaUserCircle,
   FaHome,
@@ -12,11 +12,12 @@ import {
   FaClipboardCheck,
   FaShoppingCart,
   FaSignOutAlt,
+  FaMotorcycle,
+  FaTruck,
+  FaHistory,
 } from "react-icons/fa";
 import { ChevronLeft, Menu } from "lucide-react";
 import React from "react";
-import Home from "./Home";
-
 
 const getUserFromStorage = () => {
   const stored = localStorage.getItem("user");
@@ -33,7 +34,7 @@ const tabIcons = {
   ad: FaHome,
   medicine: FaPills,
   doctor: FaUserMd,
-  doc:FaUserMd,
+  doc: FaUserMd,
   schedule: FaCalendarAlt,
   consult: FaComments,
   phar: FaStore,
@@ -45,6 +46,9 @@ const tabIcons = {
   profile: FaUserCircle,
   logout: FaSignOutAlt,
   pay: FaShoppingCart,
+  agents: FaMotorcycle,
+  agentOrders: FaTruck,
+  deliveryHistory: FaHistory,
 };
 
 export default function Dashboard() {
@@ -54,10 +58,13 @@ export default function Dashboard() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const isHome = useMatch("/dashboard");
+
+  const normalizedPath = location.pathname.toLowerCase().replace(/\/+$/, "");
+
   useEffect(() => {
     if (!user) navigate("/");
   }, [user, navigate]);
-
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -68,7 +75,7 @@ export default function Dashboard() {
   if (!user) return null;
 
   const tabs = [
-    { key: "home", label: "Home", path: "/dashboard", roles: ["normal", "doctor", "pharmacy","admin"] },
+    { key: "home", label: "Home", path: "/dashboard", roles: ["normal", "doctor", "pharmacy", "admin", "delivery_agent"] },
     { key: "doc", label: "Registered Doctors", path: "/dashboard/admin/doctor", roles: ["admin"] },
     { key: "phar", label: "Registered Pharmacies", path: "/dashboard/admin/pharmacy", roles: ["admin"] },
     { key: "medicine", label: "Medicine", path: "/dashboard/medicine", roles: ["normal"] },
@@ -78,15 +85,18 @@ export default function Dashboard() {
     { key: "chatbot", label: "Chatbot", path: "/dashboard/chatbot", roles: ["normal"] },
     { key: "store", label: "Store", path: "/dashboard/store", roles: ["pharmacy"] },
     { key: "orders", label: "Orders", path: "/dashboard/orders", roles: ["pharmacy"] },
-    { key: "logout", label: "Logout", path: "/logout", roles: ["normal", "doctor", "pharmacy","admin"] },
+    { key: "agents", label: "Delivery Agents", path: "/dashboard/agents", roles: ["pharmacy"] },
+    { key: "deliveryHistory", label: "Delivery History", path: "/dashboard/delivery-history", roles: ["pharmacy"] },
+    { key: "agentOrders", label: "My Deliveries", path: "/dashboard/agent-orders", roles: ["delivery_agent"] },
+    { key: "logout", label: "Logout", path: "/logout", roles: ["normal", "doctor", "pharmacy", "admin", "delivery_agent"] },
   ];
 
   const renderNavLinks = () =>
     tabs
       .filter((tab) => tab.roles.includes(user.role))
       .map((tab) => {
-        const Icon = tabIcons[tab.key];
-        const isActive = location.pathname === tab.path;
+        const Icon = tabIcons[tab.key as keyof typeof tabIcons];
+        const isActive = normalizedPath === tab.path;
 
         return (
           <button
@@ -116,7 +126,11 @@ export default function Dashboard() {
           </button>
           <h1 className="text-xl font-bold text-[#002E6E]">Dashboard</h1>
         </div>
-        <FaUserCircle size={30} className="text-[#002E6E]" onClick={() => navigate("/dashboard/profile")} />
+        <FaUserCircle
+          size={30}
+          className="text-[#002E6E]"
+          onClick={() => navigate("/dashboard/profile")}
+        />
       </header>
 
       {/* Sidebar */}
@@ -138,7 +152,9 @@ export default function Dashboard() {
 
         {/* Profile */}
         <div
-          className={`flex items-center gap-3 p-3 mb-6 cursor-pointer rounded-xl hover:bg-blue-50 transition ${collapsed ? "justify-center" : ""}`}
+          className={`flex items-center gap-3 p-3 mb-6 cursor-pointer rounded-xl hover:bg-blue-50 transition ${
+            collapsed ? "justify-center" : ""
+          }`}
           onClick={() => {
             navigate("/dashboard/profile");
             setMobileMenuOpen(false);
@@ -166,10 +182,8 @@ export default function Dashboard() {
       )}
 
       {/* Main content */}
-      <main className="flex-1  lg z-10 relative overflow-y-auto">
-        
-          {location.pathname === "/dashboard" ? <Home /> : <Outlet />}
-       
+      <main className="flex-1 lg z-10 relative overflow-y-auto">
+        {isHome ? <Outlet /> : <Outlet />}
       </main>
     </div>
   );

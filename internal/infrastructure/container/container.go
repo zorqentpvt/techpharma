@@ -20,14 +20,15 @@ type Container struct {
 	Database *database.Database
 
 	// Repository Layer (Infrastructure -> Domain)
-	UserRepository       repository.UserRepository
-	AuditLogRepository   repository.AuditLogRepository
-	SecurityRepository   repository.SecurityEventRepository
-	MedicineRepository   repository.MedicineRepository
-	DoctorRepository     repository.DoctorRepository
-	OrderRepository      repository.OrderRepository
-	PaymentRepository    repository.PaymentRepository // ✅ Keep as interface
-	AppoinmentRepository repository.AppoinmentRepository
+	UserRepository          repository.UserRepository
+	AuditLogRepository      repository.AuditLogRepository
+	SecurityRepository      repository.SecurityEventRepository
+	MedicineRepository      repository.MedicineRepository
+	DoctorRepository        repository.DoctorRepository
+	OrderRepository         repository.OrderRepository
+	PaymentRepository       repository.PaymentRepository // ✅ Keep as interface
+	AppoinmentRepository    repository.AppoinmentRepository
+	DeliveryAgentRepository usecase.DeliveryAgentRepository
 
 	// Domain Services
 	AuthService  service.AuthService
@@ -42,6 +43,7 @@ type Container struct {
 	OrderUsecase      usecase.OrderUseCase
 	PaymentUseCase    *usecase.PaymentUseCase // ✅ Keep as pointer
 	AppoinmentUseCase usecase.AppoinmentUseCase
+	DeliveryUseCase   usecase.DeliveryUseCase
 }
 
 // NewContainer creates a new dependency injection container
@@ -73,7 +75,7 @@ func (c *Container) initRepositories() {
 	c.OrderRepository = persistence.NewOrderRepository(c.Database.DB)
 	c.PaymentRepository = persistence.NewPaymentRepository(c.Database.DB)       // ✅ Initialize Payment Repository
 	c.AppoinmentRepository = persistence.NewAppoinmentRepository(c.Database.DB) // ✅ ADD THIS LINE
-
+	c.DeliveryAgentRepository = persistence.NewDeliveryAgentRepository(c.Database.DB)
 }
 
 // initDomainServices initializes domain services
@@ -120,6 +122,11 @@ func (c *Container) initUseCases() {
 	c.AppoinmentUseCase = usecase.NewAppoinmentUseCase(
 		c.AppoinmentRepository,
 		c.DoctorRepository,
+	)
+	c.DeliveryUseCase = usecase.NewDeliveryUseCase(
+		c.DeliveryAgentRepository,
+		c.UserRepository,
+		c.OrderRepository,
 	)
 }
 

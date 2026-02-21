@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchOrders, updateOrderStatus } from "../api/pharmastoreapi";
-import { Eye, X, Printer } from "lucide-react";
+import { Eye, X, Printer, Truck } from "lucide-react";
 
 /* ---------------- USER ---------------- */
 
@@ -15,11 +15,20 @@ type OrderStatus =
   | "confirmed"
   | "preparing"
   | "ready"
+  | "out_for_delivery"
   | "completed"
   | "cancelled";
 
+interface DeliveryAgentInfo {
+  name: string;
+  phone: string;
+  avatar: string;
+  vehicleNumber: string;
+}
+
 interface Order {
   id: string;
+  orderNumber: string;
   customerName: string;
   customerPhone: string;
   prescriptionURL?: string;
@@ -32,6 +41,7 @@ interface Order {
   pharmacyPhone?: string;
   deliveryAddress?: string;
   paymentMethod?: string;
+  deliveryAgent?: DeliveryAgentInfo;
 }
 
 /* ---------------- STATUS CONFIG ---------------- */
@@ -40,6 +50,7 @@ const statusConfig: Record<OrderStatus, { label: string; color: string }> = {
   confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-800" },
   preparing: { label: "Preparing", color: "bg-purple-100 text-purple-800" },
   ready: { label: "Ready for Pickup", color: "bg-green-100 text-green-800" },
+  out_for_delivery: { label: "Out for Delivery", color: "bg-orange-100 text-orange-800" },
   completed: { label: "Delivered", color: "bg-gray-100 text-gray-800" },
   cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800" },
 };
@@ -50,6 +61,7 @@ const STATUS_TO_API: Record<OrderStatus, string> = {
   confirmed: "confirmed",
   preparing: "preparing",
   ready: "ready for pickup",
+  out_for_delivery: "out_for_delivery",
   completed: "completed",
   cancelled: "cancelled",
 };
@@ -67,13 +79,24 @@ export default function Orders() {
   const [filterDate, setFilterDate] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [agents, setAgents] = useState<any[]>([]);
 
   /* ---------------- FETCH ORDERS ---------------- */
+  const loadOrders = async () => {
+    const res = await fetchOrders();
+    if (res?.success) {
+      const mappedOrders = res.data.map((order: any) => ({
+        ...order,
+        status: order.status === "ready for pickup" ? "ready" : order.status,
+      }));
+      setOrders(mappedOrders);
+      return mappedOrders;
+    }
+    return [];
+  };
+
   useEffect(() => {
-    const loadOrders = async () => {
-      const res = await fetchOrders();
-      if (res?.success) setOrders(res.data);
-    };
     loadOrders();
   }, []);
   
@@ -93,6 +116,18 @@ export default function Orders() {
     );
   };
 
+  const fetchAgents = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${BASE_URL}/api/pharmacy/delivery-agents`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (data.success) {
+      const onlineAgents = data.data.filter((agent: any) => agent.status === "online");
+      setAgents(onlineAgents);
+    }
+  };
+
   /* ---------------- UPDATE API ---------------- */
   const handleUpdate = async (order: Order) => {
     setUpdatingId(order.id);
@@ -103,9 +138,61 @@ export default function Orders() {
 
     if (!res?.success) {
       alert(res?.message || "Failed to update order");
+    } else if (order.status === "ready") {
+      setSelectedOrder(order);
+      await fetchAgents();
+      setShowAssignModal(true);
     }
 
     setUpdatingId(null);
+  };
+
+  const handleAssign = async (agentId: string) => {
+    if (!selectedOrder) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${BASE_URL}/api/pharmacy/orders/${selectedOrder.id}/assign`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ agentId }),
+      });
+      if (res.ok) {
+        alert("Order assigned successfully");
+        setShowAssignModal(false);
+        const updatedOrders = await loadOrders();
+        const updatedSelected = updatedOrders.find((o: any) => o.id === selectedOrder.id);
+        if (updatedSelected) setSelectedOrder(updatedSelected);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleUnassign = async () => {
+    if (!selectedOrder) return;
+    if (!window.confirm("Are you sure you want to remove the assigned agent?")) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${BASE_URL}/api/pharmacy/orders/${selectedOrder.id}/assign`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        alert("Agent removed successfully");
+        const updatedOrders = await loadOrders();
+        const updatedSelected = updatedOrders.find((o: any) => o.id === selectedOrder.id);
+        if (updatedSelected) setSelectedOrder(updatedSelected);
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to remove agent");
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   /* ---------------- HELPERS ---------------- */
@@ -121,7 +208,7 @@ export default function Orders() {
   /* ---------------- FILTER ---------------- */
   const filteredOrders = orders.filter((order) => {
     const matchSearch =
-      order.id.toLowerCase().includes(search.toLowerCase()) ||
+      (order.orderNumber || order.id).toLowerCase().includes(search.toLowerCase()) ||
       order.customerName.toLowerCase().includes(search.toLowerCase()) ||
       order.customerPhone.includes(search);
 
@@ -149,7 +236,7 @@ export default function Orders() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Invoice - ${selectedOrder.id}</title>
+          <title>Invoice - ${selectedOrder.orderNumber}</title>
           <style>
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; }
             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #002E6E; padding-bottom: 20px; margin-bottom: 30px; }
@@ -185,7 +272,7 @@ export default function Orders() {
             </div>
             <div class="info">
               <div class="section-title">Order Info</div>
-              <p><strong>Order ID:</strong> ${selectedOrder.id}</p>
+              <p><strong>Order #:</strong> ${selectedOrder.orderNumber}</p>
               <p><strong>Date:</strong> ${new Date(selectedOrder.orderDate).toLocaleString()}</p>
               <p><strong>Status:</strong> ${selectedOrder.status.toUpperCase()}</p>
               <p><strong>Payment:</strong> ${selectedOrder.paymentMethod || "N/A"}</p>
@@ -256,7 +343,7 @@ export default function Orders() {
           {/* Search */}
           <input
             className="w-full border px-4 py-3 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-[#00B9F1] outline-none"
-            placeholder="Search by order ID, name or phone"
+            placeholder="Search by order #, name or phone"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -291,7 +378,7 @@ export default function Orders() {
           <table className="min-w-[900px] w-full divide-y">
             <thead className="bg-[#002E6E] text-white text-sm">
               <tr>
-                <th className="px-4 py-4 text-left">Order ID</th>
+                <th className="px-4 py-4 text-left">Order #</th>
                 <th className="px-4 py-4 text-left">Customer</th>
                 <th className="px-4 py-4 text-left">Medicines</th>
                 <th className="px-4 py-4 text-left">Amount</th>
@@ -309,7 +396,7 @@ export default function Orders() {
                     className="hover:bg-[#F0F9FF] transition"
                   >
                     <td className="px-4 py-3 text-sm font-medium text-[#0F4FA8]">
-                      {order.id}
+                      {order.orderNumber}
                     </td>
 
                     <td className="px-4 py-3 text-sm">
@@ -427,7 +514,7 @@ export default function Orders() {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
               {/* Header */}
               <div className="bg-[#002E6E] px-6 py-4 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-white">Order Details #{selectedOrder.id.slice(0, 8)}</h2>
+                <h2 className="text-xl font-bold text-white">Order Details #{selectedOrder.orderNumber}</h2>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handlePrint}
@@ -445,6 +532,46 @@ export default function Orders() {
               
               {/* Body */}
               <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+                {/* Assign Button or Agent Info */}
+                {selectedOrder.deliveryAgent ? (
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-blue-100 p-3 rounded-full text-[#002E6E]">
+                        <Truck size={24} />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-[#002E6E]">Delivery Agent Assigned</h4>
+                        <p className="text-sm text-gray-700 font-medium">{selectedOrder.deliveryAgent.name}</p>
+                        <div className="flex gap-3 text-xs text-gray-500 mt-1">
+                          <span>📞 {selectedOrder.deliveryAgent.phone}</span>
+                          <span>🛵 {selectedOrder.deliveryAgent.vehicleNumber}</span>
+                        </div>
+                        
+                        {selectedOrder.status !== "out_for_delivery" && selectedOrder.status !== "completed" && selectedOrder.status !== "cancelled" && (
+                          <button
+                            onClick={handleUnassign}
+                            className="mt-3 text-xs text-red-600 hover:text-red-800 hover:underline font-medium"
+                          >
+                            Remove Agent
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => {
+                        fetchAgents();
+                        setShowAssignModal(true);
+                      }}
+                      className="flex items-center gap-2 bg-[#002E6E] text-white px-4 py-2 rounded-lg hover:bg-[#0043A4]"
+                    >
+                      <Truck size={18} /> Assign Delivery Agent
+                    </button>
+                  </div>
+                )}
+
                 {/* Customer Info */}
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-1">
@@ -495,6 +622,32 @@ export default function Orders() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ASSIGN AGENT MODAL */}
+        {showAssignModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md">
+              <h3 className="text-lg font-bold mb-4">Select Delivery Agent</h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {agents.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No online agents available</p>
+                ) : (
+                  agents.map((agent) => (
+                    <button
+                      key={agent.id}
+                      onClick={() => handleAssign(agent.id)}
+                      className="w-full text-left p-3 hover:bg-gray-50 rounded border flex justify-between"
+                    >
+                      <span className="font-medium">{agent.user.firstName} {agent.user.lastName}</span>
+                      <span className="text-sm text-gray-500">{agent.status}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+              <button onClick={() => setShowAssignModal(false)} className="mt-4 w-full py-2 text-gray-500">Cancel</button>
             </div>
           </div>
         )}

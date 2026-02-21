@@ -57,6 +57,9 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 		container.UserRepository,
 	)
 
+	// Delivery Agent setup
+	deliveryHandler := NewDeliveryHandlerClean(container.DeliveryUseCase)
+
 	// Authentication routes (public)
 	authRoutes := api.Group("/auth")
 	{
@@ -128,6 +131,21 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 				pharmacyRoutes.GET("/orders/:id", orderHandler.GetOrderByID)
 				pharmacyRoutes.PUT("/orders/:id", orderHandler.UpdateOrderStatus)*/
 
+			// Delivery Agent Routes
+			pharmacyRoutes.POST("/delivery-agents", deliveryHandler.AddDeliveryAgent)
+			pharmacyRoutes.GET("/delivery-agents", deliveryHandler.GetPharmacyAgents)
+			pharmacyRoutes.POST("/orders/:id/assign", deliveryHandler.AssignOrder)
+			pharmacyRoutes.DELETE("/orders/:id/assign", deliveryHandler.UnassignOrder)
+			pharmacyRoutes.PUT("/delivery-agents/:id", deliveryHandler.UpdateDeliveryAgent)
+			pharmacyRoutes.DELETE("/delivery-agents/:id", deliveryHandler.DeleteDeliveryAgent)
+
+		}
+
+		deliveryRoutes := protectedRoutes.Group("/delivery")
+		{
+			deliveryRoutes.GET("/orders", deliveryHandler.GetDeliveryOrders)
+			deliveryRoutes.PUT("/orders/:id/status", deliveryHandler.UpdateDeliveryStatus)
+			deliveryRoutes.PUT("/status", deliveryHandler.UpdateAgentStatus)
 		}
 
 		paymentRoutes := protectedRoutes.Group("/payment")

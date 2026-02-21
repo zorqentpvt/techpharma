@@ -502,7 +502,14 @@ func (u *userUseCase) UpdateUserProfile(ctx context.Context, userID uuid.UUID, u
 				existingUser.Address.PostalCode = user.Address.PostalCode
 				addressUpdated = true
 			}
-
+			if user.Address.Latitude != existingUser.Address.Latitude {
+				existingUser.Address.Latitude = user.Address.Latitude
+				addressUpdated = true
+			}
+			if user.Address.Longitude != existingUser.Address.Longitude {
+				existingUser.Address.Longitude = user.Address.Longitude
+				addressUpdated = true
+			}
 			if addressUpdated {
 				profileUpdated = true
 			}

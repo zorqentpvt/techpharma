@@ -1,11 +1,11 @@
-# Makefile for collex Go Clean Architecture Application
+# Makefile for techpharma Go Clean Architecture Application
 
 # Variables
-APP_NAME=collex
-BINARY_NAME=collex
+APP_NAME=techpharma
+BINARY_NAME=techpharma
 BUILD_DIR=build
 MAIN_PATH=cmd/api/main.go
-DOCKER_IMAGE=collex:latest
+DOCKER_IMAGE=techpharma:latest
 
 # Go related variables
 GOCMD=go
@@ -440,82 +440,3 @@ watch-types:
 		echo "No file watcher found. Install fswatch (macOS) or inotify-tools (Linux)"; \
 		exit 1; \
 	fi
-
-# Setup type generation environment
-types-setup:
-	@echo "Setting up type generation environment..."
-	@go install github.com/gzuidhof/tygo@latest
-	@mkdir -p client/src/types/generated
-	@mkdir -p client/src/types/backup
-	@chmod +x scripts/generate-types-enhanced.sh
-	@chmod +x scripts/test-type-generation.sh
-	@chmod +x scripts/fix-generated-types.js
-	@echo "Type generation environment setup complete!"
-
-# Full development workflow with type generation
-dev-with-types: generate-types-enhanced
-	@echo "Starting development with fresh types..."
-	@make run &
-	@if [ -d "client" ]; then \
-		cd client && npm run dev; \
-	else \
-		echo "Client directory not found"; \
-	fi
-
-# Help
-help:
-	@echo "Available targets:"
-	@echo "  build                  - Build the application"
-	@echo "  build-linux            - Build for Linux"
-	@echo "  clean                  - Clean build artifacts"
-	@echo "  test                   - Run tests"
-	@echo "  test-coverage          - Run tests with coverage"
-	@echo "  test-race              - Run tests with race detection"
-	@echo "  bench                  - Run benchmarks"
-	@echo "  deps                   - Install dependencies"
-	@echo "  run                    - Run the application"
-	@echo "  dev                    - Run with hot reload"
-	@echo "  watch                  - Run local development server in watch mode"
-	@echo "  watch-full             - Full development with type generation and watch mode"
-	@echo "  watch-backend          - Backend only watch mode (types already generated)"
-	@echo "  dev-server             - Comprehensive development server with setup"
-	@echo "  dev-server-no-types    - Development server without type generation"
-	@echo "  dev-server-no-db       - Development server without database check"
-	@echo "  lint                   - Lint the code"
-	@echo "  fmt                    - Format code"
-	@echo "  vet                    - Vet code"
-	@echo "  mocks                  - Generate mocks"
-	@echo "  docs                   - Generate API documentation"
-	@echo "  docker-build           - Build production Docker images"
-	@echo "  docker-run             - Start production containers"
-	@echo "  docker-down            - Stop production containers"
-	@echo "  docker-dev             - Start development containers"
-	@echo "  docker-dev-down        - Stop development containers"
-	@echo "  podman-run             - Start production containers with Podman"
-	@echo "  podman-dev             - Start development containers with Podman"
-	@echo "  podman-dev-build       - Build development Podman images"
-	@echo "  podman-dev-migrate     - Run migrations in development container with Podman"
-	@echo "  podman-dev-status      - View development container status with Podman"
-	@echo "  container-status       - View container status"
-	@echo "  container-clean        - Clean up containers and volumes"
-	@echo "  container-migrate      - Run migrations in production container"
-	@echo "  container-migrate-dev  - Run migrations in development container"
-	@echo "  dev-containers         - Development workflow with containers"
-	@echo "  migrate                - Run database migrations"
-	@echo "  migrate-status         - Check migration status"
-	@echo "  migrate-create         - Create new migration"
-	@echo "  migrate-rollback       - Rollback migration"
-	@echo "  fix-db-permissions     - Fix database permissions"
-	@echo "  security               - Run security scan"
-	@echo "  generate-types         - Generate TypeScript types"
-	@echo "  generate-types-enhanced - Enhanced type generation with utilities"
-	@echo "  test-types             - Test type generation"
-	@echo "  watch-types            - Watch for changes and regenerate types"
-	@echo "  types-setup            - Setup type generation environment"
-	@echo "  dev-with-types         - Development workflow with type generation"
-	@echo "  check                  - Run fmt, vet, lint, test"
-	@echo "  ci                     - Run CI pipeline"
-	@echo "  release                - Build release version"
-	@echo "  help                   - Show this help"
-
-.PHONY: all build build-linux clean test test-coverage test-race bench deps run dev watch watch-full watch-backend dev-server dev-server-no-types dev-server-no-db lint fmt vet mocks docs docker-build docker-run docker-down docker-dev docker-dev-down podman-run podman-dev podman-dev-build podman-dev-migrate podman-dev-status container-status container-clean container-migrate container-migrate-dev dev-containers migrate migrate-status migrate-create migrate-rollback fix-db-permissions security generate-types generate-types-enhanced test-types watch-types types-setup dev-with-types check pre-commit ci release help

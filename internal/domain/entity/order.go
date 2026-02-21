@@ -7,18 +7,20 @@ import (
 // Order represents a completed order
 type Order struct {
 	BaseModel
-	OrderNumber     string      `json:"orderNumber" gorm:"uniqueIndex;not null"`
-	UserID          uuid.UUID   `json:"userId" gorm:"type:uuid;not null"`
-	User            *User       `json:"user,omitempty" gorm:"foreignKey:UserID"`
-	PaymentID       uuid.UUID   `json:"paymentId" gorm:"type:uuid;not null"`
-	PharmacyID      uuid.UUID   `json:"pharmacyId" gorm:"type:uuid;index"`               // ADD THIS
-	Pharmacy        *Pharmacy   `json:"pharmacy,omitempty" gorm:"foreignKey:PharmacyID"` // ADD THIS
-	Payment         *Payment    `json:"payment,omitempty" gorm:"foreignKey:PaymentID"`
-	TotalAmount     float64     `json:"totalAmount" gorm:"type:decimal(10,2);not null"`
-	Status          string      `json:"status" gorm:"default:'pending'"` // pending, confirmed, processing, shipped, delivered, cancelled
-	DeliveryAddress string      `json:"deliveryAddress"`
-	PrescriptionURL string      `json:"prescriptionURL" gorm:"type:text"`
-	OrderItems      []OrderItem `json:"orderItems" gorm:"foreignKey:OrderID"`
+	OrderNumber     string         `json:"orderNumber" gorm:"uniqueIndex;not null"`
+	UserID          uuid.UUID      `json:"userId" gorm:"type:uuid;not null"`
+	User            *User          `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	PaymentID       uuid.UUID      `json:"paymentId" gorm:"type:uuid;not null"`
+	PharmacyID      uuid.UUID      `json:"pharmacyId" gorm:"type:uuid;index"`               // ADD THIS
+	Pharmacy        *Pharmacy      `json:"pharmacy,omitempty" gorm:"foreignKey:PharmacyID"` // ADD THIS
+	DeliveryAgentID *uuid.UUID     `json:"deliveryAgentId,omitempty" gorm:"type:uuid;index"`
+	DeliveryAgent   *DeliveryAgent `json:"deliveryAgent,omitempty" gorm:"foreignKey:DeliveryAgentID"`
+	Payment         *Payment       `json:"payment,omitempty" gorm:"foreignKey:PaymentID"`
+	TotalAmount     float64        `json:"totalAmount" gorm:"type:decimal(10,2);not null"`
+	Status          string         `json:"status" gorm:"default:'pending'"` // pending, confirmed, processing, shipped, delivered, cancelled
+	DeliveryAddress string         `json:"deliveryAddress"`
+	PrescriptionURL string         `json:"prescriptionURL" gorm:"type:text"`
+	OrderItems      []OrderItem    `json:"orderItems" gorm:"foreignKey:OrderID"`
 }
 
 func (Order) TableName() string {

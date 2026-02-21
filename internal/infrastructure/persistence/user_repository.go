@@ -32,6 +32,7 @@ func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Use
 	if err := r.db.WithContext(ctx).
 		Preload("Doctor").
 		Preload("Pharmacy").
+		Preload("DeliveryAgent").
 		First(&user, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -47,6 +48,7 @@ func (r *userRepository) GetByPhoneNumber(ctx context.Context, phoneNumber strin
 		Preload("Role").
 		Preload("Doctor").
 		Preload("Pharmacy").
+		Preload("DeliveryAgent").
 		Where("phone_number = ?", phoneNumber).
 		First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -62,6 +64,7 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*entity.
 	if err := r.db.WithContext(ctx).
 		Preload("Doctor").
 		Preload("Pharmacy").
+		Preload("DeliveryAgent").
 		Where("email = ?", email).
 		First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

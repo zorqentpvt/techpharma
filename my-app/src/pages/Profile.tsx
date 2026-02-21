@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { ChevronDown, Lock, Power, X } from "lucide-react";
+import { ChevronDown, Lock, Power, X, MapPin, Map as MapIcon } from "lucide-react";
 import EditIcon from "@mui/icons-material/Edit";
 import { updateProfile, updateProfilepic } from "../api/authapir";
 
 interface Address {
-  latitude?: number;
-  longitude?: number;
+  latitude?: number | string;
+  longitude?: number | string;
   address?: string;
   city?: string;
   state?: string;
@@ -45,6 +45,14 @@ interface PharmacyInfo {
   isActive?: boolean;
 }
 
+interface DeliveryAgentInfo {
+  id?: string;
+  vehicleNumber?: string;
+  licenseNumber?: string;
+  status?: string;
+  isAvailable?: boolean;
+}
+
 interface ProfileData {
   id?: string;
   username: string;
@@ -63,6 +71,7 @@ interface ProfileData {
   contactInfo?: ContactInfo;
   doctor?: DoctorInfo;
   pharmacy?: PharmacyInfo;
+  deliveryAgent?: DeliveryAgentInfo;
   status?: string;
   language?: string;
   isEmailVerified?: boolean;
@@ -192,6 +201,7 @@ export default function ProfilePage() {
         firsttime: parsedUserData.firsttime,
         doctor: parsedUserData.doctor,
         pharmacy: parsedUserData.pharmacy,
+        deliveryAgent: parsedUserData.deliveryAgent,
       };
 
       console.log("✅ Data loaded:", populated);
@@ -310,6 +320,11 @@ export default function ProfilePage() {
         ...tempData,
         // Explicitly exclude Avatar from the update payload
         Avatar: undefined,
+        address: {
+          ...tempData.address,
+          latitude: tempData.address?.latitude ? Number(tempData.address.latitude) : 0,
+          longitude: tempData.address?.longitude ? Number(tempData.address.longitude) : 0,
+        }
       };
 
       // Remove Avatar key completely
@@ -461,6 +476,7 @@ export default function ProfilePage() {
 
   const isDoctor = userData.roleId?.toLowerCase() === "doctor";
   const isPharmacy = userData.roleId?.toLowerCase() === "pharmacy";
+  const isDeliveryAgent = userData.roleId?.toLowerCase() === "delivery_agent";
 
   // Helper function to get value from nested objects
   const getValue = (name: string): string => {
@@ -483,6 +499,70 @@ export default function ProfilePage() {
     if (name.includes('doctor.')) return handleDoctorChange;
     if (name.includes('pharmacy.')) return handlePharmacyChange;
     return handleChange;
+  };
+
+  const toggleAgentStatus = async () => {
+    const currentStatus = userData.deliveryAgent?.status || "offline";
+    const newStatus = currentStatus === "online" ? "offline" : "online";
+    
+    try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${BASE_URL}/api/delivery/status`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+             // Update local state
+             const updatedAgent = { ...userData.deliveryAgent, status: newStatus, isAvailable: newStatus === "online" };
+             const updatedUserData = { ...userData, deliveryAgent: updatedAgent };
+             
+             setUserData(updatedUserData);
+             setTempData(updatedUserData);
+             
+             // Update local storage
+             const storedUserData = localStorage.getItem("userdata");
+             if (storedUserData) {
+                 const parsed = JSON.parse(storedUserData);
+                 localStorage.setItem("userdata", JSON.stringify({ ...parsed, deliveryAgent: updatedAgent }));
+             }
+             alert(`Status updated to ${newStatus}`);
+        } else {
+            alert("Failed to update status");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error updating status");
+    }
+  };
+
+  const handleGetCurrentLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setTempData((prev) => ({
+            ...prev,
+            address: {
+              ...prev.address,
+              latitude,
+              longitude,
+            },
+          }));
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          alert("Unable to retrieve location. Please allow location access.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
   };
 
   return (
@@ -540,6 +620,24 @@ export default function ProfilePage() {
               <input type="checkbox" className="sr-only" checked={userData.doctor?.isActive ?? userData.isActive} onChange={toggleActiveMode} />
               <div className={`w-12 h-6 rounded-full p-1 transition ${(userData.doctor?.isActive ?? userData.isActive) ? "bg-green-500" : "bg-gray-400"}`}>
                 <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition ${(userData.doctor?.isActive ?? userData.isActive) ? "translate-x-6" : ""}`} />
+              </div>
+            </label>
+          </div>
+        )}
+
+        {/* Delivery Agent Status Toggle */}
+        {isDeliveryAgent && (
+          <div className="flex items-center justify-between mb-6 bg-blue-50 px-4 py-3 rounded-lg border border-blue-200">
+            <span className="text-gray-700 font-medium">Delivery Status ({userData.deliveryAgent?.status || "offline"}):</span>
+            <label className="inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                className="sr-only" 
+                checked={userData.deliveryAgent?.status === "online"} 
+                onChange={toggleAgentStatus} 
+              />
+              <div className={`w-12 h-6 rounded-full p-1 transition ${userData.deliveryAgent?.status === "online" ? "bg-green-500" : "bg-gray-400"}`}>
+                <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition ${userData.deliveryAgent?.status === "online" ? "translate-x-6" : ""}`} />
               </div>
             </label>
           </div>
@@ -656,6 +754,41 @@ export default function ProfilePage() {
               disabled={!editMode}
             />
           </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <InputField 
+              label="Latitude" 
+              name="address.latitude" 
+              value={getValue('address.latitude')}
+              onChange={getOnChange('address.latitude')}
+              disabled={!editMode}
+              type="number"
+            />
+            <InputField 
+              label="Longitude" 
+              name="address.longitude" 
+              value={getValue('address.longitude')}
+              onChange={getOnChange('address.longitude')}
+              disabled={!editMode}
+              type="number"
+            />
+          </div>
+          {editMode && (
+            <button
+              type="button"
+              onClick={handleGetCurrentLocation}
+              className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm mt-2"
+            >
+              <MapPin size={16} /> Get Exact Location
+            </button>
+          )}
+          {(getValue('address.latitude') && getValue('address.longitude')) && (
+            <div className="mt-2">
+              <a href={`https://www.google.com/maps?q=${getValue('address.latitude')},${getValue('address.longitude')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline text-sm">
+                <MapIcon size={16} /> View on Google Maps
+              </a>
+            </div>
+          )}
           
           <div className="grid grid-cols-2 gap-4">
             <InputField 

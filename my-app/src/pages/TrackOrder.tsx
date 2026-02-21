@@ -60,7 +60,7 @@ export default function TrackOrder() {
   if (error) return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-red-500">{error}</div>;
   if (!order) return <div className="min-h-screen flex items-center justify-center bg-gray-50">Order not found</div>;
 
-  const steps = ["pending", "confirmed", "preparing", "ready for pickup", "delivered"];
+  const steps = ["pending", "confirmed", "preparing", "ready for pickup", "out_for_delivery", "delivered"];
   
   let normalizedStatus = order.status.toLowerCase();
   if (normalizedStatus === "completed") normalizedStatus = "delivered";
@@ -114,7 +114,7 @@ export default function TrackOrder() {
                                 {getStatusIcon(step, index)}
                             </div>
                             <span className={`absolute top-12 text-xs font-medium capitalize whitespace-nowrap ${index <= currentStepIndex ? 'text-gray-800' : 'text-gray-400'}`}>
-                                {step}
+                                {step.replace(/_/g, ' ')}
                             </span>
                         </div>
                     ))}

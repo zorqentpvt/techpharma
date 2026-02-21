@@ -22,7 +22,7 @@ import { fetchConsultations, getdocstat } from "../api/docApi";
 // ==================== TYPES ====================
 interface User {
   username: string;
-  role: "admin" | "doctor" | "pharmacy" | "normal";
+  role: "admin" | "doctor" | "pharmacy" | "normal" | "delivery_agent";
 }
 
 interface Reminder {
@@ -72,9 +72,10 @@ const HEALTH_TIPS = [
 
 const ROLE_BACKGROUNDS: Record<string, string> = {
   admin: "/images/admin.jpg",
-  doctor: "/images/doc.jpg",
+  doctor: "/images/cons.jpg",
   pharmacy: "/images/pharma1.png",
   normal: "/images/user.png",
+  delivery_agent: "/images/pharma1.png",
 };
 
 const TIP_CHANGE_INTERVAL = 4000; // 4 seconds
@@ -138,6 +139,13 @@ export default function Home() {
   const [userOrders, setUserOrders] = useState<Order[]>([]);
   const [visibleOrderCount, setVisibleOrderCount] = useState(INITIAL_VISIBLE_ORDERS);
 
+  // ===== Delivery Agent State =====
+  const [agentStats, setAgentStats] = useState({
+    totalAssigned: 0,
+    delivered: 0,
+    pending: 0,
+  });
+
   // ===== UI State =====
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [showHealthTips, setShowHealthTips] = useState(true);
@@ -175,6 +183,9 @@ export default function Home() {
             break;
           case "normal":
             await loadUserData();
+            break;
+          case "delivery_agent":
+            await loadDeliveryAgentData();
             break;
         }
       } catch (error) {
@@ -233,6 +244,28 @@ export default function Home() {
       setVisibleOrderCount(INITIAL_VISIBLE_ORDERS);
     } catch (error) {
       console.error("Failed to load user orders:", error);
+    }
+  };
+
+  const loadDeliveryAgentData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:8080/api/delivery/orders`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        const orders = data.data;
+        const delivered = orders.filter((o: any) => o.status === "delivered" || o.status === "completed").length;
+        const pending = orders.filter((o: any) => o.status !== "delivered" && o.status !== "completed" && o.status !== "cancelled").length;
+        setAgentStats({
+          totalAssigned: orders.length,
+          delivered,
+          pending,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load delivery agent data:", error);
     }
   };
 
@@ -316,6 +349,37 @@ export default function Home() {
             </span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+
+  const renderDeliveryAgentDashboard = () => (
+    <div className="bg-white/90 rounded-2xl shadow-lg p-6 mb-6 backdrop-blur-sm">
+      <h2 className="text-2xl font-semibold text-[#084377] mb-4">
+        Delivery Dashboard
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div className="bg-blue-50 rounded-lg p-4">
+          <p className="text-sm text-gray-600">Total Assigned</p>
+          <p className="text-2xl font-bold text-[#084377]">{agentStats.totalAssigned}</p>
+        </div>
+        <div className="bg-green-50 rounded-lg p-4">
+          <p className="text-sm text-gray-600">Delivered</p>
+          <p className="text-2xl font-bold text-green-600">{agentStats.delivered}</p>
+        </div>
+        <div className="bg-yellow-50 rounded-lg p-4">
+          <p className="text-sm text-gray-600">Pending</p>
+          <p className="text-2xl font-bold text-yellow-600">{agentStats.pending}</p>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <button
+          onClick={() => navigate("/dashboard/agent-orders")}
+          className="w-full py-3 bg-[#0f4c81] text-white font-semibold rounded-lg hover:bg-[#0c3d68] transition-colors"
+        >
+          View My Deliveries →
+        </button>
       </div>
     </div>
   );
@@ -542,6 +606,7 @@ export default function Home() {
         {user.role === "doctor" && renderDoctorDashboard()}
         {user.role === "normal" && renderNormalUserDashboard()}
         {user.role === "admin" && renderAdminDashboard()}
+        {user.role === "delivery_agent" && renderDeliveryAgentDashboard()}
       </div>
     </div>
   );

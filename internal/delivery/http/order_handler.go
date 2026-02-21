@@ -517,8 +517,16 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 		Quantity int    `json:"quantity"`
 	}
 
+	type DeliveryAgentInfo struct {
+		Name          string `json:"name"`
+		Phone         string `json:"phone"`
+		Avatar        string `json:"avatar"`
+		VehicleNumber string `json:"vehicleNumber"`
+	}
+
 	type OrderResponse struct {
 		ID              string             `json:"id"`
+		OrderNumber     string             `json:"orderNumber"`
 		CustomerName    string             `json:"customerName"`
 		CustomerPhone   string             `json:"customerPhone"`
 		PrescriptionURL string             `json:"prescriptionURL"`
@@ -531,6 +539,7 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 		PharmacyPhone   string             `json:"pharmacyPhone"`
 		DeliveryAddress string             `json:"deliveryAddress"`
 		PaymentMethod   string             `json:"paymentMethod"`
+		DeliveryAgent   *DeliveryAgentInfo `json:"deliveryAgent,omitempty"`
 	}
 
 	orderResponses := []OrderResponse{}
@@ -554,8 +563,23 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 			})
 		}
 
+		var agentInfo *DeliveryAgentInfo
+		if order.DeliveryAgent != nil && order.DeliveryAgent.User != nil {
+			avatar := ""
+			if order.DeliveryAgent.User.Avatar != nil {
+				avatar = *order.DeliveryAgent.User.Avatar
+			}
+			agentInfo = &DeliveryAgentInfo{
+				Name:          order.DeliveryAgent.User.FirstName + " " + order.DeliveryAgent.User.LastName,
+				Phone:         order.DeliveryAgent.User.PhoneNumber,
+				Avatar:        avatar,
+				VehicleNumber: order.DeliveryAgent.VehicleNumber,
+			}
+		}
+
 		orderResponses = append(orderResponses, OrderResponse{
 			ID:              order.ID.String(),
+			OrderNumber:     order.OrderNumber,
 			CustomerName:    order.User.FirstName + " " + order.User.LastName,
 			CustomerPhone:   order.User.PhoneNumber,
 			PrescriptionURL: order.Payment.PrescriptionURL,
@@ -568,6 +592,7 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 			PharmacyPhone:   pharmacy.PhoneNumber,
 			DeliveryAddress: order.DeliveryAddress,
 			PaymentMethod:   order.Payment.PaymentMethod,
+			DeliveryAgent:   agentInfo,
 		})
 	}
 

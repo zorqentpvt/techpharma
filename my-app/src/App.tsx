@@ -24,6 +24,9 @@ import PharmacyPage from "./pages/PharmacyPage";
 import Viewdoc from "./pages/Viewdoc";
 import Viewpharm from "./pages/Viewpharm";
 import TrackOrder from "./pages/TrackOrder";
+import DeliveryAgents from "./pages/DeliveryAgents";
+import AgentOrders from "./pages/AgentOrders";
+import DeliveryHistory from "./pages/DeliveryHistory";
 
 function App() {
   return (
@@ -35,39 +38,44 @@ function App() {
 
       <Routes>
         {/* Auth routes */}
-        
         <Route path="/" element={<SignIn />} />
         <Route path="/signup-form" element={<SignupForm />} />
         <Route path="/videocall" element={<VideoCall />} />
-  
-         
-
-
-
 
         {/* Dashboard with nested routes */}
         <Route path="/dashboard" element={<Dashboard />}>
           {/* Default /dashboard shows Home */}
           <Route index element={<Home />} />
 
-          {/* All other dashboard pages */}
-          <Route path="admin/doctor" element={<DoctorPage />} /> 
-            <Route path="admin/pharmacy" element={<PharmacyPage />} />
-            <Route path="admin/pharmacies/view/:id"  element={<Viewpharm />}/>
-            <Route path="admin/doctor/view/:id"  element={<Viewdoc />}/>
+          {/* Admin routes */}
+          <Route path="admin/doctor" element={<DoctorPage />} />
+          <Route path="admin/pharmacy" element={<PharmacyPage />} />
+          <Route path="admin/pharmacies/view/:id" element={<Viewpharm />} />
+          <Route path="admin/doctor/view/:id" element={<Viewdoc />} />
+
+          {/* Pharmacy routes */}
           <Route path="store" element={<Store />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="agents" element={<DeliveryAgents />} />
+          <Route path="delivery-history" element={<DeliveryHistory />} />
+
+          {/* Delivery Agent routes */}
+          <Route path="agent-orders" element={<AgentOrders />} />
+
+          {/* Normal user routes */}
+          <Route path="medicine" element={<Medicines />} />
+          <Route path="doctor" element={<Doctors />} />
+          <Route path="cart" element={<Cart />} />
           <Route path="pay" element={<Pay />} />
           <Route path="chatbot" element={<ChatbotInterface />} />
+          <Route path="track/:orderId" element={<TrackOrder />} />
+
+          {/* Shared routes */}
           <Route path="consult" element={<Consultings />} />
-          <Route path="medicine" element={<Medicines />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="cart" element={<Cart />} />
-          <Route path="transaction" element={<Transaction />} />
-          <Route path="doctor" element={<Doctors />} />
           <Route path="schedule" element={<Schedule />} />
           <Route path="appointments" element={<Appointments />} />
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="track/:orderId" element={<TrackOrder />} />
+          <Route path="transaction" element={<Transaction />} />
 
           {/* Redirect /dashboard/logout to root */}
           <Route path="logout" element={<Navigate to="/" replace />} />

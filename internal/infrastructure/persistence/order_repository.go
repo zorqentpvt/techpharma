@@ -328,6 +328,10 @@ func (r *OrderRepository) GetOrderByID(ctx context.Context, orderID uuid.UUID) (
 	return &order, nil
 }
 
+func (r *OrderRepository) Update(ctx context.Context, order *entity.Order) error {
+	return r.db.WithContext(ctx).Save(order).Error
+}
+
 // GetUserOrders retrieves all orders for a user with pagination
 func (r *OrderRepository) GetUserOrders(ctx context.Context, userID uuid.UUID, page, limit int) ([]*entity.Order, int64, error) {
 	var orders []*entity.Order
@@ -427,6 +431,7 @@ func (r *OrderRepository) GetPharmacyOrders(ctx context.Context, pharmacyID uuid
 		Preload("OrderItems.Medicine").
 		Preload("User").
 		Preload("Payment").
+		Preload("DeliveryAgent.User").
 		Order("orders.created_at DESC").
 		Offset((filter.Page - 1) * filter.Limit).
 		Limit(filter.Limit).
@@ -473,4 +478,16 @@ func (r *OrderRepository) GetPaymentInfo(ctx context.Context, paymentID uuid.UUI
 		return nil, err
 	}
 	return &payment, nil
+}
+
+func (r *OrderRepository) GetOrdersByDeliveryAgentID(ctx context.Context, agentID uuid.UUID) ([]*entity.Order, error) {
+	var orders []*entity.Order
+	err := r.db.WithContext(ctx).
+		Preload("OrderItems.Medicine").
+		Preload("User").
+		Preload("Payment").
+		Where("delivery_agent_id = ?", agentID).
+		Order("created_at DESC").
+		Find(&orders).Error
+	return orders, err
 }

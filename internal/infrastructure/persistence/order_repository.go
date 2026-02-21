@@ -210,68 +210,83 @@ func (r *OrderRepository) recalculateTotal(ctx context.Context, cartID uuid.UUID
 		Where("id = ?", cartID).
 		Update("total_amount", total).Error
 }
-func (r *OrderRepository) CreateOrderFromCart(ctx context.Context, cart *entity.Cart, paymentID uuid.UUID, deliveryAddress string) (*entity.Order, error) {
-	var order *entity.Order
+func (r *OrderRepository) CreateOrderFromCart(ctx context.Context, cart *entity.Cart, paymentID uuid.UUID, deliveryAddress string) ([]*entity.Order, error) {
+	var orders []*entity.Order
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Generate order number
-		payment, err := r.GetPaymentInfo(ctx, paymentID)
-		if err != nil {
-			return err
-		}
-		if payment == nil {
-			return errors.New("payment not found")
-		}
-
-		// Create order
-		order = &entity.Order{
-			OrderNumber:     payment.OrderID,
-			UserID:          cart.UserID,
-			PaymentID:       paymentID,
-			TotalAmount:     cart.TotalAmount,
-			Status:          "confirmed",
-			DeliveryAddress: deliveryAddress,
-		}
-
-		if err := tx.Create(order).Error; err != nil {
+		var payment entity.Payment
+		if err := tx.First(&payment, "id = ?", paymentID).Error; err != nil {
 			return err
 		}
 
-		// Create order items from cart medicines
-		for _, cartMedicine := range cart.Medicines {
-			orderItem := &entity.OrderItem{
-				OrderID:    order.ID,
-				MedicineID: cartMedicine.MedicineID,
-				Quantity:   cartMedicine.Quantity,
-				Price:      cartMedicine.Medicine.Price,
-				Subtotal:   float64(cartMedicine.Quantity) * cartMedicine.Medicine.Price,
+		// Group medicines by pharmacy
+		pharmacyItems := make(map[uuid.UUID][]entity.CartMedicine)
+		for _, item := range cart.Medicines {
+			pharmacyItems[item.Medicine.PharmacyID] = append(pharmacyItems[item.Medicine.PharmacyID], item)
+		}
+
+		orderCount := 0
+		totalOrders := len(pharmacyItems)
+
+		for _, items := range pharmacyItems {
+			orderCount++
+
+			// Calculate subtotal for this order
+			var orderTotal float64
+			for _, item := range items {
+				orderTotal += item.Medicine.Price * float64(item.Quantity)
 			}
 
-			if err := tx.Create(orderItem).Error; err != nil {
+			// Generate order number (append suffix if multiple orders)
+			orderNumber := payment.OrderID
+			if totalOrders > 1 {
+				orderNumber = fmt.Sprintf("%s-%d", payment.OrderID, orderCount)
+			}
+
+			order := &entity.Order{
+				OrderNumber:     orderNumber,
+				UserID:          cart.UserID,
+				PaymentID:       paymentID,
+				TotalAmount:     orderTotal,
+				Status:          "confirmed",
+				DeliveryAddress: deliveryAddress,
+			}
+
+			if err := tx.Create(order).Error; err != nil {
 				return err
 			}
 
-			// Update medicine stock
-			result := tx.Model(&entity.Medicine{}).
-				Where("id = ? AND quantity >= ?", cartMedicine.MedicineID, cartMedicine.Quantity).
-				UpdateColumn("quantity", gorm.Expr("quantity - ?", cartMedicine.Quantity))
-			if result.Error != nil {
-				return result.Error
-			}
-			if result.RowsAffected == 0 {
-				return fmt.Errorf("insufficient stock for medicine %s", cartMedicine.MedicineID)
-			}
-		}
+			// Create order items
+			for _, cartMedicine := range items {
+				orderItem := &entity.OrderItem{
+					OrderID:    order.ID,
+					MedicineID: cartMedicine.MedicineID,
+					Quantity:   cartMedicine.Quantity,
+					Price:      cartMedicine.Medicine.Price,
+					Subtotal:   float64(cartMedicine.Quantity) * cartMedicine.Medicine.Price,
+				}
 
-		// Reload with relationships
-		if err := tx.Preload("OrderItems.Medicine").
-			Preload("User").
-			First(order, order.ID).Error; err != nil {
-			return err
+				if err := tx.Create(orderItem).Error; err != nil {
+					return err
+				}
+
+				// Update medicine stock
+				result := tx.Model(&entity.Medicine{}).
+					Where("id = ? AND quantity >= ?", cartMedicine.MedicineID, cartMedicine.Quantity).
+					UpdateColumn("quantity", gorm.Expr("quantity - ?", cartMedicine.Quantity))
+				if result.Error != nil {
+					return result.Error
+				}
+				if result.RowsAffected == 0 {
+					return fmt.Errorf("insufficient stock for medicine %s", cartMedicine.MedicineID)
+				}
+			}
+			orders = append(orders, order)
 		}
 
 		return nil
 	})
-	return order, err
+	return orders, err
 }
 
 // ClearCart clears all items from user's cart

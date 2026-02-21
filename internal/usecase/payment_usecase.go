@@ -318,7 +318,7 @@ func (u *PaymentUseCase) verifySignature(message, signature string) bool {
 
 // Order management methods integrated into PaymentUseCase
 
-func (u *PaymentUseCase) CreateOrderFromCart(ctx context.Context, cart *entity.Cart, paymentID uuid.UUID, deliveryAddress string) (*entity.Order, error) {
+func (u *PaymentUseCase) CreateOrderFromCart(ctx context.Context, cart *entity.Cart, paymentID uuid.UUID, deliveryAddress string) ([]*entity.Order, error) {
 	// Validate cart has items
 	if len(cart.Medicines) == 0 {
 		return nil, errors.New("cart is empty")

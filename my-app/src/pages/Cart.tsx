@@ -3,8 +3,11 @@ import CartItems from "../components/CartItems";
 import { cartdata, removecart } from "../api/medapir";
 import { useNavigate } from "react-router-dom";
 
+const BASE_URL = "http://localhost:8080";
+
 type Product = {
   id: string;
+  medicineId: string;
   name: string;
   description: string;
   price: number;
@@ -38,6 +41,7 @@ const Cart: React.FC<CartProps> = ({ userId }) => {
         if (response.success && response.data) {
           const medicines: Product[] = response.data.medicines.map((item: any) => ({
             id: item.id,
+            medicineId: item.medicine.id,
             name: item.medicine.name,
             description: item.medicine.description,
             price: item.medicine.price,
@@ -75,12 +79,30 @@ const Cart: React.FC<CartProps> = ({ userId }) => {
     navigate("/dashboard/pay"); // navigate to pay page
   };
 
-  const handleQuantityChange = (productId: string, quantity: number) => {
+  const handleQuantityChange = async (productId: string, quantity: number) => {
     if (!orderSummary) return;
+
+    const product = orderSummary.products.find((p) => p.id === productId);
+    if (!product) return;
+
     const updatedProducts = orderSummary.products.map((p) =>
       p.id === productId ? { ...p, quantity } : p
     );
     setOrderSummary({ ...orderSummary, products: updatedProducts });
+
+    try {
+      const token = localStorage.getItem("token");
+      await fetch(`${BASE_URL}/api/user/update-cart`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ medicine_id: product.medicineId, quantity }),
+      });
+    } catch (error) {
+      console.error("Error updating cart quantity:", error);
+    }
   };
 
   const handleRemove = async (productId: string) => {

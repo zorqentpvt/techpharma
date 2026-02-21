@@ -527,9 +527,24 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 		Status          string             `json:"status"`
 		OrderDate       time.Time          `json:"orderDate"`
 		Pharmacy        string             `json:"pharmacy"`
+		PharmacyAddress string             `json:"pharmacyAddress"`
+		PharmacyPhone   string             `json:"pharmacyPhone"`
+		DeliveryAddress string             `json:"deliveryAddress"`
+		PaymentMethod   string             `json:"paymentMethod"`
 	}
 
 	orderResponses := []OrderResponse{}
+	pharmacyAddress := pharmacy.Address
+	if pharmacy.City != "" {
+		pharmacyAddress += ", " + pharmacy.City
+	}
+	if pharmacy.State != "" {
+		pharmacyAddress += ", " + pharmacy.State
+	}
+	if pharmacy.PostalCode != "" {
+		pharmacyAddress += " - " + pharmacy.PostalCode
+	}
+
 	for _, order := range orders {
 		medicines := []MedicineResponse{}
 		for _, item := range order.OrderItems {
@@ -549,6 +564,10 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 			Status:          order.Status,
 			OrderDate:       order.CreatedAt,
 			Pharmacy:        pharmacy.Name,
+			PharmacyAddress: pharmacyAddress,
+			PharmacyPhone:   pharmacy.PhoneNumber,
+			DeliveryAddress: order.DeliveryAddress,
+			PaymentMethod:   order.Payment.PaymentMethod,
 		})
 	}
 

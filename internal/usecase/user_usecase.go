@@ -10,7 +10,6 @@ import (
 	"github.com/skryfon/collex/internal/domain/entity"
 	"github.com/skryfon/collex/internal/domain/errors"
 	"github.com/skryfon/collex/internal/domain/repository"
-	"github.com/skryfon/collex/internal/domain/service"
 	"github.com/skryfon/collex/internal/types"
 )
 
@@ -36,15 +35,13 @@ type UserUseCase interface {
 
 // userUseCase implements the UserUseCase interface
 type userUseCase struct {
-	userRepo     repository.UserRepository
-	emailService service.EmailService
+	userRepo repository.UserRepository
 }
 
 // NewUserUseCase creates a new instance of userUseCase
-func NewUserUseCase(userRepo repository.UserRepository, emailService service.EmailService) UserUseCase {
+func NewUserUseCase(userRepo repository.UserRepository) UserUseCase {
 	return &userUseCase{
-		userRepo:     userRepo,
-		emailService: emailService,
+		userRepo: userRepo,
 	}
 }
 

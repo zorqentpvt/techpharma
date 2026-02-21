@@ -38,7 +38,6 @@ type authUseCase struct {
 	securityRepo repository.SecurityEventRepository
 	tokenService service.TokenService
 	authService  service.AuthService
-	emailservice service.EmailService // Added Email Service for password reset
 	config       *config.EmailConfig
 }
 
@@ -49,7 +48,6 @@ func NewAuthUseCase(
 	securityRepo repository.SecurityEventRepository,
 	tokenService service.TokenService,
 	authService service.AuthService,
-	emailService service.EmailService, // Added Email Service for password reset
 	cfg *config.Config,
 
 ) AuthUseCase {
@@ -59,7 +57,6 @@ func NewAuthUseCase(
 		securityRepo: securityRepo,
 		tokenService: tokenService,
 		authService:  authService,
-		emailservice: emailService,
 		config:       &cfg.Email,
 	}
 }
@@ -404,11 +401,7 @@ func (uc *authUseCase) ForgotPassword(ctx context.Context, req *types.ForgotPass
 	}
 	// Add reason for suspension if applicable
 
-	if err := uc.emailservice.Send(context.Background(), entity.EmailTypePasswordReset, emailData); err != nil {
-		// Log error but don't fail status update
-		println("Failed to send status update email:", err.Error())
-	}
-
+	fmt.Println(emailData)
 	return nil
 }
 

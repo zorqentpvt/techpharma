@@ -32,7 +32,6 @@ type Container struct {
 	// Domain Services
 	AuthService  service.AuthService
 	TokenService service.TokenService
-	EmailService service.EmailService
 
 	// Use Cases (Application Layer)
 	AuthUseCase       usecase.AuthUseCase
@@ -80,7 +79,6 @@ func (c *Container) initRepositories() {
 func (c *Container) initDomainServices() {
 	c.TokenService = infraService.NewTokenService(c.Config)
 	c.AuthService = infraService.NewAuthService(c.UserRepository)
-	c.EmailService = infraService.NewEmailService(c.Config)
 }
 
 // initUseCases initializes all use cases
@@ -91,12 +89,10 @@ func (c *Container) initUseCases() {
 		c.SecurityRepository,
 		c.TokenService,
 		c.AuthService,
-		c.EmailService,
 		c.Config,
 	)
 	c.UserUseCase = usecase.NewUserUseCase(
 		c.UserRepository,
-		c.EmailService,
 	)
 	c.MedicineUseCase = usecase.NewMedicineUseCase(
 		c.MedicineRepository,
@@ -164,11 +160,6 @@ func (c *Container) GetTokenService() service.TokenService {
 // GetAuthService returns the authentication service
 func (c *Container) GetAuthService() service.AuthService {
 	return c.AuthService
-}
-
-// GetEmailService returns the email service
-func (c *Container) GetEmailService() service.EmailService {
-	return c.EmailService
 }
 
 // GetUserRepository returns the user repository

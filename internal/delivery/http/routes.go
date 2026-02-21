@@ -44,10 +44,13 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 	orderHandler := NewOrderHandlerClean(
 		container.OrderUsecase,
 		container.PaymentUseCase,
+		container.UserRepository,
+		container.Config,
 	)
 	paymentHandler := NewPaymentHandlerClean(
 		container.PaymentUseCase,
 		container.UserRepository,
+		container.Config,
 	)
 	appoinmentHandler := NewAppoinmentHandlerClean(
 		container.AppoinmentUseCase,
@@ -64,6 +67,9 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 		authRoutes.GET("/validate", authHandler.ValidateToken)
 		authRoutes.POST("/forgot-password", authHandler.ForgotPassword)
 		authRoutes.POST("/reset-password", authHandler.ResetPassword)
+		authRoutes.GET("/invoice/:orderId", paymentHandler.GenerateInvoice)
+		authRoutes.GET("/track/:orderId", orderHandler.TrackOrder)
+
 	}
 
 	// Protected routes (require authentication)

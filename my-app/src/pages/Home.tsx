@@ -392,11 +392,17 @@ export default function Home() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex flex-col items-end gap-1">
                     <p className="font-bold text-[#0f4c81]">
                       ₹{order.payment.amount}
                     </p>
                     <p className="text-xs text-gray-500">{order.orderNumber}</p>
+                    <button
+                      onClick={() => navigate(`/dashboard/track/${order.id}`)}
+                      className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition font-medium"
+                    >
+                      Track Order
+                    </button>
                   </div>
                 </motion.div>
               ))}

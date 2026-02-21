@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice - ORD1771086220e5fea8f2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .invoice-container {
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 0;
+        }
+
+        /* Header Section */
+        .invoice-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 40px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .header-left p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .order-number {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        /* Body Section */
+        .invoice-body {
+            padding: 50px;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .info-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .info-section h3 {
+            color: #1e3a8a;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+
+        .info-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #1e293b;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-confirmed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* Items Section */
+        .items-section {
+            margin: 40px 0;
+        }
+
+        .items-section h3 {
+            color: #1e3a8a;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .items-table thead {
+            background: #1e3a8a;
+            color: white;
+        }
+
+        .items-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .items-table th:nth-child(2),
+        .items-table th:nth-child(3),
+        .items-table th:nth-child(4) {
+            text-align: right;
+        }
+
+        .items-table td {
+            padding: 20px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        .items-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .medicine-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.05em;
+            margin-bottom: 5px;
+        }
+
+        .medicine-description {
+            font-size: 0.9em;
+            color: #64748b;
+            margin: 5px 0;
+        }
+
+        .medicine-details {
+            font-size: 0.85em;
+            color: #94a3b8;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        .items-table td:nth-child(2),
+        .items-table td:nth-child(3),
+        .items-table td:nth-child(4) {
+            text-align: right;
+            vertical-align: top;
+            padding-top: 25px;
+        }
+
+        .quantity {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1em;
+        }
+
+        .price {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .subtotal {
+            font-weight: 700;
+            color: #1e3a8a;
+            font-size: 1.1em;
+        }
+
+        /* Total Section */
+        .total-section {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .total-box {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px 40px;
+            border-radius: 8px;
+            min-width: 350px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .total-row.grand-total {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        /* Pharmacy Info */
+        .pharmacy-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 40px;
+        }
+
+        .pharmacy-section h3 {
+            color: #1e3a8a;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .pharmacy-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .pharmacy-item {
+            font-size: 0.95em;
+        }
+
+        .pharmacy-item strong {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .pharmacy-item span {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .pharmacy-address {
+            grid-column: 1 / -1;
+            margin-top: 10px;
+        }
+
+        /* Footer */
+        .invoice-footer {
+            text-align: center;
+            padding: 30px 50px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 40px;
+        }
+
+        .invoice-footer p {
+            color: #64748b;
+            font-size: 0.95em;
+            margin: 5px 0;
+        }
+
+        .invoice-footer .thank-you {
+            color: #1e3a8a;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        /* Print Button */
+        .print-button {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s;
+        }
+
+        .print-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .print-controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .invoice-container {
+                box-shadow: none;
+                max-width: 100%;
+                margin: 0;
+            }
+
+            .print-controls,
+            .print-button {
+                display: none !important;
+            }
+
+            .invoice-body {
+                padding: 30px;
+            }
+
+            .invoice-header {
+                padding: 30px;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .invoice-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+
+            .header-right {
+                text-align: center;
+            }
+
+            .info-grid,
+            .pharmacy-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .invoice-body {
+                padding: 30px 20px;
+            }
+
+            .items-table {
+                font-size: 0.9em;
+            }
+
+            .items-table th,
+            .items-table td {
+                padding: 10px 8px;
+            }
+
+            .total-box {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-controls">
+        <button class="print-button" onclick="window.print()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Print Invoice
+        </button>
+    </div>
+
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="header-left">
+                <h1>INVOICE</h1>
+                <p>TechPharma</p>
+            </div>
+            <div class="header-right">
+                <div class="order-number">
+                    Order #<span id="orderNumber">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="invoice-body">
+            <!-- Information Grid -->
+            <div class="info-grid">
+                <!-- Order Information -->
+                <div class="info-section">
+                    <h3>Order Information</h3>
+                    <div class="info-row">
+                        <span class="info-label">Order ID:</span>
+                        <span class="info-value" id="orderId">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Order Date:</span>
+                        <span class="info-value" id="orderDate">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" id="orderStatus">-</span>
+                    </div>
+                </div>
+
+                <!-- Payment Information -->
+                <div class="info-section">
+                    <h3>Payment Information</h3>
+                    <div class="info-row">
+                        <span class="info-label">Payment ID:</span>
+                        <span class="info-value" id="paymentId">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Payment Method:</span>
+                        <span class="info-value" id="paymentMethod">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Payment Status:</span>
+                        <span class="info-value" id="paymentStatus">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Razorpay Order:</span>
+                        <span class="info-value" id="razorpayOrderId" style="font-size: 0.85em;">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Section -->
+            <div class="items-section">
+                <h3>Order Items</h3>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Medicine Details</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderItemsBody">
+                        <!-- Items will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Total Section -->
+            <div class="total-section">
+                <div class="total-box">
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">₹0.00</span>
+                    </div>
+                    <div class="total-row grand-total">
+                        <span>Total Amount:</span>
+                        <span id="totalAmount">₹0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pharmacy Information -->
+            <div class="pharmacy-section" id="pharmacySection">
+                <h3>Pharmacy Information</h3>
+                <div class="pharmacy-grid" id="pharmacyGrid">
+                    <!-- Pharmacy details will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="invoice-footer">
+            <p class="thank-you">Thank you for your purchase!</p>
+            <p>For any queries, please contact the pharmacy directly.</p>
+            <p style="margin-top: 15px; font-size: 0.85em;">This is a computer-generated invoice and does not require a signature.</p>
+        </div>
+    </div>
+
+    <script>
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-IN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return `₹${parseFloat(amount).toFixed(2)}`;
+        }
+
+        // Populate invoice data
+        function populateInvoice(invoiceData) {
+            const data = invoiceData.data;
+
+            // Update page title
+            document.title = `Invoice - ${data.orderNumber}`;
+
+            // Order information
+            document.getElementById('orderNumber').textContent = data.orderNumber;
+            document.getElementById('orderId').textContent = data.orderNumber;
+            document.getElementById('orderDate').textContent = formatDate(data.createdAt);
+            
+            const orderStatusEl = document.getElementById('orderStatus');
+            orderStatusEl.innerHTML = `<span class="status-badge status-confirmed">${data.status}</span>`;
+
+            // Payment information
+            document.getElementById('paymentId').textContent = data.payment.razorpayPaymentId || '-';
+            document.getElementById('paymentMethod').textContent = (data.payment.paymentMethod || 'N/A').toUpperCase();
+            
+            const paymentStatusEl = document.getElementById('paymentStatus');
+            paymentStatusEl.innerHTML = `<span class="status-badge status-paid">${data.payment.status}</span>`;
+            
+            document.getElementById('razorpayOrderId').textContent = data.payment.razorpayOrderId || '-';
+
+            // Order items
+            const itemsBody = document.getElementById('orderItemsBody');
+            itemsBody.innerHTML = ''; // Clear existing content
+            let subtotal = 0;
+
+            data.orderItems.forEach(item => {
+                const medicine = item.medicine;
+                const row = document.createElement('tr');
+                
+                const expiryDate = new Date(medicine.expiryDate).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="medicine-name">${medicine.name}</div>
+                        <div class="medicine-description">${medicine.description}</div>
+                        <div class="medicine-details">
+                            <strong>Manufacturer:</strong> ${medicine.manufacturer}<br>
+                            <strong>Batch:</strong> ${medicine.batchNumber} | <strong>Expiry:</strong> ${expiryDate}
+                        </div>
+                    </td>
+                    <td><span class="quantity">${item.quantity}</span></td>
+                    <td><span class="price">${formatCurrency(item.price)}</span></td>
+                    <td><span class="subtotal">${formatCurrency(item.subtotal)}</span></td>
+                `;
+                
+                itemsBody.appendChild(row);
+                subtotal += parseFloat(item.subtotal);
+            });
+
+            // Total calculations
+            const totalAmount = data.payment.amount || subtotal;
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('totalAmount').textContent = formatCurrency(totalAmount);
+
+            // Pharmacy information
+            if (data.orderItems.length > 0 && data.orderItems[0].medicine.pharmacy) {
+                const pharmacy = data.orderItems[0].medicine.pharmacy;
+                const pharmacyGrid = document.getElementById('pharmacyGrid');
+                
+                pharmacyGrid.innerHTML = `
+                    <div class="pharmacy-item">
+                        <strong>Name:</strong> <span>${pharmacy.name}</span>
+                    </div>
+                    <div class="pharmacy-item">
+                        <strong>License:</strong> <span>${pharmacy.licenseNumber}</span>
+                    </div>
+                    <div class="pharmacy-item">
+                        <strong>Email:</strong> <span>${pharmacy.email}</span>
+                    </div>
+                    <div class="pharmacy-item">
+                        <strong>Phone:</strong> <span>${pharmacy.phoneNumber}</span>
+                    </div>
+                    <div class="pharmacy-item pharmacy-address">
+                        <strong>Address:</strong> <span>${pharmacy.address}, ${pharmacy.city}, ${pharmacy.state} - ${pharmacy.postalCode}, ${pharmacy.country}</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Show error state
+        function showError(message) {
+            document.getElementById('orderItemsBody').innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 40px;">
+                        <div style="font-size: 1.2em; color: #dc2626;">
+                            ❌ ${message}<br>
+                            <small style="color: #64748b; margin-top: 10px; display: block;">Please check if the API server is running on http://localhost:8080</small>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Fetch invoice data from API
+        async function fetchInvoiceData(orderNumber) {
+            try {
+                const response = await fetch(`http://localhost:8080/api/auth/invoice/${orderNumber}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    populateInvoice(data);
+                } else {
+                    showError('Failed to fetch invoice data');
+                }
+            } catch (error) {
+                console.error('Error fetching invoice data:', error);
+                showError(`Error: ${error.message}`);
+            }
+        }
+
+        // Load invoice data when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            let orderNumber = 'ORD1771086220e5fea8f2'; // Default order number
+            
+            // Check URL parameter (?order=XXX)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('order')) {
+                orderNumber = urlParams.get('order');
+            }
+            // Extract from URL path
+            else {
+                const pathParts = window.location.pathname.split('/');
+                const invoiceIndex = pathParts.indexOf('invoice');
+                if (invoiceIndex !== -1 && pathParts[invoiceIndex + 1]) {
+                    orderNumber = pathParts[invoiceIndex + 1];
+                }
+            }
+            
+            fetchInvoiceData(orderNumber);
+        });
+    </script>
+</body>
+</html>

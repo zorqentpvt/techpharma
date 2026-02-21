@@ -156,6 +156,7 @@ func (u *PaymentUseCase) CreateOrder(ctx context.Context, userID uuid.UUID, req 
 		DeliveryAddress: req.DeliveryAddress,
 		PrescriptionURL: req.PrescriptionURL,
 	}
+	fmt.Printf("Payment: %+v\n", payment.DeliveryAddress)
 
 	if err := u.paymentRepo.Create(ctx, payment); err != nil {
 		return nil, fmt.Errorf("failed to save payment: %w", err)
@@ -317,7 +318,7 @@ func (u *PaymentUseCase) verifySignature(message, signature string) bool {
 
 // Order management methods integrated into PaymentUseCase
 
-func (u *PaymentUseCase) CreateOrderFromCart(ctx context.Context, cart *entity.Cart, paymentID uuid.UUID, deliveryAddress string) (*entity.Order, error) {
+func (u *PaymentUseCase) CreateOrderFromCart(ctx context.Context, cart *entity.Cart, paymentID uuid.UUID, deliveryAddress string) ([]*entity.Order, error) {
 	// Validate cart has items
 	if len(cart.Medicines) == 0 {
 		return nil, errors.New("cart is empty")
@@ -369,4 +370,14 @@ func (u *PaymentUseCase) UpdateOrderStatus(ctx context.Context, orderID uuid.UUI
 	}
 
 	return u.orderRepo.UpdateOrderStatus(ctx, orderID, status)
+}
+func (u *PaymentUseCase) GetOrderByOrderID(ctx context.Context, orderID string) (*entity.Order, error) {
+	order, err := u.orderRepo.GetOrderByOrderID(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+	if order == nil {
+		return nil, errors.New("order not found")
+	}
+	return order, nil
 }

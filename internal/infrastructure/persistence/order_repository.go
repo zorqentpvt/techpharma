@@ -451,7 +451,7 @@ func (r *OrderRepository) GetOrderByOrderID(ctx context.Context, orderID string)
 	var order entity.Order
 	err := r.db.WithContext(ctx).
 		Joins("JOIN payments ON payments.id = orders.payment_id").
-		Where("payments.order_id = ?", orderID).
+		Where("payments.order_id = ? OR orders.order_number = ?", orderID).
 		Preload("Payment").
 		Preload("OrderItems.Medicine.Pharmacy").
 		First(&order).Error

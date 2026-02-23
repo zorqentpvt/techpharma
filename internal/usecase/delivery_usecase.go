@@ -3,10 +3,13 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/smtp"
 
 	"github.com/google/uuid"
 	"github.com/skryfon/collex/internal/domain/entity"
 	"github.com/skryfon/collex/internal/domain/repository"
+	"github.com/skryfon/collex/pkg/config"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -50,13 +53,15 @@ type deliveryUseCase struct {
 	deliveryRepo DeliveryAgentRepository
 	userRepo     repository.UserRepository
 	orderRepo    repository.OrderRepository
+	config       *config.Config
 }
 
-func NewDeliveryUseCase(deliveryRepo DeliveryAgentRepository, userRepo repository.UserRepository, orderRepo repository.OrderRepository) DeliveryUseCase {
+func NewDeliveryUseCase(deliveryRepo DeliveryAgentRepository, userRepo repository.UserRepository, orderRepo repository.OrderRepository, cfg *config.Config) DeliveryUseCase {
 	return &deliveryUseCase{
 		deliveryRepo: deliveryRepo,
 		userRepo:     userRepo,
 		orderRepo:    orderRepo,
+		config:       cfg,
 	}
 }
 
@@ -183,7 +188,33 @@ func (u *deliveryUseCase) UpdateDeliveryStatus(ctx context.Context, agentUserID 
 		return errors.New("unauthorized: order not assigned to this agent")
 	}
 
-	return u.orderRepo.UpdateOrderStatus(ctx, orderID, status)
+	if err := u.orderRepo.UpdateOrderStatus(ctx, orderID, status); err != nil {
+		return err
+	}
+
+	if status == "out_for_delivery" || status == "delivered" || status == "completed" {
+		go func() {
+			user, err := u.userRepo.GetByID(context.Background(), order.UserID)
+			if err != nil {
+				fmt.Printf("Failed to get user for email notification: %v\n", err)
+				return
+			}
+
+			// Fetch agent user details
+			agentUser, err := u.userRepo.GetByID(context.Background(), agentUserID)
+			var agentName, agentPhone string
+			if err == nil && agentUser != nil {
+				agentName = agentUser.FirstName + " " + agentUser.LastName
+				agentPhone = agentUser.PhoneNumber
+			}
+
+			if user != nil && user.Email != nil && *user.Email != "" {
+				u.sendEmail(*user.Email, user.FirstName, order.OrderNumber, status, agentName, agentPhone)
+			}
+		}()
+	}
+
+	return nil
 }
 
 func (u *deliveryUseCase) UpdateAgentStatus(ctx context.Context, agentUserID uuid.UUID, status string) error {
@@ -280,4 +311,52 @@ func (u *deliveryUseCase) UnassignOrder(ctx context.Context, pharmacyUserID uuid
 		return updater.Update(ctx, order)
 	}
 	return errors.New("order repository does not support update")
+}
+
+func (u *deliveryUseCase) sendEmail(to, name, orderNumber, status, agentName, agentPhone string) {
+	from := u.config.Email.FromEmail
+	password := u.config.Email.Password
+	const (
+		smtpHost = "smtp.gmail.com"
+		smtpPort = "587"
+	)
+
+	subject := fmt.Sprintf("Order Status Update - %s", status)
+	trackingURL := fmt.Sprintf("http://localhost:8080/static/track.html?order=%s", orderNumber)
+	agentDetails := ""
+	if agentName != "" {
+		agentDetails = fmt.Sprintf(`
+<div style="margin-top: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 5px;">
+	<h3 style="margin-top: 0;">Delivery Agent Details</h3>
+	<p style="margin: 5px 0;"><strong>Name:</strong> %s</p>
+	<p style="margin: 5px 0;"><strong>Phone:</strong> %s</p>
+</div>`, agentName, agentPhone)
+	}
+
+	body := fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<body>
+<p>Dear %s,</p>
+<p>Your order #%s status has been updated to: <strong>%s</strong></p>
+%s
+<p>You can track your order using the link below:</p>
+<a href="%s" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; border-radius: 4px;">Track Order</a>
+<p>If you have any questions, feel free to reach out!</p>
+<p>Best regards,<br>TechPharma Team</p>
+</body>
+</html>`, name, orderNumber, status, agentDetails, trackingURL)
+
+	msg := []byte("From: " + from + "\r\n" +
+		"To: " + to + "\r\n" +
+		"Subject: " + subject + "\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: text/html; charset=\"utf-8\"\r\n" +
+		"\r\n" +
+		body + "\r\n")
+
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, msg)
+	if err != nil {
+		fmt.Printf("Failed to send email: %v\n", err)
+	}
 }

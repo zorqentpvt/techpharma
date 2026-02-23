@@ -889,6 +889,12 @@ func (o *OrderHandlerClean) TrackOrder(c *gin.Context) {
 		ImageURL     string  `json:"imageUrl,omitempty"`
 	}
 
+	type DeliveryAgentInfo struct {
+		Name          string `json:"name"`
+		Phone         string `json:"phone"`
+		VehicleNumber string `json:"vehicleNumber"`
+	}
+
 	type TrackOrderResponse struct {
 		ID              uuid.UUID           `json:"id"`
 		OrderNumber     string              `json:"orderNumber"`
@@ -897,6 +903,7 @@ func (o *OrderHandlerClean) TrackOrder(c *gin.Context) {
 		TotalAmount     float64             `json:"totalAmount"`
 		DeliveryAddress string              `json:"deliveryAddress"`
 		Items           []OrderItemResponse `json:"items"`
+		DeliveryAgent   *DeliveryAgentInfo  `json:"deliveryAgent,omitempty"`
 	}
 
 	items := make([]OrderItemResponse, 0)
@@ -914,6 +921,15 @@ func (o *OrderHandlerClean) TrackOrder(c *gin.Context) {
 		})
 	}
 
+	var agentInfo *DeliveryAgentInfo
+	if order.DeliveryAgent != nil && order.DeliveryAgent.User != nil {
+		agentInfo = &DeliveryAgentInfo{
+			Name:          order.DeliveryAgent.User.FirstName + " " + order.DeliveryAgent.User.LastName,
+			Phone:         order.DeliveryAgent.User.PhoneNumber,
+			VehicleNumber: order.DeliveryAgent.VehicleNumber,
+		}
+	}
+
 	resp := TrackOrderResponse{
 		ID:              order.ID,
 		OrderNumber:     order.OrderNumber,
@@ -922,6 +938,7 @@ func (o *OrderHandlerClean) TrackOrder(c *gin.Context) {
 		TotalAmount:     order.Payment.Amount,
 		DeliveryAddress: order.DeliveryAddress,
 		Items:           items,
+		DeliveryAgent:   agentInfo,
 	}
 
 	c.JSON(http.StatusOK, response.Response{

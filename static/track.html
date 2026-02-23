@@ -102,6 +102,11 @@
             color: #78350f;
         }
 
+        .status-out_for_delivery {
+            background: #cffafe;
+            color: #0e7490;
+        }
+
         .status-completed {
             background: #d1fae5;
             color: #065f46;
@@ -563,6 +568,25 @@
                             <div class="detail-value" id="orderId" style="font-size: 0.85em;"></div>
                         </div>
                     </div>
+
+                    <!-- Agent Info -->
+                    <div id="agentInfo" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                        <h3 style="font-size: 1.1em; margin-bottom: 10px;">Delivery Agent Details</h3>
+                        <div class="order-details-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Name</div>
+                                <div class="detail-value" id="agentName"></div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Phone</div>
+                                <div class="detail-value" id="agentPhone"></div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Vehicle</div>
+                                <div class="detail-value" id="agentVehicle"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Progress Tracker -->
@@ -587,9 +611,9 @@
                             <div class="step-label">Preparing</div>
                         </div>
                         
-                        <div class="progress-step" data-status="ready for pickup">
-                            <div class="step-circle" id="step-ready for pickup">📦</div>
-                            <div class="step-label">Ready for Pickup</div>
+                        <div class="progress-step" data-status="out_for_delivery">
+                            <div class="step-circle" id="step-out_for_delivery">🚚</div>
+                            <div class="step-label">Out for Delivery</div>
                         </div>
                         
                         <div class="progress-step" data-status="completed">
@@ -639,7 +663,7 @@
 
     <script>
         // Status order for progress
-        const STATUS_ORDER = ['pending', 'confirmed', 'preparing', 'ready for pickup', 'completed'];
+        const STATUS_ORDER = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'completed'];
         
         // Format currency
         function formatCurrency(amount) {
@@ -711,9 +735,8 @@
         // Get status class
         function getStatusClass(status) {
             const statusLower = status.toLowerCase();
-            // Handle "ready for pickup" special case
-            if (statusLower === 'ready for pickup') {
-                return 'status-ready';
+            if (statusLower === 'out_for_delivery') {
+                return 'status-out_for_delivery';
             }
             return `status-${statusLower}`;
         }
@@ -733,6 +756,16 @@
             const statusEl = document.getElementById('orderStatus');
             statusEl.textContent = data.status;
             statusEl.className = `order-status ${getStatusClass(data.status)}`;
+
+            // Agent Info
+            if (data.deliveryAgent) {
+                document.getElementById('agentInfo').style.display = 'block';
+                document.getElementById('agentName').textContent = data.deliveryAgent.name;
+                document.getElementById('agentPhone').textContent = data.deliveryAgent.phone;
+                document.getElementById('agentVehicle').textContent = data.deliveryAgent.vehicleNumber;
+            } else {
+                document.getElementById('agentInfo').style.display = 'none';
+            }
 
             // Update invoice button link
             const invoiceBtn = document.getElementById('viewInvoiceBtn');
@@ -795,7 +828,7 @@
         // Fetch order data
         async function fetchOrderData(orderNumber) {
             try {
-                const response = await fetch(`http://localhost:8080/api/auth/track/${orderNumber}`);
+                const response = await fetch(`/api/auth/track/${orderNumber}`);
                 
                 if (!response.ok) {
                     if (response.status === 404) {

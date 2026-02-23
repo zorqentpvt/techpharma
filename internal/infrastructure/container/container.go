@@ -127,6 +127,7 @@ func (c *Container) initUseCases() {
 		c.DeliveryAgentRepository,
 		c.UserRepository,
 		c.OrderRepository,
+		c.Config,
 	)
 }
 

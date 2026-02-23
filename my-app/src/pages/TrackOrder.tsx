@@ -10,6 +10,12 @@ interface OrderItemResponse {
   imageUrl?: string;
 }
 
+interface DeliveryAgentInfo {
+  name: string;
+  phone: string;
+  vehicleNumber: string;
+}
+
 interface TrackOrderResponse {
   id: string;
   orderNumber: string;
@@ -18,6 +24,7 @@ interface TrackOrderResponse {
   totalAmount: number;
   deliveryAddress: string;
   items: OrderItemResponse[];
+  deliveryAgent?: DeliveryAgentInfo;
 }
 
 const BASE_URL = "http://localhost:8080";
@@ -118,6 +125,28 @@ export default function TrackOrder() {
                             </span>
                         </div>
                     ))}
+                </div>
+             )}
+
+             {!isCancelled && (normalizedStatus === "out_for_delivery" || normalizedStatus === "delivered") && order.deliveryAgent && (
+                <div className="mt-8 bg-white p-4 rounded-xl border border-blue-100 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-blue-600" /> Delivery Agent
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Name</p>
+                      <p className="font-medium text-gray-900">{order.deliveryAgent.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Phone</p>
+                      <p className="font-medium text-gray-900">{order.deliveryAgent.phone}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Vehicle</p>
+                      <p className="font-medium text-gray-900">{order.deliveryAgent.vehicleNumber}</p>
+                    </div>
+                  </div>
                 </div>
              )}
           </div>

@@ -44,6 +44,7 @@ type Container struct {
 	PaymentUseCase    *usecase.PaymentUseCase // ✅ Keep as pointer
 	AppoinmentUseCase usecase.AppoinmentUseCase
 	DeliveryUseCase   usecase.DeliveryUseCase
+	TelegramHandler   any
 }
 
 // NewContainer creates a new dependency injection container

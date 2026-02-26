@@ -57,6 +57,14 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 		container.UserRepository,
 	)
 
+	telegramHandler := NewTelegramHandler(
+		container.AppoinmentUseCase,
+		container.UserRepository,
+		container.DoctorUseCase,
+		container.Config.Telegram.BotToken,
+	)
+	container.TelegramHandler = telegramHandler
+
 	// Delivery Agent setup
 	deliveryHandler := NewDeliveryHandlerClean(container.DeliveryUseCase)
 
@@ -74,6 +82,9 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 		authRoutes.GET("/track/:orderId", orderHandler.TrackOrder)
 
 	}
+
+	// Telegram Webhook
+	api.POST("/telegram/webhook", telegramHandler.HandleWebhook)
 
 	// Protected routes (require authentication)
 	protectedRoutes := api.Group("/")

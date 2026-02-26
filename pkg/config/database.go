@@ -9,16 +9,21 @@ import (
 
 // NewDatabaseConnection creates a new database connection with enhanced features
 func NewDatabaseConnection(cfg *Config) (*database.Database, error) {
-	log.Printf("Connecting to database at %s:%s...", cfg.Database.Host, cfg.Database.Port)
+	if cfg.Database.DatabaseURL != "" {
+		log.Println("Connecting to database using DATABASE_URL...")
+	} else {
+		log.Printf("Connecting to database at %s:%s...", cfg.Database.Host, cfg.Database.Port)
+	}
 
 	// Convert config to database config
 	dbConfig := &database.DatabaseConfig{
-		Host:     cfg.Database.Host,
-		Port:     cfg.Database.Port,
-		User:     cfg.Database.User,
-		Password: cfg.Database.Password,
-		DBName:   cfg.Database.DBName,
-		SSLMode:  cfg.Database.SSLMode,
+		Host:        cfg.Database.Host,
+		Port:        cfg.Database.Port,
+		User:        cfg.Database.User,
+		Password:    cfg.Database.Password,
+		DBName:      cfg.Database.DBName,
+		SSLMode:     cfg.Database.SSLMode,
+		DatabaseURL: cfg.Database.DatabaseURL,
 
 		// Connection pool settings
 		MaxOpenConns:    cfg.Database.MaxOpenConns,

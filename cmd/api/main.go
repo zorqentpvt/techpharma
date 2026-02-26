@@ -20,7 +20,7 @@ func main() {
 	// Run database migrations if enabled
 
 	// Initialize server with clean architecture
-	srv := server.NewCleanServer(cfg, db, cfg.Server.Port)
+	srv := server.NewServer(cfg, db, cfg.Server.Port)
 
 	// Start server
 	log.Printf("Starting server on port %s with clean architecture", cfg.Server.Port)

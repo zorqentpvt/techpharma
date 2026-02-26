@@ -12,63 +12,62 @@ import (
 	"github.com/skryfon/collex/pkg/config"
 )
 
-// AppContainer holds all application dependencies (DEPRECATED - use container.Container)
-type AppContainer struct {
-	// Add all use cases and other dependencies here
-	Config *config.Config
-	DB     *database.Database
-	// Future use cases will be added here
-}
-
 type Server struct {
 	router    *gin.Engine
 	container *container.Container
 	port      string
-	// Legacy container for backward compatibility
-	legacyContainer *AppContainer
 }
 
-// NewServer creates a new server instance (DEPRECATED - use NewCleanServer)
-func NewServer(legacyContainer *AppContainer, port string) *Server {
-	return &Server{
-		router:          gin.Default(),
-		legacyContainer: legacyContainer,
-		port:            port,
-	}
-}
-
-// NewCleanServer creates a new server instance with clean architecture
-func NewCleanServer(config *config.Config, db *database.Database, port string) *Server {
-	// Create the clean architecture container
-	container := container.NewContainer(config, db)
+func NewServer(config *config.Config, db *database.Database, port string) *Server {
+	c := container.NewContainer(config, db)
 
 	return &Server{
 		router:    gin.Default(),
-		container: container,
+		container: c,
 		port:      port,
 	}
 }
 
-// SetupRoutes configures all the routes for the server
 func (s *Server) SetupRoutes() {
-	if s.container != nil {
-		// Use clean architecture routes
-		http.SetupCleanRoutes(s.router, s.container)
-	} else {
+	if s.container == nil {
 		log.Fatal("No container configured for server")
 	}
+
+	http.SetupCleanRoutes(s.router, s.container)
+
 	s.router.Static("/uploads", "./uploads")
 	s.router.Static("/static", "./static")
 	s.router.Static("/invoice", "./invoice")
-
-	// As the application grows, you can add more route setup functions:
-	// http.SetupProductRoutes(s.router, s.container.ProductUseCase)
-	// http.SetupOrderRoutes(s.router, s.container.OrderUseCase)
 }
 
-// Start starts the HTTP server
+func (s *Server) registerTelegramWebhook() {
+	if s.container.TelegramHandler == nil {
+		log.Println("[Telegram] Handler not initialized, skipping webhook registration")
+		return
+	}
+	telegramHandler, ok := s.container.TelegramHandler.(*http.TelegramHandler)
+	if !ok || telegramHandler == nil {
+		log.Println("[Telegram] Handler not initialized, skipping webhook registration")
+		return
+	}
+
+	serverURL := s.container.Config.ServerURL
+	if serverURL == "" {
+		log.Println("[Telegram] SERVER_URL not set, skipping webhook registration")
+		return
+	}
+
+	if err := telegramHandler.SetWebhook(serverURL); err != nil {
+		log.Printf("[Telegram] Failed to register webhook: %v", err)
+		return
+	}
+
+	log.Printf("[Telegram] Webhook registered successfully at %s/api/telegram/webhook", serverURL)
+}
+
 func (s *Server) Start() error {
 	s.SetupRoutes()
+	s.registerTelegramWebhook()
 
 	address := fmt.Sprintf(":%s", s.port)
 	log.Printf("Server starting on %s", address)

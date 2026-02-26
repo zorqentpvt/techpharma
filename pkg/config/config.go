@@ -13,13 +13,15 @@ import (
 
 // Config holds all application configuration
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	JWT      JWTConfig
-	App      AppConfig
-	CORS     Cors        // Added CORS configuration
-	Email    EmailConfig // ✅ add this
-	Payment  Payment
+	ServerURL string
+	Server    ServerConfig
+	Database  DatabaseConfig
+	JWT       JWTConfig
+	App       AppConfig
+	CORS      Cors        // Added CORS configuration
+	Email     EmailConfig // ✅ add this
+	Payment   Payment
+	Telegram  TelegramConfig
 }
 
 type Cors struct {
@@ -41,12 +43,13 @@ type ServerConfig struct {
 
 // DatabaseConfig holds database-related configuration
 type DatabaseConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DBName   string
-	SSLMode  string
+	Host        string
+	Port        string
+	User        string
+	Password    string
+	DBName      string
+	SSLMode     string
+	DatabaseURL string
 
 	// Connection pool settings
 	MaxOpenConns    int
@@ -97,12 +100,17 @@ type Payment struct {
 	RazorpaySecret string
 }
 
+type TelegramConfig struct {
+	BotToken string
+}
+
 // LoadConfig loads configuration from environment variables and .env files
 func LoadConfig() *Config {
 	// Load .env file if it exists
 	loadEnvFile()
 
 	return &Config{
+		ServerURL: getEnv("SERVER_URL", "https://convert-italia-township-listing.trycloudflare.com"),
 		Server: ServerConfig{
 			Port:         getEnv("SERVER_PORT", "8080"),
 			ReadTimeout:  getDurationEnv("SERVER_READ_TIMEOUT", 30*time.Second),
@@ -110,12 +118,13 @@ func LoadConfig() *Config {
 			IdleTimeout:  getDurationEnv("SERVER_IDLE_TIMEOUT", 60*time.Second),
 		},
 		Database: DatabaseConfig{
-			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnv("DB_PORT", "5432"),
-			User:     getEnv("DB_USER", "postgres"),
-			Password: getEnv("DB_PASSWORD", "postgres"),
-			DBName:   getEnv("DB_NAME", "collex"),
-			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
+			Host:        getEnv("DB_HOST", "localhost"),
+			Port:        getEnv("DB_PORT", "5432"),
+			User:        getEnv("DB_USER", "postgres"),
+			Password:    getEnv("DB_PASSWORD", "postgres"),
+			DBName:      getEnv("DB_NAME", "collex"),
+			SSLMode:     getEnv("DB_SSL_MODE", "disable"),
+			DatabaseURL: getEnv("DATABASE_URL", ""),
 
 			// Connection pool settings
 			MaxOpenConns:    getIntEnv("DB_MAX_OPEN_CONNS", 100),
@@ -167,6 +176,9 @@ func LoadConfig() *Config {
 		Payment: Payment{
 			RazorpayKey:    getEnv("RAZORPAY_KEY", "rzp_test_RVStDFGuG7R1H7"),
 			RazorpaySecret: getEnv("RAZORPAY_SECRET", "Sc12luS2VZkhXgEg85GyGhO0"),
+		},
+		Telegram: TelegramConfig{
+			BotToken: getEnv("TELEGRAM_BOT_TOKEN", ""),
 		},
 	}
 }

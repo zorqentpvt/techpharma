@@ -14,12 +14,13 @@ import (
 
 // DatabaseConfig represents database configuration
 type DatabaseConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DBName   string
-	SSLMode  string
+	Host        string
+	Port        string
+	User        string
+	Password    string
+	DBName      string
+	SSLMode     string
+	DatabaseURL string
 
 	// Connection pool settings
 	MaxOpenConns    int
@@ -40,8 +41,13 @@ type Database struct {
 
 // NewDatabase creates a new database connection with connection pooling
 func NewDatabase(cfg *DatabaseConfig) (*Database, error) {
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode)
+	var dsn string
+	if cfg.DatabaseURL != "" {
+		dsn = cfg.DatabaseURL
+	} else {
+		dsn = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+			cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode)
+	}
 
 	// Configure GORM with performance optimizations
 	gormConfig := &gorm.Config{

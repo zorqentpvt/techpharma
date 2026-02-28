@@ -2,7 +2,6 @@ package http
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -61,6 +60,7 @@ func (h *MedicineHandlerClean) GetMedicines(c *gin.Context) {
 		SearchQuery: req.SearchQuery,
 		Latitude:    lattitude,
 		Longitude:   longitude,
+		Radius:      req.Radius,
 	}
 	medicinedata, err := h.medicineUseCase.GetMedicines(c.Request.Context(), filter)
 	if err != nil {
@@ -71,8 +71,6 @@ func (h *MedicineHandlerClean) GetMedicines(c *gin.Context) {
 		})
 		return
 	}
-	log.Printf("%f,%f", lattitude, longitude)
-	fmt.Printf("latitude: %f, longitude: %f, radius: %d\n", lattitude, longitude, req.Radius)
 	c.JSON(http.StatusOK, response.Response{
 		Success: true,
 		Data:    medicinedata,

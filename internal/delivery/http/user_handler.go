@@ -2,10 +2,8 @@ package http
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -1055,6 +1053,14 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 			pharmacyUpdate.PostalCode = *req.Pharmacy.PostalCode
 			updateNeeded = true
 		}
+		if req.Pharmacy.Latitude != nil {
+			pharmacyUpdate.Latitude = currentUser.Address.Latitude
+			updateNeeded = true
+		}
+		if req.Pharmacy.Longitude != nil {
+			pharmacyUpdate.Longitude = currentUser.Address.Longitude
+			updateNeeded = true
+		}
 		if req.Pharmacy.State != nil {
 			pharmacyUpdate.State = *req.Pharmacy.State
 			updateNeeded = true
@@ -1067,84 +1073,6 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 		if req.Pharmacy.PharmacyPhone != nil {
 			pharmacyUpdate.PhoneNumber = *req.Pharmacy.PharmacyPhone
 			updateNeeded = true
-		}
-
-		// Calculate Latitude and Longitude from address
-		var currentPharmacy entity.Pharmacy
-		if currentUser.Pharmacy != nil {
-			currentPharmacy = *currentUser.Pharmacy
-		}
-
-		resolveField := func(newVal *string, oldVal string) string {
-			if newVal != nil {
-				return *newVal
-			}
-			return oldVal
-		}
-
-		address := resolveField(req.Pharmacy.PharmacyAddress, currentPharmacy.Address)
-		city := resolveField(req.Pharmacy.City, currentPharmacy.City)
-		state := resolveField(req.Pharmacy.State, currentPharmacy.State)
-		country := resolveField(req.Pharmacy.Country, currentPharmacy.Country)
-		postalCode := resolveField(req.Pharmacy.PostalCode, currentPharmacy.PostalCode)
-
-		// Check if any address field is being updated
-		addressUpdated := req.Pharmacy.PharmacyAddress != nil || req.Pharmacy.City != nil ||
-			req.Pharmacy.State != nil || req.Pharmacy.Country != nil || req.Pharmacy.PostalCode != nil
-
-		if addressUpdated {
-			cleanAddr := func(s string) string {
-				s = strings.TrimSpace(s)
-				for strings.Contains(s, ", ,") {
-					s = strings.ReplaceAll(s, ", ,", ",")
-				}
-				return strings.Trim(s, ", ")
-			}
-
-			// Strategy 1: Full Address
-			fullAddress := cleanAddr(fmt.Sprintf("%s, %s, %s, %s, %s", address, city, state, postalCode, country))
-
-			var lat, lon float64
-			var err error
-			var found bool
-
-			if fullAddress != "" {
-				lat, lon, err = h.geocodeAddress(fullAddress)
-				if err == nil {
-					found = true
-				} else {
-					fmt.Printf("Failed to geocode full address '%s': %v\n", fullAddress, err)
-				}
-			}
-
-			// Strategy 2: Postal Code + Country (if full address failed)
-			if !found && postalCode != "" && country != "" {
-				postalAddr := cleanAddr(fmt.Sprintf("%s, %s", postalCode, country))
-				lat, lon, err = h.geocodeAddress(postalAddr)
-				if err == nil {
-					found = true
-				} else {
-					fmt.Printf("Failed to geocode postal address '%s': %v\n", postalAddr, err)
-				}
-			}
-
-			// Strategy 3: City + State + Country (if postal code failed)
-			if !found && city != "" && country != "" {
-				cityAddr := cleanAddr(fmt.Sprintf("%s, %s, %s", city, state, country))
-				lat, lon, err = h.geocodeAddress(cityAddr)
-				if err == nil {
-					found = true
-				} else {
-					fmt.Printf("Failed to geocode city address '%s': %v\n", cityAddr, err)
-				}
-			}
-
-			if found {
-				pharmacyUpdate.Latitude = lat
-				pharmacyUpdate.Longitude = lon
-				fmt.Printf("Geocoded address '%s' to Lat: %f, Lon: %f\n", fullAddress, lat, lon)
-				updateNeeded = true
-			}
 		}
 
 		if updateNeeded {
@@ -1440,60 +1368,4 @@ func (h *UserHandlerClean) DeleteAvatar(c *gin.Context) {
 		Success: true,
 		Message: "Avatar deleted successfully",
 	})
-}
-
-func (h *UserHandlerClean) geocodeAddress(address string) (float64, float64, error) {
-	baseURL := "https://nominatim.openstreetmap.org/search"
-	u, err := url.Parse(baseURL)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	q := u.Query()
-	q.Set("q", address)
-	q.Set("format", "json")
-	q.Set("limit", "1")
-	u.RawQuery = q.Encode()
-
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		return 0, 0, err
-	}
-	req.Header.Set("User-Agent", "TechPharmaApp/1.0")
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return 0, 0, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, 0, fmt.Errorf("geocoding API returned status: %d", resp.StatusCode)
-	}
-
-	var results []struct {
-		Lat string `json:"lat"`
-		Lon string `json:"lon"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
-		return 0, 0, err
-	}
-
-	if len(results) == 0 {
-		return 0, 0, fmt.Errorf("no results found for address")
-	}
-
-	lat, err := strconv.ParseFloat(results[0].Lat, 64)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	lon, err := strconv.ParseFloat(results[0].Lon, 64)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	return lat, lon, nil
 }

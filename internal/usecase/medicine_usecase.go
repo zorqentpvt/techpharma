@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"time"
 
@@ -55,7 +56,9 @@ func (u *medicineUseCase) GetMedicines(ctx context.Context, filter types.Medicin
 
 		for _, med := range medicines {
 			if med.Pharmacy != nil {
-				if calculateDistance(filter.Latitude, filter.Longitude, med.Pharmacy.Latitude, med.Pharmacy.Longitude) <= radius {
+				distance := calculateDistance(filter.Latitude, filter.Longitude, med.Pharmacy.Latitude, med.Pharmacy.Longitude)
+				fmt.Printf("Pharmacy: %s, Distance: %f km\n", med.Pharmacy.Name, distance)
+				if distance <= radius {
 					nearbyMedicines = append(nearbyMedicines, med)
 				}
 			}

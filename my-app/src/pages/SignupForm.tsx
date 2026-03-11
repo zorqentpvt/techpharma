@@ -29,6 +29,9 @@ export default function SignupForm() {
     licenseNumber: "",
     pharmacyName: "",
     paddress: "",
+    category: "private_standard",
+    governmentRegistrationNumber: "",
+    janAushadhiId: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -197,7 +200,73 @@ export default function SignupForm() {
                 className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <div></div>
+
+            <div>
+              <label className="block mb-1 font-medium">GST Number</label>
+              <input
+                type="text"
+                name="gstnumber"
+                value={formData.gstnumber}
+                onChange={handleChange}
+                placeholder="GST Number"
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium">Pharmacy Phone</label>
+              <input
+                type="text"
+                name="pnum"
+                value={formData.pnum}
+                onChange={handleChange}
+                placeholder="Pharmacy Contact Number"
+                className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium">Category</label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full p-2 border border-blue-400 rounded-lg bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="private_standard">Private Standard</option>
+                <option value="private_approved">Private Approved</option>
+                <option value="government">Government</option>
+                <option value="jan_aushadhi">Jan Aushadhi</option>
+              </select>
+            </div>
+
+            {formData.category === "government" && (
+              <div>
+                <label className="block mb-1 font-medium">Govt Registration No</label>
+                <input
+                  type="text"
+                  name="governmentRegistrationNumber"
+                  value={formData.governmentRegistrationNumber}
+                  onChange={handleChange}
+                  placeholder="Government Registration Number"
+                  className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
+
+            {formData.category === "jan_aushadhi" && (
+              <div>
+                <label className="block mb-1 font-medium">Jan Aushadhi ID</label>
+                <input
+                  type="text"
+                  name="janAushadhiId"
+                  value={formData.janAushadhiId}
+                  onChange={handleChange}
+                  placeholder="Jan Aushadhi ID"
+                  className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
 
             {/* file uploading */}
             <div className="flex flex-col items-start gap-3">

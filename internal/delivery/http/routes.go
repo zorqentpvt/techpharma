@@ -52,6 +52,9 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 		container.UserRepository,
 		container.Config,
 	)
+	patientEligibilityHandler := NewPatientEligibilityHandler(
+		container.PatientEligibilityUseCase,
+	)
 	appoinmentHandler := NewAppoinmentHandlerClean(
 		container.AppoinmentUseCase,
 		container.UserRepository,
@@ -94,6 +97,14 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			patientRoutes.POST("/add-cart", orderHandler.AddToCart)
 			patientRoutes.GET("/view-cart", orderHandler.GetCart)
 			patientRoutes.DELETE("/remove-cart", orderHandler.RemoveFromCart)
+
+			patientRoutes.POST("/eligibility/apply", patientEligibilityHandler.ApplyForEligibility)
+			patientRoutes.GET("/eligibility", patientEligibilityHandler.GetMyEligibility)
+			patientRoutes.GET("/eligibility/active", patientEligibilityHandler.GetActiveEligibility)
+			patientRoutes.POST("/orders/free-medicine", orderHandler.CreateFreeMedicineOrder)
+
+			patientRoutes.GET("/pharmacies", userHandler.GetActivePharmacies)
+			patientRoutes.GET("/pharmacies/:id", userHandler.GetPharmacyDetails)
 
 			patientRoutes.POST("/book-appointment", appoinmentHandler.BookAppointment)
 			patientRoutes.GET("/confirmed-appointment-slots", appoinmentHandler.ConfirmedAppionmentSlot)
@@ -171,6 +182,12 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 		{
 			// User management routes (admin only)
 			adminUserRoutes := adminRoutes.Group("/users")
+
+			adminRoutes.GET("/eligibility", patientEligibilityHandler.GetAllEligibilityRequests) // Placeholder
+			adminRoutes.PUT("/eligibility/:id/approve", patientEligibilityHandler.ApproveEligibility)
+			adminRoutes.PUT("/eligibility/:id/reject", patientEligibilityHandler.RejectEligibility)
+
+			adminRoutes.PUT("/pharmacies/:id/free-medicine", userHandler.ToggleFreeMedicineStatus)
 
 			{
 				//adminUserRoutes.GET("/roles", userHandler.FetchRoles)

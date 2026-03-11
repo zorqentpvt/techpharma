@@ -30,8 +30,10 @@ type UserUseCase interface {
 	CreatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error)
 	UpdateDoctor(ctx context.Context, doctor *entity.Doctor) (*entity.Doctor, error)
 	UpdatePharmacy(ctx context.Context, pharmacy *entity.Pharmacy) (*entity.Pharmacy, error)
-
+	GetActivePharmacies(ctx context.Context) ([]*entity.Pharmacy, error)
+	GetPharmacyDetails(ctx context.Context, id uuid.UUID) (*entity.Pharmacy, error)
 	GetDashboardStats(ctx context.Context) (*types.DashboardStatsResponse, error)
+	ToggleFreeMedicineStatus(ctx context.Context, pharmacyID uuid.UUID, enabled bool) error
 }
 
 // userUseCase implements the UserUseCase interface
@@ -648,4 +650,16 @@ func (h *userUseCase) GetDashboardStats(ctx context.Context) (*types.DashboardSt
 	}
 
 	return stats, nil
+}
+
+func (u *userUseCase) ToggleFreeMedicineStatus(ctx context.Context, pharmacyID uuid.UUID, enabled bool) error {
+	return u.userRepo.UpdatePharmacyFreeMedicineStatus(ctx, pharmacyID, enabled)
+}
+
+func (u *userUseCase) GetActivePharmacies(ctx context.Context) ([]*entity.Pharmacy, error) {
+	return u.userRepo.GetActivePharmacies(ctx)
+}
+
+func (u *userUseCase) GetPharmacyDetails(ctx context.Context, id uuid.UUID) (*entity.Pharmacy, error) {
+	return u.userRepo.GetPharmacyWithMedicines(ctx, id)
 }

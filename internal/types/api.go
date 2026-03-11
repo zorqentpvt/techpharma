@@ -64,6 +64,11 @@ type CreateUserRequest struct {
 	PharmacyAddress string `form:"paddress" json:"paddress,omitempty"`
 	GSTNumber       string `form:"gstnumber" json:"gstnumber,omitempty"`
 	PharmacyPhone   string `form:"pnum" json:"pnum,omitempty"`
+
+	Category                     string `form:"category" json:"category,omitempty"`
+	IsFreeMedicineEnabled        bool   `form:"isFreeMedicineEnabled" json:"isFreeMedicineEnabled,omitempty"`
+	GovernmentRegistrationNumber string `form:"governmentRegistrationNumber" json:"governmentRegistrationNumber,omitempty"`
+	JanAushadhiID                string `form:"janAushadhiId" json:"janAushadhiId,omitempty"`
 }
 
 // tygo:emit
@@ -340,17 +345,21 @@ type UpdateProfileRequest struct {
 	Doctor   *Doctor   `json:"doctor,omitempty"`
 }
 type Pharmacy struct {
-	PharmacyName    *string  `json:"name,omitempty"`
-	PharmacyAddress *string  `json:"address,omitempty"`
-	Latitude        *float64 `json:"latitude,omitempty"`
-	Longitude       *float64 `json:"longitude,omitempty"`
-	City            *string  `json:"city,omitempty"`
-	Country         *string  `json:"country,omitempty"`
-	PostalCode      *string  `json:"postalCode,omitempty"`
-	State           *string  `json:"state,omitempty"`
-	LicenseNumber   *string  `json:"licenseNumber,omitempty"`
-	GSTNumber       *string  `json:"gstNumber,omitempty"`
-	PharmacyPhone   *string  `json:"pharmacyPhone,omitempty"`
+	PharmacyName                 *string  `json:"name,omitempty"`
+	PharmacyAddress              *string  `json:"address,omitempty"`
+	Latitude                     *float64 `json:"latitude,omitempty"`
+	Longitude                    *float64 `json:"longitude,omitempty"`
+	City                         *string  `json:"city,omitempty"`
+	Country                      *string  `json:"country,omitempty"`
+	PostalCode                   *string  `json:"postalCode,omitempty"`
+	State                        *string  `json:"state,omitempty"`
+	LicenseNumber                *string  `json:"licenseNumber,omitempty"`
+	GSTNumber                    *string  `json:"gstNumber,omitempty"`
+	PharmacyPhone                *string  `json:"pharmacyPhone,omitempty"`
+	Category                     *string  `json:"category,omitempty"`
+	IsFreeMedicineEnabled        *bool    `json:"isFreeMedicineEnabled,omitempty"`
+	GovernmentRegistrationNumber *string  `json:"governmentRegistrationNumber,omitempty"`
+	JanAushadhiID                *string  `json:"janAushadhiId,omitempty"`
 }
 type Doctor struct {
 	IsActive         *bool    `json:"isActive,omitempty"`
@@ -607,4 +616,9 @@ type TodaysPatient struct {
 	Gender        string    `json:"gender"`
 	Time          time.Time `json:"time"`
 	Reason        string    `json:"reason"`
+}
+
+type FreeMedicineOrderRequest struct {
+	CartID     uuid.UUID `json:"cartId" binding:"required"`
+	PharmacyID uuid.UUID `json:"pharmacyId" binding:"required"`
 }

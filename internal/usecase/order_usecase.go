@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/skryfon/collex/internal/domain/entity"
+	domainErrors "github.com/skryfon/collex/internal/domain/errors"
 	"github.com/skryfon/collex/internal/domain/repository"
 	"github.com/skryfon/collex/internal/types"
 )
@@ -25,19 +26,24 @@ type OrderUseCase interface {
 
 	//Order Managem	enet Methods
 	GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, int64, error)
+	CreateFreeMedicineOrder(ctx context.Context, userID uuid.UUID, cartID uuid.UUID, pharmacyID uuid.UUID) (*entity.Order, error)
 }
 
 // orderUseCase implements the OrderUseCase interface
 type orderUseCase struct {
-	orderRepo    repository.OrderRepository
-	medicineRepo repository.MedicineRepository
+	orderRepo     repository.OrderRepository
+	medicineRepo  repository.MedicineRepository
+	userRepo      repository.UserRepository
+	eligibilityUC PatientEligibilityUseCase
 }
 
 // NewMedicineUseCase creates a new instance of medicineUseCase
-func NewOrderUseCase(orderRepo repository.OrderRepository, medicineRepo repository.MedicineRepository) OrderUseCase {
+func NewOrderUseCase(orderRepo repository.OrderRepository, medicineRepo repository.MedicineRepository, userRepo repository.UserRepository, eligibilityUC PatientEligibilityUseCase) OrderUseCase {
 	return &orderUseCase{
-		orderRepo:    orderRepo,
-		medicineRepo: medicineRepo,
+		orderRepo:     orderRepo,
+		medicineRepo:  medicineRepo,
+		userRepo:      userRepo,
+		eligibilityUC: eligibilityUC,
 	}
 }
 
@@ -130,4 +136,44 @@ func (uc *orderUseCase) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID
 
 func (uc *orderUseCase) GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, int64, error) {
 	return uc.orderRepo.GetTotalRevenue(ctx, pharmacyID)
+}
+
+func (uc *orderUseCase) CreateFreeMedicineOrder(ctx context.Context, userID uuid.UUID, cartID uuid.UUID, pharmacyID uuid.UUID) (*entity.Order, error) {
+	// Verify user eligibility
+	eligibility, err := uc.eligibilityUC.VerifyEligibilityForOrder(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	pharmacy, err := uc.orderRepo.GetPharmacyByID(ctx, pharmacyID)
+	if err != nil || pharmacy == nil {
+		return nil, domainErrors.NewDomainError("PHARMACY_NOT_FOUND", "Pharmacy not found", domainErrors.ErrNotFound)
+	}
+
+	if !pharmacy.CanProvideFreeMedicines() {
+		return nil, domainErrors.NewDomainError("PHARMACY_NOT_ELIGIBLE", "This pharmacy does not provide free medicines", domainErrors.ErrForbidden)
+	}
+
+	// Get cart
+	cart, err := uc.orderRepo.GetCartByID(ctx, cartID)
+	if err != nil || cart == nil {
+		return nil, domainErrors.NewDomainError("CART_NOT_FOUND", "Cart not found", domainErrors.ErrNotFound)
+	}
+
+	// Check if all items require a prescription
+	for _, item := range cart.Medicines {
+		if item.Medicine.ID == uuid.Nil || item.Medicine.PrescriptionRequired == nil || !*item.Medicine.PrescriptionRequired {
+			return nil, domainErrors.NewDomainError("PRESCRIPTION_REQUIRED", "All items for a free order must require a prescription.", domainErrors.ErrForbidden)
+		}
+	}
+
+	// Fetch user to get delivery address
+	user, err := uc.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, domainErrors.NewDomainError("USER_NOT_FOUND", "User not found", domainErrors.ErrNotFound)
+	}
+	deliveryAddress := user.Address.GetFullAddress()
+
+	// Create the free medicine order using repository
+	return uc.orderRepo.CreateFreeMedicineOrder(ctx, cart, pharmacyID, eligibility.ID, deliveryAddress)
 }

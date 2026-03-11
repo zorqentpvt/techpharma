@@ -330,14 +330,26 @@ func (h *UserHandlerClean) createDoctor(ctx context.Context, userID uuid.UUID, r
 
 // createPharmacy creates a pharmacy profile
 func (h *UserHandlerClean) createPharmacy(ctx context.Context, userID uuid.UUID, req *types.CreateUserRequest) error {
+	var govRegNum, janAushadhiID *string
+	if req.GovernmentRegistrationNumber != "" {
+		govRegNum = &req.GovernmentRegistrationNumber
+	}
+	if req.JanAushadhiID != "" {
+		janAushadhiID = &req.JanAushadhiID
+	}
+
 	pharmacy := &entity.Pharmacy{
-		UserID:        userID,
-		Name:          req.PharmacyName,
-		LicenseNumber: req.LicenseNumber,
-		Email:         &req.Email,
-		PhoneNumber:   req.PharmacyPhone,
-		Address:       req.PharmacyAddress,
-		IsActive:      true,
+		UserID:                       userID,
+		Name:                         req.PharmacyName,
+		LicenseNumber:                req.LicenseNumber,
+		Email:                        &req.Email,
+		PhoneNumber:                  req.PharmacyPhone,
+		Address:                      req.PharmacyAddress,
+		IsActive:                     true,
+		Category:                     entity.PharmacyCategory(req.Category),
+		IsFreeMedicineEnabled:        false,
+		GovernmentRegistrationNumber: govRegNum,
+		JanAushadhiID:                janAushadhiID,
 	}
 
 	_, err := h.userUseCase.CreatePharmacy(ctx, pharmacy)
@@ -1070,6 +1082,19 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 			updateNeeded = true
 		}
 
+		if req.Pharmacy.Category != nil {
+			pharmacyUpdate.Category = entity.PharmacyCategory(*req.Pharmacy.Category)
+			updateNeeded = true
+		}
+		if req.Pharmacy.GovernmentRegistrationNumber != nil {
+			pharmacyUpdate.GovernmentRegistrationNumber = req.Pharmacy.GovernmentRegistrationNumber
+			updateNeeded = true
+		}
+		if req.Pharmacy.JanAushadhiID != nil {
+			pharmacyUpdate.JanAushadhiID = req.Pharmacy.JanAushadhiID
+			updateNeeded = true
+		}
+
 		if req.Pharmacy.PharmacyPhone != nil {
 			pharmacyUpdate.PhoneNumber = *req.Pharmacy.PharmacyPhone
 			updateNeeded = true
@@ -1367,5 +1392,79 @@ func (h *UserHandlerClean) DeleteAvatar(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{
 		Success: true,
 		Message: "Avatar deleted successfully",
+	})
+}
+
+// ToggleFreeMedicineStatus handles PUT /admin/pharmacies/:id/free-medicine
+func (h *UserHandlerClean) ToggleFreeMedicineStatus(c *gin.Context) {
+	pharmacyIDStr := c.Param("id")
+	pharmacyID, err := uuid.Parse(pharmacyIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "Invalid pharmacy ID format",
+		})
+		return
+	}
+
+	var req struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "Request body validation failed",
+		})
+		return
+	}
+
+	if err := h.userUseCase.ToggleFreeMedicineStatus(c.Request.Context(), pharmacyID, req.Enabled); err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   "Failed to update status",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Message: "Pharmacy free medicine status updated successfully",
+	})
+}
+
+// GetActivePharmacies handles GET /api/user/pharmacies
+func (h *UserHandlerClean) GetActivePharmacies(c *gin.Context) {
+	pharmacies, err := h.userUseCase.GetActivePharmacies(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   "Failed to fetch pharmacies",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Data:    pharmacies,
+	})
+}
+
+// GetPharmacyDetails handles GET /api/user/pharmacies/:id
+func (h *UserHandlerClean) GetPharmacyDetails(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid ID format"})
+		return
+	}
+
+	pharmacy, err := h.userUseCase.GetPharmacyDetails(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, types.ErrorResponse{Error: "Pharmacy not found"})
+		return
+	}
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Data:    pharmacy,
 	})
 }

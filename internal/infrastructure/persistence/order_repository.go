@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/skryfon/collex/internal/domain/entity"
@@ -453,11 +454,54 @@ func (r *OrderRepository) GetPharmacyOrders(ctx context.Context, pharmacyID uuid
 
 	return orders, total, err
 }
+
+// GetFreeMedicineOrders retrieves all free medicine orders for a pharmacy
+func (r *OrderRepository) GetFreeMedicineOrders(ctx context.Context, pharmacyID uuid.UUID, filters types.ListPharmacyOrders) ([]*entity.Order, int64, error) {
+	var orders []*entity.Order
+	var total int64
+
+	baseQuery := r.db.WithContext(ctx).
+		Model(&entity.Order{}).
+		Joins("JOIN order_items ON order_items.order_id = orders.id").
+		Joins("JOIN medicines ON medicines.id = order_items.medicine_id").
+		Where("medicines.pharmacy_id = ? AND orders.is_free_medicine_order = ?", pharmacyID, true)
+
+	if filters.Status != "" {
+		baseQuery = baseQuery.Where("orders.status = ?", filters.Status)
+	}
+
+	if err := baseQuery.Session(&gorm.Session{}).Distinct("orders.id").Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := baseQuery.
+		Group("orders.id").
+		Preload("OrderItems.Medicine").
+		Preload("User").
+		Preload("Payment").
+		Preload("EligibilityVerification").
+		Preload("DeliveryAgent.User").
+		Order("orders.created_at DESC").
+		Offset((filters.Page - 1) * filters.Limit).
+		Limit(filters.Limit).
+		Find(&orders).Error
+
+	return orders, total, err
+}
+
+func (r *OrderRepository) GetPharmacyByID(ctx context.Context, pharmacyID uuid.UUID) (*entity.Pharmacy, error) {
+	var pharmacy entity.Pharmacy
+	if err := r.db.WithContext(ctx).First(&pharmacy, "id = ?", pharmacyID).Error; err != nil {
+		return nil, err
+	}
+	return &pharmacy, nil
+}
+
 func (r *OrderRepository) GetOrderByOrderID(ctx context.Context, orderID string) (*entity.Order, error) {
 	var order entity.Order
 	err := r.db.WithContext(ctx).
 		Joins("JOIN payments ON payments.id = orders.payment_id").
-		Where("orders.order_number = ? OR payments.order_id = ?", orderID, orderID).
+		Where("orders.order_number = ? OR payments.order_id = ? OR payments.razorpay_order_id = ?", orderID, orderID, orderID).
 		Preload("Payment").
 		Preload("OrderItems.Medicine.Pharmacy").
 		Preload("DeliveryAgent.User").
@@ -492,4 +536,100 @@ func (r *OrderRepository) GetOrdersByDeliveryAgentID(ctx context.Context, agentI
 		Order("created_at DESC").
 		Find(&orders).Error
 	return orders, err
+}
+
+func (r *OrderRepository) CreateFreeMedicineOrder(ctx context.Context, cart *entity.Cart, pharmacyID uuid.UUID, eligibilityID uuid.UUID, deliveryAddress string) (*entity.Order, error) {
+	var order *entity.Order
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. Identify items for this pharmacy
+		var items []entity.CartMedicine
+		for _, item := range cart.Medicines {
+			if item.Medicine.PharmacyID == pharmacyID {
+				items = append(items, item)
+			}
+		}
+
+		if len(items) == 0 {
+			return errors.New("no items found for this pharmacy in cart")
+		}
+
+		// 2. Generate Order ID
+		orderNumber := fmt.Sprintf("FREE-%d-%s", time.Now().Unix(), uuid.New().String()[:4])
+
+		// 3. Create Dummy Payment
+		payment := entity.Payment{
+			OrderID:         orderNumber,
+			Amount:          0,
+			Currency:        "INR",
+			UserID:          cart.UserID,
+			Status:          "success",
+			PaymentMethod:   "Free Medicine Scheme",
+			Description:     "Free Medicine Order",
+			Notes:           "{}",
+			RazorpayOrderID: orderNumber,
+		}
+		if err := tx.Create(&payment).Error; err != nil {
+			return err
+		}
+
+		// 4. Create Order
+		order = &entity.Order{
+			OrderNumber:               orderNumber,
+			UserID:                    cart.UserID,
+			PaymentID:                 payment.ID,
+			PharmacyID:                pharmacyID,
+			TotalAmount:               0,
+			Status:                    "pending_verification",
+			DeliveryAddress:           deliveryAddress,
+			IsFreeMedicineOrder:       true,
+			EligibilityVerificationID: &eligibilityID,
+		}
+
+		if err := tx.Create(order).Error; err != nil {
+			return err
+		}
+
+		// 5. Create Order Items and Deduct Stock
+		for _, item := range items {
+			orderItem := entity.OrderItem{
+				OrderID:    order.ID,
+				MedicineID: item.MedicineID,
+				PharmacyID: pharmacyID,
+				Quantity:   item.Quantity,
+				Price:      item.Medicine.Price,
+				Subtotal:   0, // Free to patient
+			}
+			if err := tx.Create(&orderItem).Error; err != nil {
+				return err
+			}
+
+			// Update stock
+			res := tx.Model(&entity.Medicine{}).
+				Where("id = ? AND quantity >= ?", item.MedicineID, item.Quantity).
+				UpdateColumn("quantity", gorm.Expr("quantity - ?", item.Quantity))
+
+			if res.Error != nil {
+				return res.Error
+			}
+			if res.RowsAffected == 0 {
+				return fmt.Errorf("insufficient stock for medicine %s", item.Medicine.Name)
+			}
+		}
+
+		// 6. Remove items from cart
+		for _, item := range items {
+			if err := tx.Delete(&item).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Reload order to return complete object
+	return r.GetOrderByID(ctx, order.ID)
 }

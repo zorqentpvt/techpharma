@@ -21,6 +21,12 @@ type Order struct {
 	DeliveryAddress string         `json:"deliveryAddress"`
 	PrescriptionURL string         `json:"prescriptionURL" gorm:"type:text"`
 	OrderItems      []OrderItem    `json:"orderItems" gorm:"foreignKey:OrderID"`
+
+	// Free Medicine Fields
+	IsFreeMedicineOrder       bool                `gorm:"default:false;index" json:"isFreeMedicineOrder"`
+	EligibilityVerificationID *uuid.UUID          `gorm:"type:uuid" json:"eligibilityVerificationId,omitempty"`
+	EligibilityVerification   *PatientEligibility `gorm:"foreignKey:EligibilityVerificationID" json:"eligibilityVerification,omitempty"`
+	GovernmentClaimID         *string             `gorm:"type:varchar(100)" json:"governmentClaimId,omitempty"`
 }
 
 func (Order) TableName() string {

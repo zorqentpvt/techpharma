@@ -20,15 +20,16 @@ type Container struct {
 	Database *database.Database
 
 	// Repository Layer (Infrastructure -> Domain)
-	UserRepository          repository.UserRepository
-	AuditLogRepository      repository.AuditLogRepository
-	SecurityRepository      repository.SecurityEventRepository
-	MedicineRepository      repository.MedicineRepository
-	DoctorRepository        repository.DoctorRepository
-	OrderRepository         repository.OrderRepository
-	PaymentRepository       repository.PaymentRepository // ✅ Keep as interface
-	AppoinmentRepository    repository.AppoinmentRepository
-	DeliveryAgentRepository usecase.DeliveryAgentRepository
+	UserRepository               repository.UserRepository
+	AuditLogRepository           repository.AuditLogRepository
+	SecurityRepository           repository.SecurityEventRepository
+	MedicineRepository           repository.MedicineRepository
+	DoctorRepository             repository.DoctorRepository
+	OrderRepository              repository.OrderRepository
+	PaymentRepository            repository.PaymentRepository // ✅ Keep as interface
+	AppoinmentRepository         repository.AppoinmentRepository
+	PatientEligibilityRepository repository.PatientEligibilityRepository
+	DeliveryAgentRepository      usecase.DeliveryAgentRepository
 
 	// Domain Services
 	AuthService  service.AuthService
@@ -36,14 +37,15 @@ type Container struct {
 	EmailService service.EmailService
 
 	// Use Cases (Application Layer)
-	AuthUseCase       usecase.AuthUseCase
-	UserUseCase       usecase.UserUseCase
-	MedicineUseCase   usecase.MedicineUseCase
-	DoctorUseCase     usecase.DoctorUseCase
-	OrderUsecase      usecase.OrderUseCase
-	PaymentUseCase    *usecase.PaymentUseCase // ✅ Keep as pointer
-	AppoinmentUseCase usecase.AppoinmentUseCase
-	DeliveryUseCase   usecase.DeliveryUseCase
+	AuthUseCase               usecase.AuthUseCase
+	UserUseCase               usecase.UserUseCase
+	MedicineUseCase           usecase.MedicineUseCase
+	DoctorUseCase             usecase.DoctorUseCase
+	OrderUsecase              usecase.OrderUseCase
+	PaymentUseCase            *usecase.PaymentUseCase // ✅ Keep as pointer
+	AppoinmentUseCase         usecase.AppoinmentUseCase
+	PatientEligibilityUseCase usecase.PatientEligibilityUseCase
+	DeliveryUseCase           usecase.DeliveryUseCase
 }
 
 // NewContainer creates a new dependency injection container
@@ -76,6 +78,7 @@ func (c *Container) initRepositories() {
 	c.PaymentRepository = persistence.NewPaymentRepository(c.Database.DB)       // ✅ Initialize Payment Repository
 	c.AppoinmentRepository = persistence.NewAppoinmentRepository(c.Database.DB) // ✅ ADD THIS LINE
 	c.DeliveryAgentRepository = persistence.NewDeliveryAgentRepository(c.Database.DB)
+	c.PatientEligibilityRepository = persistence.NewPatientEligibilityRepository(c.Database.DB)
 }
 
 // initDomainServices initializes domain services
@@ -100,6 +103,10 @@ func (c *Container) initUseCases() {
 		c.UserRepository,
 		c.EmailService,
 	)
+	c.PatientEligibilityUseCase = usecase.NewPatientEligibilityUseCase(
+		c.PatientEligibilityRepository,
+		c.UserRepository,
+	)
 	c.MedicineUseCase = usecase.NewMedicineUseCase(
 		c.MedicineRepository,
 		c.UserRepository,
@@ -110,6 +117,8 @@ func (c *Container) initUseCases() {
 	c.OrderUsecase = usecase.NewOrderUseCase(
 		c.OrderRepository,
 		c.MedicineRepository,
+		c.UserRepository,
+		c.PatientEligibilityUseCase,
 	)
 	// ✅ CRITICAL FIX: Don't dereference the pointer
 	c.PaymentUseCase = usecase.NewPaymentUseCase(

@@ -15,6 +15,8 @@ import {
   FaMotorcycle,
   FaTruck,
   FaHistory,
+  FaFileMedical,
+  FaClinicMedical,
 } from "react-icons/fa";
 import { ChevronLeft, Menu } from "lucide-react";
 import React from "react";
@@ -49,6 +51,9 @@ const tabIcons = {
   agents: FaMotorcycle,
   agentOrders: FaTruck,
   deliveryHistory: FaHistory,
+  eligibility: FaFileMedical,
+  adminEligibility: FaFileMedical,
+  pharmacies: FaClinicMedical,
 };
 
 export default function Dashboard() {
@@ -76,7 +81,10 @@ export default function Dashboard() {
 
   const tabs = [
     { key: "home", label: "Home", path: "/dashboard", roles: ["normal", "doctor", "pharmacy", "admin", "delivery_agent"] },
+    { key: "eligibility", label: "Free Medicine Eligibility", path: "/dashboard/eligibility", roles: ["normal"] },
+    { key: "pharmacies", label: "Pharmacies", path: "/dashboard/pharmacies", roles: ["normal"] },
     { key: "doc", label: "Registered Doctors", path: "/dashboard/admin/doctor", roles: ["admin"] },
+    { key: "adminEligibility", label: "Eligibility Requests", path: "/dashboard/admin/eligibility", roles: ["admin"] },
     { key: "phar", label: "Registered Pharmacies", path: "/dashboard/admin/pharmacy", roles: ["admin"] },
     { key: "medicine", label: "Medicine", path: "/dashboard/medicine", roles: ["normal"] },
     { key: "doctor", label: "Doctors", path: "/dashboard/doctor", roles: ["normal"] },

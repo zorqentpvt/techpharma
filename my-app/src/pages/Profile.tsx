@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronDown, Lock, Power, X, MapPin, Map as MapIcon } from "lucide-react";
 import EditIcon from "@mui/icons-material/Edit";
 import { updateProfile, updateProfilepic } from "../api/authapir";
+import { getMyEligibility } from "../api/freeMedicineApi";
 
 interface Address {
   latitude?: number | string;
@@ -43,6 +44,7 @@ interface PharmacyInfo {
   latitude?: number;
   longitude?: number;
   isActive?: boolean;
+  isFreeMedicineEnabled?: boolean;
 }
 
 interface DeliveryAgentInfo {
@@ -51,6 +53,14 @@ interface DeliveryAgentInfo {
   licenseNumber?: string;
   status?: string;
   isAvailable?: boolean;
+}
+
+interface EligibilityRecord {
+  id: string;
+  schemeType: string;
+  status: 'pending' | 'approved' | 'rejected';
+  validUntil?: string;
+  rejectionReason?: string;
 }
 
 interface ProfileData {
@@ -160,6 +170,7 @@ export default function ProfilePage() {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [eligibility, setEligibility] = useState<EligibilityRecord[]>([]);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [image, setImage] = useState<File | null>(null);
   const [previewAvatar, setPreviewAvatar] = useState<string>("");
@@ -217,6 +228,23 @@ export default function ProfilePage() {
   useEffect(() => {
     populateUserData();
   }, []);
+
+  useEffect(() => {
+    const fetchEligibility = async () => {
+      if (userData.roleId && userData.roleId.toLowerCase() === 'normal') {
+        try {
+          const res = await getMyEligibility();
+          if (res.success && Array.isArray(res.data)) {
+            setEligibility(res.data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch eligibility status:", error);
+        }
+      }
+    };
+
+    if (userData.id) fetchEligibility();
+  }, [userData.id, userData.roleId]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -477,6 +505,7 @@ export default function ProfilePage() {
   const isDoctor = userData.roleId?.toLowerCase() === "doctor";
   const isPharmacy = userData.roleId?.toLowerCase() === "pharmacy";
   const isDeliveryAgent = userData.roleId?.toLowerCase() === "delivery_agent";
+  const isNormalUser = userData.roleId?.toLowerCase() === "normal";
 
   // Helper function to get value from nested objects
   const getValue = (name: string): string => {
@@ -566,8 +595,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-100 py-8">
-      <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-2xl relative">
+    <div className="min-h-screen flex items-center justify-center bg-blue-50 py-8 px-4">
+      <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-5xl relative">
         {/* Settings Dropdown */}
         <div className="absolute top-5 right-5" ref={dropdownRef}>
           <button
@@ -643,7 +672,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-8 mt-8">
           {/* Profile Picture */}
           <div className="relative flex justify-center">
             <div className="relative group">
@@ -667,113 +696,140 @@ export default function ProfilePage() {
           </div>
 
           {/* Basic Fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <InputField 
-              label="First Name" 
-              name="firstName" 
-              value={getValue('firstName')}
-              onChange={getOnChange('firstName')}
-              required 
-              disabled={!editMode}
-            />
-            <InputField 
-              label="Last Name" 
-              name="lastName" 
-              value={getValue('lastName')}
-              onChange={getOnChange('lastName')}
-              required 
-              disabled={!editMode}
-            />
+          <div>
+            <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Personal Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <InputField 
+                label="First Name" 
+                name="firstName" 
+                value={getValue('firstName')}
+                onChange={getOnChange('firstName')}
+                required 
+                disabled={!editMode}
+              />
+              <InputField 
+                label="Last Name" 
+                name="lastName" 
+                value={getValue('lastName')}
+                onChange={getOnChange('lastName')}
+                required 
+                disabled={!editMode}
+              />
+              <InputField 
+                label="Username" 
+                name="username" 
+                value={getValue('username')}
+                onChange={getOnChange('username')}
+                required 
+                disabled={true}
+              />
+              <InputField 
+                label="Email" 
+                name="email" 
+                value={getValue('email')}
+                onChange={getOnChange('email')}
+                type="email" 
+                required 
+                disabled={true}
+              />
+              <InputField 
+                label="Phone Number" 
+                name="phoneNumber" 
+                value={getValue('phoneNumber')}
+                onChange={getOnChange('phoneNumber')}
+                type="tel" 
+                required 
+                disabled={!editMode}
+              />
+              <InputField 
+                label="Date of Birth" 
+                name="dateOfBirth" 
+                value={getValue('dateOfBirth')}
+                onChange={getOnChange('dateOfBirth')}
+                type="date" 
+                required 
+                disabled={true}
+              />
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Gender <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="gender"
+                  value={tempData.gender}
+                  onChange={handleChange}
+                  disabled={true}
+                  className="w-full p-2 border border-gray-300 bg-gray-100 rounded-lg cursor-not-allowed text-gray-600"
+                >
+                  <option value="">Select</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
           </div>
           
-          <InputField 
-            label="Username" 
-            name="username" 
-            value={getValue('username')}
-            onChange={getOnChange('username')}
-            required 
-            disabled={true}
-          />
-          <InputField 
-            label="Email" 
-            name="email" 
-            value={getValue('email')}
-            onChange={getOnChange('email')}
-            type="email" 
-            required 
-            disabled={true}
-          />
-          <InputField 
-            label="Phone Number" 
-            name="phoneNumber" 
-            value={getValue('phoneNumber')}
-            onChange={getOnChange('phoneNumber')}
-            type="tel" 
-            required 
-            disabled={!editMode}
-          />
-          <InputField 
-            label="Address" 
-            name="address.address" 
-            value={getValue('address.address')}
-            onChange={getOnChange('address.address')}
-            textarea 
-            disabled={!editMode}
-          />
-          
-          <div className="grid grid-cols-2 gap-4">
-            <InputField 
-              label="City" 
-              name="address.city" 
-              value={getValue('address.city')}
-              onChange={getOnChange('address.city')}
-              disabled={!editMode}
-            />
-            <InputField 
-              label="State" 
-              name="address.state" 
-              value={getValue('address.state')}
-              onChange={getOnChange('address.state')}
-              disabled={!editMode}
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <InputField 
-              label="Postal Code" 
-              name="address.postalCode" 
-              value={getValue('address.postalCode')}
-              onChange={getOnChange('address.postalCode')}
-              disabled={!editMode}
-            />
-            <InputField 
-              label="Country" 
-              name="address.country" 
-              value={getValue('address.country')}
-              onChange={getOnChange('address.country')}
-              disabled={!editMode}
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <InputField 
-              label="Latitude" 
-              name="address.latitude" 
-              value={getValue('address.latitude')}
-              onChange={getOnChange('address.latitude')}
-              disabled={!editMode}
-              type="number"
-            />
-            <InputField 
-              label="Longitude" 
-              name="address.longitude" 
-              value={getValue('address.longitude')}
-              onChange={getOnChange('address.longitude')}
-              disabled={!editMode}
-              type="number"
-            />
-          </div>
-          {editMode && (
+          <div>
+            <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Address & Location</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-3">
+                <InputField 
+                  label="Address" 
+                  name="address.address" 
+                  value={getValue('address.address')}
+                  onChange={getOnChange('address.address')}
+                  textarea 
+                  disabled={!editMode}
+                />
+              </div>
+              
+              <InputField 
+                label="City" 
+                name="address.city" 
+                value={getValue('address.city')}
+                onChange={getOnChange('address.city')}
+                disabled={!editMode}
+              />
+              <InputField 
+                label="State" 
+                name="address.state" 
+                value={getValue('address.state')}
+                onChange={getOnChange('address.state')}
+                disabled={!editMode}
+              />
+              <InputField 
+                label="Postal Code" 
+                name="address.postalCode" 
+                value={getValue('address.postalCode')}
+                onChange={getOnChange('address.postalCode')}
+                disabled={!editMode}
+              />
+              <InputField 
+                label="Country" 
+                name="address.country" 
+                value={getValue('address.country')}
+                onChange={getOnChange('address.country')}
+                disabled={!editMode}
+              />
+              <InputField 
+                label="Latitude" 
+                name="address.latitude" 
+                value={getValue('address.latitude')}
+                onChange={getOnChange('address.latitude')}
+                disabled={!editMode}
+                type="number"
+              />
+              <InputField 
+                label="Longitude" 
+                name="address.longitude" 
+                value={getValue('address.longitude')}
+                onChange={getOnChange('address.longitude')}
+                disabled={!editMode}
+                type="number"
+              />
+            </div>
+            {editMode && (
             <button
               type="button"
               onClick={handleGetCurrentLocation}
@@ -781,70 +837,44 @@ export default function ProfilePage() {
             >
               <MapPin size={16} /> Get Exact Location
             </button>
-          )}
-          {(getValue('address.latitude') && getValue('address.longitude')) && (
-            <div className="mt-2">
-              <a href={`https://www.google.com/maps?q=${getValue('address.latitude')},${getValue('address.longitude')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline text-sm">
-                <MapIcon size={16} /> View on Google Maps
-              </a>
-            </div>
-          )}
-          
-          <div className="grid grid-cols-2 gap-4">
-            <InputField 
-              label="Date of Birth" 
-              name="dateOfBirth" 
-              value={getValue('dateOfBirth')}
-              onChange={getOnChange('dateOfBirth')}
-              type="date" 
-              required 
-              disabled={true}
-            />
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">
-                Gender <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="gender"
-                value={tempData.gender}
-                onChange={handleChange}
-                disabled={true}
-                className="w-full p-2 border border-gray-300 bg-gray-100 rounded-lg cursor-not-allowed text-gray-600"
-              >
-                <option value="">Select</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+            )}
+            {(getValue('address.latitude') && getValue('address.longitude')) && (
+              <div className="mt-2">
+                <a href={`https://www.google.com/maps?q=${getValue('address.latitude')},${getValue('address.longitude')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline text-sm">
+                  <MapIcon size={16} /> View on Google Maps
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Doctor Fields */}
           {isDoctor && (
-            <div className="border-t pt-4 mt-4 space-y-4">
-              <h3 className="text-lg font-semibold text-blue-600">Doctor Information</h3>
-              <InputField 
-                label="Specialization ID" 
-                name="doctor.specializationId" 
-                value={getValue('doctor.specializationId')}
-                onChange={getOnChange('doctor.specializationId')}
-                disabled={!editMode}
-              />
-              <InputField 
-                label="License Number" 
-                name="doctor.licenseNumber" 
-                value={getValue('doctor.licenseNumber')}
-                onChange={getOnChange('doctor.licenseNumber')}
-                disabled={!editMode}
-              />
-              <InputField 
-                label="Qualification" 
-                name="doctor.qualification" 
-                value={getValue('doctor.qualification')}
-                onChange={getOnChange('doctor.qualification')}
-                disabled={!editMode}
-              />
-              <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-blue-600 mb-4 border-b pb-2">Professional Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField 
+                  label="Specialization ID" 
+                  name="doctor.specializationId" 
+                  value={getValue('doctor.specializationId')}
+                  onChange={getOnChange('doctor.specializationId')}
+                  disabled={!editMode}
+                />
+                <InputField 
+                  label="License Number" 
+                  name="doctor.licenseNumber" 
+                  value={getValue('doctor.licenseNumber')}
+                  onChange={getOnChange('doctor.licenseNumber')}
+                  disabled={!editMode}
+                />
+                <div className="md:col-span-2">
+                  <InputField 
+                    label="Qualification" 
+                    name="doctor.qualification" 
+                    value={getValue('doctor.qualification')}
+                    onChange={getOnChange('doctor.qualification')}
+                    disabled={!editMode}
+                  />
+                </div>
                 <InputField 
                   label="Experience (years)" 
                   name="doctor.experience" 
@@ -867,47 +897,51 @@ export default function ProfilePage() {
 
           {/* Pharmacy Fields */}
           {isPharmacy && (
-            <div className="border-t pt-4 mt-4 space-y-4">
-              <h3 className="text-lg font-semibold text-blue-600">Pharmacy Information</h3>
-              <InputField 
-                label="Pharmacy Name" 
-                name="pharmacy.name" 
-                value={getValue('pharmacy.name')}
-                onChange={getOnChange('pharmacy.name')}
-                disabled={!editMode}
-              />
-              <InputField 
-                label="Pharmacy Email" 
-                name="pharmacy.email" 
-                value={getValue('pharmacy.email')}
-                onChange={getOnChange('pharmacy.email')}
-                type="email" 
-                disabled={!editMode}
-              />
-              <InputField 
-                label="Pharmacy Phone" 
-                name="pharmacy.phoneNumber" 
-                value={getValue('pharmacy.phoneNumber')}
-                onChange={getOnChange('pharmacy.phoneNumber')}
-                type="tel" 
-                disabled={!editMode}
-              />
-              <InputField 
-                label="License Number" 
-                name="pharmacy.licenseNumber" 
-                value={getValue('pharmacy.licenseNumber')}
-                onChange={getOnChange('pharmacy.licenseNumber')}
-                disabled={!editMode}
-              />
-              <InputField 
-                label="Pharmacy Address" 
-                name="pharmacy.address" 
-                value={getValue('pharmacy.address')}
-                onChange={getOnChange('pharmacy.address')}
-                textarea 
-                disabled={!editMode}
-              />
-              <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-blue-600 mb-4 border-b pb-2">Pharmacy Business Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <InputField 
+                    label="Pharmacy Name" 
+                    name="pharmacy.name" 
+                    value={getValue('pharmacy.name')}
+                    onChange={getOnChange('pharmacy.name')}
+                    disabled={!editMode}
+                  />
+                </div>
+                <InputField 
+                  label="License Number" 
+                  name="pharmacy.licenseNumber" 
+                  value={getValue('pharmacy.licenseNumber')}
+                  onChange={getOnChange('pharmacy.licenseNumber')}
+                  disabled={!editMode}
+                />
+                <InputField 
+                  label="Pharmacy Email" 
+                  name="pharmacy.email" 
+                  value={getValue('pharmacy.email')}
+                  onChange={getOnChange('pharmacy.email')}
+                  type="email" 
+                  disabled={!editMode}
+                />
+                <InputField 
+                  label="Pharmacy Phone" 
+                  name="pharmacy.phoneNumber" 
+                  value={getValue('pharmacy.phoneNumber')}
+                  onChange={getOnChange('pharmacy.phoneNumber')}
+                  type="tel" 
+                  disabled={!editMode}
+                />
+                <div className="lg:col-span-3">
+                  <InputField 
+                    label="Pharmacy Address" 
+                    name="pharmacy.address" 
+                    value={getValue('pharmacy.address')}
+                    onChange={getOnChange('pharmacy.address')}
+                    textarea 
+                    disabled={!editMode}
+                  />
+                </div>
                 <InputField 
                   label="City" 
                   name="pharmacy.city" 
@@ -922,8 +956,6 @@ export default function ProfilePage() {
                   onChange={getOnChange('pharmacy.state')}
                   disabled={!editMode}
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <InputField 
                   label="Postal Code" 
                   name="pharmacy.postalCode" 
@@ -939,6 +971,47 @@ export default function ProfilePage() {
                   disabled={!editMode}
                 />
               </div>
+            </div>
+          )}
+
+          {/* Eligibility Status for Normal User */}
+          {isNormalUser && eligibility.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-blue-600">Free Medicine Eligibility</h3>
+              {eligibility.map(record => (
+                <div key={record.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <p className="font-medium capitalize">{record.schemeType.replace(/_/g, " ")}</p>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                      record.status === 'approved' ? 'bg-green-100 text-green-700' :
+                      record.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {record.status}
+                    </span>
+                  </div>
+                  {record.status === 'approved' && record.validUntil && (
+                    <p className="text-sm text-green-600 mt-1">Valid until: {new Date(record.validUntil).toLocaleDateString()}</p>
+                  )}
+                  {record.status === 'rejected' && record.rejectionReason && (
+                    <p className="text-sm text-red-600 mt-1">Reason: {record.rejectionReason}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Free Medicine Program Status for Pharmacy */}
+          {isPharmacy && userData.pharmacy && (
+            <div className="border-t pt-4 mt-4">
+              <h3 className="text-lg font-semibold text-blue-600 mb-2">Program Status</h3>
+              <div className="flex items-center justify-between bg-blue-50 px-4 py-3 rounded-lg border border-blue-200">
+                <span className="text-gray-700 font-medium">Free Medicine Program</span>
+                <span className={`px-3 py-1 rounded-full text-sm font-bold ${userData.pharmacy.isFreeMedicineEnabled ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"}`}>
+                  {userData.pharmacy.isFreeMedicineEnabled ? "Enabled" : "Disabled"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">This status is managed by the platform administrator.</p>
             </div>
           )}
 

@@ -330,3 +330,32 @@ func (r *userRepository) GetPharmacyByUserID(ctx context.Context, userID uuid.UU
 	}
 	return pharmacy.ID
 }
+
+func (r *userRepository) UpdatePharmacyFreeMedicineStatus(ctx context.Context, pharmacyID uuid.UUID, enabled bool) error {
+	return r.db.WithContext(ctx).Model(&entity.Pharmacy{}).
+		Where("id = ?", pharmacyID).
+		Update("is_free_medicine_enabled", enabled).Error
+}
+
+func (r *userRepository) GetActivePharmacies(ctx context.Context) ([]*entity.Pharmacy, error) {
+	var pharmacies []*entity.Pharmacy
+	err := r.db.WithContext(ctx).
+		Preload("User").
+		Joins("JOIN users ON users.id = pharmacies.user_id").
+		Where("pharmacies.is_active = ?", true).
+		Where("users.is_active = ?", true).
+		Where("users.deleted_at IS NULL").
+		Find(&pharmacies).Error
+	return pharmacies, err
+}
+func (r *userRepository) GetPharmacyWithMedicines(ctx context.Context, pharmacyID uuid.UUID) (*entity.Pharmacy, error) {
+	var pharmacy entity.Pharmacy
+	err := r.db.WithContext(ctx).
+		Preload("User").
+		Preload("Medicines", "is_active = ?", true). // Only fetch active medicines
+		First(&pharmacy, "id = ?", pharmacyID).Error
+	if err != nil {
+		return nil, err
+	}
+	return &pharmacy, nil
+}

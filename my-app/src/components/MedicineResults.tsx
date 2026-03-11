@@ -1,7 +1,7 @@
 import { Medicine } from "../api/medapi";
 import React from "react";
 import medpic from "../assets/med.jpg";
-import { addtocart } from "../api/medapir";
+import { addToCart as addToCartApi } from "../api/medapir";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -36,7 +36,7 @@ export function MedicineResults({
 
   const handleAddToCart = async (med: Medicine) => {
     try {
-      await addtocart(med.id);
+      await addToCartApi(med.id, 1);
       toast.success(`${med.name} added to cart!`);
     } catch (error) {
       toast.error(`Failed to add ${med.name} to cart.`);

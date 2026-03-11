@@ -33,6 +33,9 @@ type UserRepository interface {
 	CountInactivePharmacies(ctx context.Context) (int64, error)
 	CountTotalUsers(ctx context.Context) (int64, error)
 	GetPharmacyByUserID(ctx context.Context, userID uuid.UUID) (id uuid.UUID)
+	UpdatePharmacyFreeMedicineStatus(ctx context.Context, pharmacyID uuid.UUID, enabled bool) error
+	GetActivePharmacies(ctx context.Context) ([]*entity.Pharmacy, error)
+	GetPharmacyWithMedicines(ctx context.Context, pharmacyID uuid.UUID) (*entity.Pharmacy, error)
 }
 
 type AuditLogRepository interface {
@@ -77,6 +80,8 @@ type OrderRepository interface {
 
 	CreateOrder(ctx context.Context, order *entity.Order) error
 	CreateOrderItem(ctx context.Context, orderItems *entity.OrderItem) error
+	GetPharmacyByID(ctx context.Context, pharmacyID uuid.UUID) (*entity.Pharmacy, error)
+	CreateFreeMedicineOrder(ctx context.Context, cart *entity.Cart, pharmacyID uuid.UUID, eligibilityID uuid.UUID, deliveryAddress string) (*entity.Order, error)
 }
 type PaymentRepository interface {
 	Create(ctx context.Context, payment *entity.Payment) error

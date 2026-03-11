@@ -27,6 +27,10 @@ import TrackOrder from "./pages/TrackOrder";
 import DeliveryAgents from "./pages/DeliveryAgents";
 import AgentOrders from "./pages/AgentOrders";
 import DeliveryHistory from "./pages/DeliveryHistory";
+import Eligibility from "./pages/Eligibility";
+import AdminEligibility from "./pages/AdminEligibility";
+import Pharmacies from "./pages/Pharmacies";
+import PharmacyDetails from "./pages/PharmacyDetails";
 
 function App() {
   return (
@@ -48,6 +52,7 @@ function App() {
           <Route index element={<Home />} />
 
           {/* Admin routes */}
+          <Route path="admin/eligibility" element={<AdminEligibility />} />
           <Route path="admin/doctor" element={<DoctorPage />} />
           <Route path="admin/pharmacy" element={<PharmacyPage />} />
           <Route path="admin/pharmacies/view/:id" element={<Viewpharm />} />
@@ -63,6 +68,9 @@ function App() {
           <Route path="agent-orders" element={<AgentOrders />} />
 
           {/* Normal user routes */}
+          <Route path="eligibility" element={<Eligibility />} />
+          <Route path="pharmacies" element={<Pharmacies />} />
+          <Route path="pharmacies/:id" element={<PharmacyDetails />} />
           <Route path="medicine" element={<Medicines />} />
           <Route path="doctor" element={<Doctors />} />
           <Route path="cart" element={<Cart />} />

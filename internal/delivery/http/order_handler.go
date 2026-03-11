@@ -525,21 +525,23 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 	}
 
 	type OrderResponse struct {
-		ID              string             `json:"id"`
-		OrderNumber     string             `json:"orderNumber"`
-		CustomerName    string             `json:"customerName"`
-		CustomerPhone   string             `json:"customerPhone"`
-		PrescriptionURL string             `json:"prescriptionURL"`
-		Medicines       []MedicineResponse `json:"medicines"`
-		TotalAmount     float64            `json:"totalAmount"`
-		Status          string             `json:"status"`
-		OrderDate       time.Time          `json:"orderDate"`
-		Pharmacy        string             `json:"pharmacy"`
-		PharmacyAddress string             `json:"pharmacyAddress"`
-		PharmacyPhone   string             `json:"pharmacyPhone"`
-		DeliveryAddress string             `json:"deliveryAddress"`
-		PaymentMethod   string             `json:"paymentMethod"`
-		DeliveryAgent   *DeliveryAgentInfo `json:"deliveryAgent,omitempty"`
+		ID                      string                     `json:"id"`
+		OrderNumber             string                     `json:"orderNumber"`
+		CustomerName            string                     `json:"customerName"`
+		CustomerPhone           string                     `json:"customerPhone"`
+		PrescriptionURL         string                     `json:"prescriptionURL"`
+		Medicines               []MedicineResponse         `json:"medicines"`
+		TotalAmount             float64                    `json:"totalAmount"`
+		Status                  string                     `json:"status"`
+		OrderDate               time.Time                  `json:"orderDate"`
+		Pharmacy                string                     `json:"pharmacy"`
+		PharmacyAddress         string                     `json:"pharmacyAddress"`
+		PharmacyPhone           string                     `json:"pharmacyPhone"`
+		DeliveryAddress         string                     `json:"deliveryAddress"`
+		PaymentMethod           string                     `json:"paymentMethod"`
+		IsFreeMedicineOrder     bool                       `json:"isFreeMedicineOrder"`
+		EligibilityVerification *entity.PatientEligibility `json:"eligibilityVerification,omitempty"`
+		DeliveryAgent           *DeliveryAgentInfo         `json:"deliveryAgent,omitempty"`
 	}
 
 	orderResponses := []OrderResponse{}
@@ -578,21 +580,23 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 		}
 
 		orderResponses = append(orderResponses, OrderResponse{
-			ID:              order.ID.String(),
-			OrderNumber:     order.OrderNumber,
-			CustomerName:    order.User.FirstName + " " + order.User.LastName,
-			CustomerPhone:   order.User.PhoneNumber,
-			PrescriptionURL: order.Payment.PrescriptionURL,
-			Medicines:       medicines,
-			TotalAmount:     order.TotalAmount,
-			Status:          order.Status,
-			OrderDate:       order.CreatedAt,
-			Pharmacy:        pharmacy.Name,
-			PharmacyAddress: pharmacyAddress,
-			PharmacyPhone:   pharmacy.PhoneNumber,
-			DeliveryAddress: order.DeliveryAddress,
-			PaymentMethod:   order.Payment.PaymentMethod,
-			DeliveryAgent:   agentInfo,
+			ID:                      order.ID.String(),
+			OrderNumber:             order.OrderNumber,
+			CustomerName:            order.User.FirstName + " " + order.User.LastName,
+			CustomerPhone:           order.User.PhoneNumber,
+			PrescriptionURL:         order.Payment.PrescriptionURL,
+			Medicines:               medicines,
+			TotalAmount:             order.TotalAmount,
+			Status:                  order.Status,
+			OrderDate:               order.CreatedAt,
+			Pharmacy:                pharmacy.Name,
+			PharmacyAddress:         pharmacyAddress,
+			PharmacyPhone:           pharmacy.PhoneNumber,
+			DeliveryAddress:         order.DeliveryAddress,
+			PaymentMethod:           order.Payment.PaymentMethod,
+			IsFreeMedicineOrder:     order.IsFreeMedicineOrder,
+			EligibilityVerification: order.EligibilityVerification,
+			DeliveryAgent:           agentInfo,
 		})
 	}
 
@@ -945,5 +949,67 @@ func (o *OrderHandlerClean) TrackOrder(c *gin.Context) {
 		Success: true,
 		Message: "Order details retrieved successfully",
 		Data:    resp,
+	})
+}
+
+// CreateFreeMedicineOrder handles the creation of a free medicine order
+func (o *OrderHandlerClean) CreateFreeMedicineOrder(c *gin.Context) {
+	// Get user ID from context
+	userIDStr := c.GetString("userID")
+	if userIDStr == "" {
+		c.JSON(http.StatusUnauthorized, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "UNAUTHORIZED",
+				Message: "User ID not found in context",
+			},
+		})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_USER_ID",
+				Message: "Invalid user ID format",
+			},
+		})
+		return
+	}
+
+	var req types.FreeMedicineOrderRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_REQUEST",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	order, err := o.orderUseCase.CreateFreeMedicineOrder(c.Request.Context(), userID, req.CartID, req.PharmacyID)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		// Map domain errors to HTTP status codes
+		// Assuming simple mapping for now based on error message or type
+		// You can improve this by using proper domain error types checking
+		c.JSON(statusCode, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "ORDER_CREATION_FAILED",
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, response.Response{
+		Success: true,
+		Data:    order,
+		Message: "Free medicine order created successfully",
 	})
 }

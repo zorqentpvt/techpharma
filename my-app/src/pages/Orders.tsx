@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchOrders, updateOrderStatus } from "../api/pharmastoreapi";
 import { Eye, X, Printer, Truck } from "lucide-react";
-
+import { FaHandHoldingHeart, FaCreditCard } from "react-icons/fa";
 /* ---------------- USER ---------------- */
 
 const getUserFromStorage = () => {
@@ -17,13 +17,32 @@ type OrderStatus =
   | "ready"
   | "out_for_delivery"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "pending_verification";
 
 interface DeliveryAgentInfo {
   name: string;
   phone: string;
   avatar: string;
   vehicleNumber: string;
+}
+
+interface EligibilityVerification {
+  id: string;
+  schemeType: string;
+  status: string;
+  documentType: string;
+  documentNumber: string;
+  documentUrl?: string;
+  medicalCondition?: string;
+  diagnosisDate?: string;
+  validFrom: string;
+  validUntil: string;
+  user?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  }
 }
 
 interface Order {
@@ -42,6 +61,8 @@ interface Order {
   deliveryAddress?: string;
   paymentMethod?: string;
   deliveryAgent?: DeliveryAgentInfo;
+  isFreeMedicineOrder?: boolean;
+  eligibilityVerification?: EligibilityVerification;
 }
 
 /* ---------------- STATUS CONFIG ---------------- */
@@ -53,6 +74,7 @@ const statusConfig: Record<OrderStatus, { label: string; color: string }> = {
   out_for_delivery: { label: "Out for Delivery", color: "bg-orange-100 text-orange-800" },
   completed: { label: "Delivered", color: "bg-gray-100 text-gray-800" },
   cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800" },
+  pending_verification: { label: "Verification Pending", color: "bg-orange-50 text-orange-700" },
 };
 
 /* ---------------- MAP UI STATUS → API STATUS ---------------- */
@@ -64,6 +86,7 @@ const STATUS_TO_API: Record<OrderStatus, string> = {
   out_for_delivery: "out_for_delivery",
   completed: "completed",
   cancelled: "cancelled",
+  pending_verification: "pending_verification",
 };
 const BASE_URL = "http://localhost:8080";
 
@@ -273,6 +296,11 @@ export default function Orders() {
             <div class="info">
               <div class="section-title">Order Info</div>
               <p><strong>Order #:</strong> ${selectedOrder.orderNumber}</p>
+              ${
+                selectedOrder.isFreeMedicineOrder 
+                ? `<p style="color: green; font-weight: bold;">FREE MEDICINE ORDER</p>` 
+                : ""
+              }
               <p><strong>Date:</strong> ${new Date(selectedOrder.orderDate).toLocaleString()}</p>
               <p><strong>Status:</strong> ${selectedOrder.status.toUpperCase()}</p>
               <p><strong>Payment:</strong> ${selectedOrder.paymentMethod || "N/A"}</p>
@@ -379,6 +407,7 @@ export default function Orders() {
             <thead className="bg-[#002E6E] text-white text-sm">
               <tr>
                 <th className="px-4 py-4 text-left">Order #</th>
+                <th className="px-4 py-4 text-left">Type</th>
                 <th className="px-4 py-4 text-left">Customer</th>
                 <th className="px-4 py-4 text-left">Medicines</th>
                 <th className="px-4 py-4 text-left">Amount</th>
@@ -397,6 +426,18 @@ export default function Orders() {
                   >
                     <td className="px-4 py-3 text-sm font-medium text-[#0F4FA8]">
                       {order.orderNumber}
+                    </td>
+                    
+                    <td className="px-4 py-3">
+                      {order.isFreeMedicineOrder ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-100 text-green-700 text-xs font-bold border border-green-200">
+                          <FaHandHoldingHeart /> FREE
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">
+                          <FaCreditCard /> PAID
+                        </span>
+                      )}
                     </td>
 
                     <td className="px-4 py-3 text-sm">
@@ -468,13 +509,26 @@ export default function Orders() {
 
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="p-2 text-gray-500 hover:text-[#00B9F1] hover:bg-blue-50 rounded-lg transition"
-                          title="View Details"
-                        >
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className={`p-2 rounded-lg transition ${
+                          order.isFreeMedicineOrder && order.status === 'pending_verification'
+                            ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                            : 'text-gray-500 hover:text-[#00B9F1] hover:bg-blue-50'
+                        }`}
+                        title={
+                          order.isFreeMedicineOrder && order.status === 'pending_verification'
+                            ? 'Verify Eligibility'
+                            : 'View Details'
+                        }
+                      >
+                        {order.isFreeMedicineOrder && order.status === 'pending_verification' ? (
+                          <FaHandHoldingHeart size={20} />
+                        ) : (
                           <Eye size={20} />
-                        </button>
+                        )}
+                      </button>
+
                         <button
                           onClick={() => handleUpdate(order)}
                           disabled={updatingId === order.id}
@@ -491,7 +545,7 @@ export default function Orders() {
               ) : (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center py-10 text-sm text-gray-500"
                   >
                     No orders found
@@ -514,7 +568,12 @@ export default function Orders() {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
               {/* Header */}
               <div className="bg-[#002E6E] px-6 py-4 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-white">Order Details #{selectedOrder.orderNumber}</h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-bold text-white">Order Details #{selectedOrder.orderNumber}</h2>
+                  {selectedOrder.isFreeMedicineOrder && (
+                    <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-md font-bold">FREE MEDICINE</span>
+                  )}
+                </div>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handlePrint}
@@ -532,6 +591,33 @@ export default function Orders() {
               
               {/* Body */}
               <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+                {/* Eligibility Verification Details */}
+                {selectedOrder.isFreeMedicineOrder && selectedOrder.eligibilityVerification && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                    <h4 className="font-bold text-orange-800 mb-3 flex items-center gap-2">
+                      <FaHandHoldingHeart /> Eligibility Verification Details
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                      <p><span className="font-semibold text-gray-600">Scheme:</span> <span className="capitalize">{selectedOrder.eligibilityVerification.schemeType.replace(/_/g, " ")}</span></p>
+                      <p><span className="font-semibold text-gray-600">Status:</span> <span className="font-bold capitalize">{selectedOrder.eligibilityVerification.status}</span></p>
+                      <p><span className="font-semibold text-gray-600">Document:</span> {selectedOrder.eligibilityVerification.documentType.replace(/_/g, " ")}</p>
+                      <p><span className="font-semibold text-gray-600">Doc Number:</span> {selectedOrder.eligibilityVerification.documentNumber}</p>
+                      {selectedOrder.eligibilityVerification.medicalCondition && (
+                        <p className="md:col-span-2"><span className="font-semibold text-gray-600">Condition:</span> {selectedOrder.eligibilityVerification.medicalCondition}</p>
+                      )}
+                      {selectedOrder.eligibilityVerification.documentUrl && (
+                        <a
+                          href={`${BASE_URL}/${selectedOrder.eligibilityVerification.documentUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline font-medium inline-flex items-center gap-1 mt-2 md:col-span-2"
+                        >
+                          View Attached Document <Eye size={14} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {/* Assign Button or Agent Info */}
                 {selectedOrder.deliveryAgent ? (
                   <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
@@ -595,7 +681,13 @@ export default function Orders() {
                   <div className="space-y-1">
                     <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Payment Details</h3>
                     <p className="text-gray-700 text-sm"><span className="font-medium">Method:</span> {selectedOrder.paymentMethod || "N/A"}</p>
-                    <p className="text-gray-700 text-sm"><span className="font-medium">Total:</span> <span className="text-[#0F4FA8] font-bold text-lg">₹{selectedOrder.totalAmount}</span></p>
+                    <p className="text-gray-700 text-sm">
+                      <span className="font-medium">Total:</span> 
+                      <span className="text-[#0F4FA8] font-bold text-lg">
+                        {selectedOrder.isFreeMedicineOrder ? <span className="text-green-600">₹0.00 (Subsidized)</span> : `₹${selectedOrder.totalAmount}`}
+                      </span>
+                    </p>
+                    {selectedOrder.isFreeMedicineOrder && <p className="text-xs text-green-600 mt-1">* This order is fully subsidized by the program.</p>}
                   </div>
                 </div>
 

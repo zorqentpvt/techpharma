@@ -6,6 +6,16 @@ import (
 	"github.com/google/uuid"
 )
 
+// PharmacyCategory represents the category of pharmacy
+type PharmacyCategory string
+
+const (
+	PharmacyGovernment      PharmacyCategory = "government"
+	PharmacyJanAushadhi     PharmacyCategory = "jan_aushadhi"
+	PharmacyPrivateApproved PharmacyCategory = "private_approved"
+	PharmacyPrivateStandard PharmacyCategory = "private_standard"
+)
+
 // Pharmacy represents a pharmacy in the system
 type Pharmacy struct {
 	BaseModel
@@ -33,4 +43,18 @@ type Pharmacy struct {
 
 	// Relations
 	Medicines []Medicine `gorm:"foreignKey:PharmacyID" json:"medicines,omitempty"`
+
+	// Free Medicine Program Fields
+	Category                     PharmacyCategory `gorm:"type:varchar(50);default:'private_standard'" json:"category"`
+	IsFreeMedicineEnabled        bool             `gorm:"default:false" json:"isFreeMedicineEnabled"`
+	GovernmentRegistrationNumber *string          `gorm:"type:varchar(100)" json:"governmentRegistrationNumber,omitempty"`
+	JanAushadhiID                *string          `gorm:"type:varchar(100)" json:"janAushadhiId,omitempty"`
+}
+
+// CanProvideFreeMedicines checks if pharmacy can provide free medicines
+func (p *Pharmacy) CanProvideFreeMedicines() bool {
+	return p.IsFreeMedicineEnabled &&
+		(p.Category == PharmacyGovernment ||
+			p.Category == PharmacyJanAushadhi ||
+			p.Category == PharmacyPrivateApproved)
 }

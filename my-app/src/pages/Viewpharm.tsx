@@ -16,6 +16,11 @@ type Pharmacy = {
   country: string;
   latitude?: number;
   longitude?: number;
+  isFreeMedicineEnabled?: boolean;
+  gstNumber?: string;
+  category?: string;
+  governmentRegistrationNumber?: string;
+  janAushadhiId?: string;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -91,6 +96,36 @@ const ViewPharm: React.FC = () => {
     }
   };
 
+  const toggleFreeMedicine = async () => {
+    if (!user?.pharmacy) return;
+    const newStatus = !user.pharmacy.isFreeMedicineEnabled;
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${BASE_URL}/api/admin/pharmacies/${user.pharmacy.id}/free-medicine`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ enabled: newStatus }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setUser((prev) =>
+          prev && prev.pharmacy
+            ? { ...prev, pharmacy: { ...prev.pharmacy, isFreeMedicineEnabled: newStatus } }
+            : prev
+        );
+      } else {
+        alert(data.message || "Failed to update free medicine status");
+      }
+    } catch (err) {
+      console.error("Error updating status:", err);
+    }
+  };
+
   const fileSrc = user?.fileUrl ? `${BASE_URL}/${user.fileUrl}` : null;
 
   if (loading) return <div className="text-center py-10">Loading user data...</div>;
@@ -151,27 +186,63 @@ const ViewPharm: React.FC = () => {
           <h2 className="text-3xl font-semibold text-[#0f4c81] mb-6">Pharmacy Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
             {user.pharmacy
-              ? Object.entries(user.pharmacy).map(([key, value]) => (
-                  <p key={key}>
-                    <span className="font-semibold capitalize">{key.replace(/([A-Z])/g, " $1")}:</span>{" "}
-                    {String(value)}
-                  </p>
-                  
-                ))
+              ? <>
+                  <p><span className="font-semibold">Name:</span> {user.pharmacy.name}</p>
+                  <p><span className="font-semibold">Email:</span> {user.pharmacy.email}</p>
+                  <p><span className="font-semibold">Phone:</span> {user.pharmacy.phoneNumber}</p>
+                  <p><span className="font-semibold">License No:</span> {user.pharmacy.licenseNumber}</p>
+                  <p><span className="font-semibold">GST No:</span> {user.pharmacy.gstNumber || "N/A"}</p>
+                  <p><span className="font-semibold">Category:</span> <span className="capitalize">{user.pharmacy.category?.replace(/_/g, " ") || "N/A"}</span></p>
+                  <p><span className="font-semibold">Address:</span> {user.pharmacy.address}</p>
+                  <p><span className="font-semibold">City:</span> {user.pharmacy.city || "N/A"}</p>
+                  <p><span className="font-semibold">State:</span> {user.pharmacy.state || "N/A"}</p>
+                  <p><span className="font-semibold">Postal Code:</span> {user.pharmacy.postalCode || "N/A"}</p>
+                  <p><span className="font-semibold">Country:</span> {user.pharmacy.country || "N/A"}</p>
+                  {user.pharmacy.governmentRegistrationNumber && (
+                    <p><span className="font-semibold">Govt Reg No:</span> {user.pharmacy.governmentRegistrationNumber}</p>
+                  )}
+                  {user.pharmacy.janAushadhiId && (
+                    <p><span className="font-semibold">Jan Aushadhi ID:</span> {user.pharmacy.janAushadhiId}</p>
+                  )}
+                </>
               : <p className="text-gray-500 col-span-2">No pharmacy data available.</p>
             }
-            <button
-    onClick={toggleStatus}
-    className={`relative w-20 h-10 rounded-full transition-colors duration-300 ${
-      user.isActive ? "bg-green-600" : "bg-red-600"
-    }`}
-  >
-    <span
-      className={`absolute top-1 left-1 w-8 h-8 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
-        user.isActive ? "translate-x-10" : "translate-x-0"
-      }`}
-    />
-  </button> 
+
+            <div className="flex flex-col gap-4 col-span-1 md:col-span-2 border-t pt-4 mt-2">
+              <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl">
+                <span className="font-bold text-gray-700">Account Active Status</span>
+                <button
+                  onClick={toggleStatus}
+                  className={`relative w-20 h-10 rounded-full transition-colors duration-300 ${
+                    user.isActive ? "bg-green-600" : "bg-red-600"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-1 left-1 w-8 h-8 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+                      user.isActive ? "translate-x-10" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {user.pharmacy && (
+                <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl">
+                  <span className="font-bold text-gray-700">Free Medicine Program</span>
+                  <button
+                    onClick={toggleFreeMedicine}
+                    className={`relative w-20 h-10 rounded-full transition-colors duration-300 ${
+                      user.pharmacy.isFreeMedicineEnabled ? "bg-green-600" : "bg-gray-400"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-1 left-1 w-8 h-8 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+                        user.pharmacy.isFreeMedicineEnabled ? "translate-x-10" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

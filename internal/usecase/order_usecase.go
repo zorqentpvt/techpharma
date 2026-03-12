@@ -26,7 +26,7 @@ type OrderUseCase interface {
 
 	//Order Managem	enet Methods
 	GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUID) (float64, int64, error)
-	CreateFreeMedicineOrder(ctx context.Context, userID uuid.UUID, cartID uuid.UUID, pharmacyID uuid.UUID) (*entity.Order, error)
+	CreateFreeMedicineOrder(ctx context.Context, userID uuid.UUID, cartID uuid.UUID, pharmacyID uuid.UUID, prescriptionURL string) (*entity.Order, error)
 }
 
 // orderUseCase implements the OrderUseCase interface
@@ -138,7 +138,7 @@ func (uc *orderUseCase) GetTotalRevenue(ctx context.Context, pharmacyID uuid.UUI
 	return uc.orderRepo.GetTotalRevenue(ctx, pharmacyID)
 }
 
-func (uc *orderUseCase) CreateFreeMedicineOrder(ctx context.Context, userID uuid.UUID, cartID uuid.UUID, pharmacyID uuid.UUID) (*entity.Order, error) {
+func (uc *orderUseCase) CreateFreeMedicineOrder(ctx context.Context, userID uuid.UUID, cartID uuid.UUID, pharmacyID uuid.UUID, prescriptionURL string) (*entity.Order, error) {
 	// Verify user eligibility
 	eligibility, err := uc.eligibilityUC.VerifyEligibilityForOrder(ctx, userID)
 	if err != nil {
@@ -175,5 +175,5 @@ func (uc *orderUseCase) CreateFreeMedicineOrder(ctx context.Context, userID uuid
 	deliveryAddress := user.Address.GetFullAddress()
 
 	// Create the free medicine order using repository
-	return uc.orderRepo.CreateFreeMedicineOrder(ctx, cart, pharmacyID, eligibility.ID, deliveryAddress)
+	return uc.orderRepo.CreateFreeMedicineOrder(ctx, cart, pharmacyID, eligibility.ID, deliveryAddress, prescriptionURL)
 }

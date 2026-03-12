@@ -101,7 +101,7 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			patientRoutes.POST("/eligibility/apply", patientEligibilityHandler.ApplyForEligibility)
 			patientRoutes.GET("/eligibility", patientEligibilityHandler.GetMyEligibility)
 			patientRoutes.GET("/eligibility/active", patientEligibilityHandler.GetActiveEligibility)
-			patientRoutes.POST("/orders/free-medicine", orderHandler.CreateFreeMedicineOrder)
+			patientRoutes.POST("/order/free", orderHandler.CreateFreeMedicineOrder)
 
 			patientRoutes.GET("/pharmacies", userHandler.GetActivePharmacies)
 			patientRoutes.GET("/pharmacies/:id", userHandler.GetPharmacyDetails)

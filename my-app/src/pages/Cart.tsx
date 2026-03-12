@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import CartItems from "../components/CartItems";
 import { cartdata, removeCart } from "../api/medapir";
 import { useNavigate } from "react-router-dom";
-import { getActiveEligibility, createFreeMedicineOrder } from "../api/freeMedicineApi";
+import { getActiveEligibility } from "../api/freeMedicineApi";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle } from "lucide-react";
 
@@ -38,6 +38,7 @@ const Cart: React.FC<CartProps> = ({ userId: propUserId }) => {
   const [isEligible, setIsEligible] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successOrderNumber, setSuccessOrderNumber] = useState("");
+  const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   const navigate = useNavigate();
 
   const userId = propUserId || (() => {
@@ -117,17 +118,36 @@ const Cart: React.FC<CartProps> = ({ userId: propUserId }) => {
     
     // Assumption: Cart contains items from one pharmacy for free order simplicity
     const pharmacyId = orderSummary.products[0].pharmacyId;
+
+    if (!prescriptionFile) {
+      alert("Please upload a prescription to proceed with the free medicine order.");
+      return;
+    }
     
     if (!window.confirm("Place this order for FREE under your eligibility scheme?")) return;
 
     try {
-      const res = await createFreeMedicineOrder(orderSummary.id, pharmacyId);
-      if (res.success) {
+      const formData = new FormData();
+      formData.append("cartId", orderSummary.id);
+      formData.append("pharmacyId", pharmacyId);
+      formData.append("prescription", prescriptionFile);
+
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${BASE_URL}/api/user/order/free`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+        body: formData
+      });
+      const data = await res.json();
+
+      if (data.success) {
         setOrderSummary({ id: null, products: [], shipping: 0, taxes: 0, totalcost: 0 }); // Clear cart locally
-        setSuccessOrderNumber(res.data?.orderNumber || "Pending");
+        setSuccessOrderNumber(data.data?.orderNumber || "Pending");
         setShowSuccessModal(true);
       } else {
-        const msg = res.error?.message || res.message || "Unknown error";
+        const msg = data.error?.message || data.message || "Unknown error";
         alert("Failed to place free order: " + msg);
       }
     } catch (err) {
@@ -171,6 +191,12 @@ const Cart: React.FC<CartProps> = ({ userId: propUserId }) => {
       // Optionally refresh UI or update state here
     } catch (error) {
       console.error("Error removing product:", error);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setPrescriptionFile(e.target.files[0]);
     }
   };
 
@@ -241,12 +267,26 @@ const Cart: React.FC<CartProps> = ({ userId: propUserId }) => {
                   </button>
                   
                   {isEligible && allPrescription && (
-                    <button
-                      onClick={handleFreeOrder}
-                      className="w-full mt-3 py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                    >
-                      Order Free (Scheme)
-                    </button>
+                    <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                      <p className="text-sm text-green-800 font-medium mb-2">Free Medicine Scheme Eligible</p>
+                      
+                      <div className="mb-3">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Upload Prescription *</label>
+                        <input 
+                          type="file" 
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={handleFileChange}
+                          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200"
+                        />
+                      </div>
+
+                      <button
+                        onClick={handleFreeOrder}
+                        className="w-full py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                      >
+                        Order Free (Scheme)
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

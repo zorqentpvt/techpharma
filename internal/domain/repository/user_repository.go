@@ -81,7 +81,7 @@ type OrderRepository interface {
 	CreateOrder(ctx context.Context, order *entity.Order) error
 	CreateOrderItem(ctx context.Context, orderItems *entity.OrderItem) error
 	GetPharmacyByID(ctx context.Context, pharmacyID uuid.UUID) (*entity.Pharmacy, error)
-	CreateFreeMedicineOrder(ctx context.Context, cart *entity.Cart, pharmacyID uuid.UUID, eligibilityID uuid.UUID, deliveryAddress string) (*entity.Order, error)
+	CreateFreeMedicineOrder(ctx context.Context, cart *entity.Cart, pharmacyID uuid.UUID, eligibilityID uuid.UUID, deliveryAddress string, prescriptionURL string) (*entity.Order, error)
 }
 type PaymentRepository interface {
 	Create(ctx context.Context, payment *entity.Payment) error

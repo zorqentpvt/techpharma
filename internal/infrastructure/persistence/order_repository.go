@@ -538,7 +538,7 @@ func (r *OrderRepository) GetOrdersByDeliveryAgentID(ctx context.Context, agentI
 	return orders, err
 }
 
-func (r *OrderRepository) CreateFreeMedicineOrder(ctx context.Context, cart *entity.Cart, pharmacyID uuid.UUID, eligibilityID uuid.UUID, deliveryAddress string) (*entity.Order, error) {
+func (r *OrderRepository) CreateFreeMedicineOrder(ctx context.Context, cart *entity.Cart, pharmacyID uuid.UUID, eligibilityID uuid.UUID, deliveryAddress string, prescriptionURL string) (*entity.Order, error) {
 	var order *entity.Order
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 1. Identify items for this pharmacy
@@ -567,6 +567,7 @@ func (r *OrderRepository) CreateFreeMedicineOrder(ctx context.Context, cart *ent
 			Description:     "Free Medicine Order",
 			Notes:           "{}",
 			RazorpayOrderID: orderNumber,
+			PrescriptionURL: prescriptionURL,
 		}
 		if err := tx.Create(&payment).Error; err != nil {
 			return err

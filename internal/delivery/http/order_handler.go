@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/smtp"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -980,19 +983,107 @@ func (o *OrderHandlerClean) CreateFreeMedicineOrder(c *gin.Context) {
 		return
 	}
 
-	var req types.FreeMedicineOrderRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	// Handle prescription file upload
+	var prescriptionURL string
+	file, header, err := c.Request.FormFile("prescription")
+	if err == nil {
+		defer file.Close()
+
+		// Validate file extension
+		ext := strings.ToLower(filepath.Ext(header.Filename))
+		if ext != ".pdf" && ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+			c.JSON(http.StatusBadRequest, response.Response{
+				Success: false,
+				Error: &response.ErrorInfo{
+					Code:    "INVALID_FILE",
+					Message: "Prescription must be PDF, JPG, JPEG or PNG",
+				},
+			})
+			return
+		}
+
+		// Create directory
+		uploadDir := "uploads/prescriptions"
+		if err := os.MkdirAll(uploadDir, 0755); err != nil {
+			c.JSON(http.StatusInternalServerError, response.Response{
+				Success: false,
+				Error: &response.ErrorInfo{
+					Code:    "SERVER_ERROR",
+					Message: "Failed to create upload directory",
+				},
+			})
+			return
+		}
+
+		// Generate unique filename
+		filename := fmt.Sprintf("%s_%d%s", uuid.New().String(), time.Now().Unix(), ext)
+		filePath := filepath.Join(uploadDir, filename)
+
+		// Save file
+		if err := c.SaveUploadedFile(header, filePath); err != nil {
+			c.JSON(http.StatusInternalServerError, response.Response{
+				Success: false,
+				Error: &response.ErrorInfo{
+					Code:    "UPLOAD_FAILED",
+					Message: "Could not save prescription file",
+				},
+			})
+			return
+		}
+		prescriptionURL = filepath.ToSlash(filePath)
+	}
+
+	// Parse form data
+	cartIDStr := c.PostForm("cartId")
+	pharmacyIDStr := c.PostForm("pharmacyId")
+
+	if cartIDStr == "" || pharmacyIDStr == "" {
 		c.JSON(http.StatusBadRequest, response.Response{
 			Success: false,
 			Error: &response.ErrorInfo{
 				Code:    "INVALID_REQUEST",
-				Message: err.Error(),
+				Message: "Cart ID and Pharmacy ID are required",
 			},
 		})
 		return
 	}
 
-	order, err := o.orderUseCase.CreateFreeMedicineOrder(c.Request.Context(), userID, req.CartID, req.PharmacyID)
+	cartID, err := uuid.Parse(cartIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_ID",
+				Message: "Invalid Cart ID format",
+			},
+		})
+		return
+	}
+
+	pharmacyID, err := uuid.Parse(pharmacyIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "INVALID_ID",
+				Message: "Invalid Pharmacy ID format",
+			},
+		})
+		return
+	}
+
+	if prescriptionURL == "" {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Success: false,
+			Error: &response.ErrorInfo{
+				Code:    "MISSING_PRESCRIPTION",
+				Message: "Prescription file is required for free medicine orders",
+			},
+		})
+		return
+	}
+
+	order, err := o.orderUseCase.CreateFreeMedicineOrder(c.Request.Context(), userID, cartID, pharmacyID, prescriptionURL)
 	if err != nil {
 		statusCode := http.StatusInternalServerError
 		// Map domain errors to HTTP status codes

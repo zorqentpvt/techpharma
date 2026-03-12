@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import CartItems from "../components/CartItems";
-import { cartdata, removecart } from "../api/medapir";
+import { cartdata, removeCart } from "../api/medapir";
 import { useNavigate } from "react-router-dom";
 import { getActiveEligibility, createFreeMedicineOrder } from "../api/freeMedicineApi";
 import { motion, AnimatePresence } from "framer-motion";
@@ -165,7 +165,7 @@ const Cart: React.FC<CartProps> = ({ userId: propUserId }) => {
 
   const handleRemove = async (productId: string) => {
     try {
-      const res = await removecart(productId);
+      const res = await removeCart(productId);
       console.log(res);
       if (res.success) console.log(`Product ${productId} removed from cart`);
       // Optionally refresh UI or update state here

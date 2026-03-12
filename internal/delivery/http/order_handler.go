@@ -103,9 +103,10 @@ func (o *OrderHandlerClean) AddToCart(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "item added to cart successfully",
-		"cart":    fullCart,
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Data:    fullCart,
+		Message: "item added to cart successfully",
 	})
 }
 func (o *OrderHandlerClean) GetCart(c *gin.Context) {

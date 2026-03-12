@@ -18,6 +18,9 @@ interface Pharmacy {
   user: {
     avatar?: string;
   };
+  latitude?: number;
+  longitude?: number;
+  distance?: number;
 }
 
 const BASE_URL = "http://localhost:8080";
@@ -57,6 +60,24 @@ function PharmacyCard({ pharmacy }: { pharmacy: Pharmacy }) {
             <MapPin size={14} />
             <span>{pharmacy.city}, {pharmacy.state}</span>
           </div>
+          {pharmacy.distance !== undefined && pharmacy.distance !== null ? (
+            <p className="text-xs font-semibold text-blue-600 mt-1">{pharmacy.distance} km away</p>
+          ) : (
+            <p className={`text-xs mt-1 ${pharmacy.latitude && pharmacy.longitude ? "text-orange-500" : "text-red-500"}`}>
+              {pharmacy.latitude && pharmacy.longitude ? "Give location to get distance" : "Location not available"}
+            </p>
+          )}
+          {pharmacy.latitude && pharmacy.longitude && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(`https://www.google.com/maps?q=${pharmacy.latitude},${pharmacy.longitude}`, "_blank");
+              }}
+              className="mt-2 text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-medium"
+            >
+              <MapPin size={12} /> View on Map
+            </button>
+          )}
         </div>
       </div>
       <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">

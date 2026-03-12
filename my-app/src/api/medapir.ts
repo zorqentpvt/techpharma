@@ -1,130 +1,158 @@
-import { Appointment } from "./medapi";
+// searchApi.ts
+import api from "./api"; // your Axios instance
 
-const BASE_URL = "http://localhost:8080";
-
-export interface Medicine {
-  id: string;
-  name: string;
-  contents: string;
-  description: string;
-  stock: number;
-  price: number;
-  pharmacy: {
-    id: string;
-    name: string;
-    lat?: number;
-    lng?: number;
-  };
-  image?: string;
-  prescriptionRequired: boolean;
+interface MedicineSearchParams {
+  query: string;       // search term for name/content
+  location?: string;   // optional for sorting
+  limit?: number;      // optional limit
+  offset?: number;     // optional offset/pagination
 }
 
-export const searchMedicine = async (
-  query: string,
-  coords: { latitude: number; longitude: number } | null
-) => {
-  const token = localStorage.getItem("token");
-  let url = `${BASE_URL}/api/user/search-medicines?query=${query}`;
-  if (coords) {
-    url += `&lat=${coords.latitude}&lon=${coords.longitude}`;
+interface DoctorSearchParams {
+  query: string;       // search term for name/specialization
+  location?: string;   // optional for sorting
+  limit?: number;
+  offset?: number;
+} 
+
+// SEARCH MEDICINE
+export async function searchMedicine(searchQuery: string, coordinates: { lat: number; long: number }) {
+  const payload = {
+    searchQuery,
+    coordinates,  // ✅ nested object
+  };
+
+  console.log("API Payload (searchMedicine):", payload);
+
+  try {
+    const response = await api.post("api/user/medicines", payload);
+    console.log("API Response (searchMedicine):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.log("API Error (searchMedicine):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
   }
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.json();
-};
+}
 
-export const searchDoctor = async (
-  query: string,
-  coords: { latitude: number; longitude: number } | null
-) => {
-  const token = localStorage.getItem("token");
-  let url = `${BASE_URL}/api/user/search-doctors?query=${query}`;
-  if (coords) {
-    url += `&lat=${coords.latitude}&lon=${coords.longitude}`;
+
+
+// SEARCH DOCTOR
+export async function searchDoctor(query: string, coordinates: { lat: number; long: number }) {
+  const payload = {
+    query,
+    coordinates,  // ✅ same structure
+  };
+
+  console.log("API Payload (searchDoctor):", payload);
+
+  try {
+    const response = await api.post("api/user/doctors", payload);
+    console.log("API Response (searchDoctor):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.log("API Error (searchDoctor):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
   }
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.json();
-};
+}
 
-export const fetchUserOrders = async () => {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${BASE_URL}/api/user/orders`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.json();
-};
 
-export const cartdata = async (userId: string) => {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${BASE_URL}/api/user/cart`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.json();
-};
+// Corrected async function
+export async function docAppointments(id: string) {
+  console.log("API Payload (docAppointments):", id);
 
-export const removecart = async (medicineId: string) => {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${BASE_URL}/api/user/remove-from-cart`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ medicine_id: medicineId }),
-  });
-  return res.json();
-};
+  try {
 
-export const docAppointments = async (doctorId: string): Promise<{ success: boolean; data?: Appointment[]; message?: string }> => {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${BASE_URL}/api/user/doctor/${doctorId}/appointments`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.json();
-};
+    const response = await api.get(`api/user/confirmed-appointment-slots`, { params: { docId: id } });
+      console.log("API Response (docAppointments) already booked:", response.data);
+    return response.data; // expected to have { success, message, data }
+  } catch (error: any) {
+    console.log("API Error (docAppointments):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}
 
-export const getActivePharmacies = async () => {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${BASE_URL}/api/user/pharmacies`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.json();
-};
+export async function cartdata(id: string) {
+  console.log("API Payload (cartdata):", id);
 
-export const getPharmacyDetails = async (id: string) => {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${BASE_URL}/api/user/pharmacies/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.json();
-};
+  try {
+    const response = await api.get(`api/user/view-cart`,  { userId: id });
+    console.log("API Response (cartdata):", response.data);
+    return response.data; // expected { success, message, data }
+  } catch (error: any) {
+    console.log("API Error (cartdata):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}
+export async function addToCart(medicine_id: string, quantity: number) {
+  console.log("API Payload (addToCart):", { medicine_id, quantity });
 
-export const addToCart = async (medicineId: string, quantity: number) => {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${BASE_URL}/api/user/add-to-cart`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ medicine_id: medicineId, quantity }),
-  });
-  return res.json();
-};
+  try {
+    const response = await api.post(`api/user/add-cart`, { medicine_id, quantity });
+    console.log("API Response (addToCart):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.log("API Error (addToCart):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}
+export async function removeCart(medicineId: string) {
+  // Basic validation
+  if (!medicineId) {
+    return { success: false, message: "Medicine ID is required" };
+  }
+
+  // Payload must match Go struct exactly
+  const payload = { medicine_id: medicineId };
+  console.log("API Payload (removeCart):", payload);
+
+  try {
+    const response = await api.delete(`api/user/remove-cart`, {
+      data: payload,
+      headers: { "Content-Type": "application/json" }, // ensure JSON is sent
+    });
+
+    console.log("API Response (removeCart):", response.data);
+    return response.data; // expected { success, message, data }
+
+  } catch (error: any) {
+    console.error("API Error (removeCart):", error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message,
+    };
+  }
+}
+export async function fetchUserOrders() {
+  try {
+    const response = await api.get("api/user/orders");
+    console.log("API Response (fetchOrders):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.log("API Error (fetchOrders):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}
+
+export async function getActivePharmacies(coords?: { latitude: number; longitude: number } | null) {
+  try {
+    let url = "api/user/pharmacies";
+    if (coords) {
+      url += `?lat=${coords.latitude}&lng=${coords.longitude}`;
+    }
+    const response = await api.get(url);
+    console.log("API Response (getActivePharmacies):", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.log("API Error (getActivePharmacies):", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}
+
+export async function getPharmacyDetails(id: string) {
+  try {
+    const response = await api.get(`api/user/pharmacies/${id}`);
+    return response.data;
+  } catch (error: any) {
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+}

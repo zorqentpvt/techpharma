@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -1443,9 +1444,41 @@ func (h *UserHandlerClean) GetActivePharmacies(c *gin.Context) {
 		return
 	}
 
+	// Fetch User for Location
+	userIDStr := c.GetString("userID")
+	var userLat, userLon float64
+	if userIDStr != "" {
+		if userID, err := uuid.Parse(userIDStr); err == nil {
+			if user, err := h.userUseCase.GetUserByID(c.Request.Context(), userID); err == nil && user != nil {
+				userLat = user.Address.Latitude
+				userLon = user.Address.Longitude
+			}
+		}
+	}
+
+	type PharmacyWithDistance struct {
+		*entity.Pharmacy
+		Distance *float64 `json:"distance"`
+	}
+
+	responseList := make([]PharmacyWithDistance, 0, len(pharmacies))
+
+	for _, p := range pharmacies {
+		var dist *float64
+		// Calculate distance if both user and pharmacy locations are available (non-zero)
+		if userLat != 0 && userLon != 0 && p.Latitude != 0 && p.Longitude != 0 {
+			d := calculateDistance(userLat, userLon, p.Latitude, p.Longitude)
+			dist = &d
+		}
+		responseList = append(responseList, PharmacyWithDistance{
+			Pharmacy: p,
+			Distance: dist,
+		})
+	}
+
 	c.JSON(http.StatusOK, response.Response{
 		Success: true,
-		Data:    pharmacies,
+		Data:    responseList,
 	})
 }
 
@@ -1467,4 +1500,16 @@ func (h *UserHandlerClean) GetPharmacyDetails(c *gin.Context) {
 		Success: true,
 		Data:    pharmacy,
 	})
+}
+
+func calculateDistance(lat1, lon1, lat2, lon2 float64) float64 {
+	const R = 6371 // Earth radius in km
+	dLat := (lat2 - lat1) * (math.Pi / 180)
+	dLon := (lon2 - lon1) * (math.Pi / 180)
+	lat1 = lat1 * (math.Pi / 180)
+	lat2 = lat2 * (math.Pi / 180)
+
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) + math.Sin(dLon/2)*math.Sin(dLon/2)*math.Cos(lat1)*math.Cos(lat2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	return math.Round(c*R*100) / 100
 }

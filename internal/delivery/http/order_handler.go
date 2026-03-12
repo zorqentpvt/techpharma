@@ -517,8 +517,10 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 	}
 
 	type MedicineResponse struct {
-		Name     string `json:"name"`
-		Quantity int    `json:"quantity"`
+		ID       uuid.UUID `json:"id"`
+		Name     string    `json:"name"`
+		Quantity int       `json:"quantity"`
+		Price    float64   `json:"price"`
 	}
 
 	type DeliveryAgentInfo struct {
@@ -564,8 +566,10 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 		medicines := []MedicineResponse{}
 		for _, item := range order.OrderItems {
 			medicines = append(medicines, MedicineResponse{
+				ID:       item.Medicine.ID,
 				Name:     item.Medicine.Name,
 				Quantity: item.Quantity,
+				Price:    item.Price,
 			})
 		}
 
@@ -583,6 +587,16 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 			}
 		}
 
+		// Calculate total amount correctly for free medicine orders (sum of item values)
+		// For paid orders, TotalAmount is already correct
+		displayAmount := order.TotalAmount
+		if order.IsFreeMedicineOrder {
+			displayAmount = 0
+			for _, item := range order.OrderItems {
+				displayAmount += item.Price * float64(item.Quantity)
+			}
+		}
+
 		orderResponses = append(orderResponses, OrderResponse{
 			ID:                      order.ID.String(),
 			OrderNumber:             order.OrderNumber,
@@ -590,7 +604,7 @@ func (o *OrderHandlerClean) GetPharmacyOrders(c *gin.Context) {
 			CustomerPhone:           order.User.PhoneNumber,
 			PrescriptionURL:         order.Payment.PrescriptionURL,
 			Medicines:               medicines,
-			TotalAmount:             order.TotalAmount,
+			TotalAmount:             displayAmount,
 			Status:                  order.Status,
 			OrderDate:               order.CreatedAt,
 			Pharmacy:                pharmacy.Name,

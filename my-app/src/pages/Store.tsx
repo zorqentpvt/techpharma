@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
-import { Medicine } from "../mock/medicines";
 import {
   addMedicine,
   updateMedicine,
@@ -11,6 +10,19 @@ import {
 
 const BASE_URL = "http://localhost:8080";
 
+export interface Medicine {
+  id: string;
+  name: string;
+  contents: string;
+  description?: string;
+  stock: number;
+  price: number;
+  prescriptionRequired: boolean;
+  isFreeScheme: boolean;
+  image: string;
+  pharmacy: string;
+}
+
 const getUserFromStorage = () => {
   const stored = localStorage.getItem("user");
   return stored ? JSON.parse(stored) : null;
@@ -19,6 +31,14 @@ const getUserFromStorage = () => {
 export default function Store() {
   const navigate = useNavigate();
   const [user, setUser] = useState(getUserFromStorage());
+  const [userData] = useState(() => {
+    try {
+      const stored = localStorage.getItem("userdata");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [medList, setMedList] = useState<Medicine[]>([]);
   const [name, setName] = useState("");
   const [stock, setStock] = useState<number>(0);
@@ -29,6 +49,7 @@ export default function Store() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [prescriptionRequired, setPrescriptionRequired] = useState(false);
+  const [isFreeScheme, setIsFreeScheme] = useState(false);
 
   useEffect(() => {
     if (!user || user.role !== "pharmacy") {
@@ -46,7 +67,9 @@ export default function Store() {
               stock: m.quantity,
               price: m.price,
               prescriptionRequired: m.prescriptionRequired,
+              isFreeScheme: m.isFreeScheme || false,
               image: m.image || "",
+              pharmacy: m.pharmacy || user?.username || "",
             }));
             setMedList(mapped);
           }
@@ -73,6 +96,7 @@ export default function Store() {
     setDescription("");
     setImage(null);
     setPrescriptionRequired(false);
+    setIsFreeScheme(false);
     setEditingId(null);
   };
 
@@ -88,7 +112,8 @@ export default function Store() {
         description,
         image: image || undefined,
         prescriptionRequired,
-      });
+        isFreeScheme,
+      } as any);
 
       const created = res?.data;
       if (!created?.name) {
@@ -106,7 +131,9 @@ export default function Store() {
           stock: created.quantity,
           price: created.price,
           prescriptionRequired: created.prescriptionRequired,
+          isFreeScheme: created.isFreeScheme || false,
           image: created.image || "",
+          pharmacy: user?.username || "",
         },
       ]);
 
@@ -127,7 +154,8 @@ export default function Store() {
         description,
         image: image || undefined,
         prescriptionRequired,
-      });
+        isFreeScheme,
+      } as any);
       const updated = res?.data || res;
 
       setMedList((prev) =>
@@ -141,6 +169,7 @@ export default function Store() {
                 stock: updated.quantity,
                 price: updated.price,
                 prescriptionRequired: updated.prescriptionRequired,
+                isFreeScheme: updated.isFreeScheme,
                 image: updated.image || med.image,
               }
             : med
@@ -162,6 +191,7 @@ export default function Store() {
     setDescription(med.description || "");
     setImage(null);
     setPrescriptionRequired(med.prescriptionRequired || false);
+    setIsFreeScheme(med.isFreeScheme || false);
     setEditingId(id);
   };
 
@@ -242,12 +272,31 @@ export default function Store() {
                 type="checkbox"
                 id="prescription"
                 checked={prescriptionRequired}
-                onChange={(e) => setPrescriptionRequired(e.target.checked)}
+                onChange={(e) => {
+                  setPrescriptionRequired(e.target.checked);
+                  if (!e.target.checked) {
+                    setIsFreeScheme(false);
+                  }
+                }}
               />
               <label htmlFor="prescription" className="text-sm text-gray-700">
                 Prescription Required
               </label>
             </div>
+            {userData?.pharmacy?.isFreeMedicineEnabled && (
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isFreeScheme"
+                disabled={!prescriptionRequired}
+                checked={isFreeScheme}
+                onChange={(e) => setIsFreeScheme(e.target.checked)}
+              />
+              <label htmlFor="isFreeScheme" className={`text-sm ${!prescriptionRequired ? 'text-gray-400' : 'text-gray-700'}`}>
+                Free Scheme
+              </label>
+            </div>
+            )}
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2 cursor-pointer bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 rounded-md text-sm transition">
                 {image ? "Change Image" : "Upload Image"}
@@ -320,6 +369,9 @@ export default function Store() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Prescription
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Free Scheme
+                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -359,6 +411,9 @@ export default function Store() {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {med.prescriptionRequired ? "Yes" : "No"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {med.isFreeScheme ? "Yes" : "No"}
                     </td>
                     <td className="px-6 py-4 text-right text-sm font-medium">
                       <button

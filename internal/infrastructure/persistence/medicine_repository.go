@@ -85,6 +85,9 @@ func (r *MedicineRepository) ListMedicines(ctx context.Context, filters types.Me
 	if filters.IsActive != nil {
 		query = query.Where("is_active = ?", *filters.IsActive)
 	}
+	if filters.IsFreeScheme != nil {
+		query = query.Where("is_free_scheme = ?", *filters.IsFreeScheme)
+	}
 
 	// Count total records
 	if err := query.Count(&total).Error; err != nil {

@@ -165,6 +165,10 @@ func (uc *orderUseCase) CreateFreeMedicineOrder(ctx context.Context, userID uuid
 		if item.Medicine.ID == uuid.Nil || item.Medicine.PrescriptionRequired == nil || !*item.Medicine.PrescriptionRequired {
 			return nil, domainErrors.NewDomainError("PRESCRIPTION_REQUIRED", "All items for a free order must require a prescription.", domainErrors.ErrForbidden)
 		}
+
+		if item.Medicine.IsFreeScheme == nil || !*item.Medicine.IsFreeScheme {
+			return nil, domainErrors.NewDomainError("FREE_SCHEME_REQUIRED", "All items must be eligible for free scheme.", domainErrors.ErrForbidden)
+		}
 	}
 
 	// Fetch user to get delivery address

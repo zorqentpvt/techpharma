@@ -429,6 +429,7 @@ type MedicineFilters struct {
 	PharmacyID           *uuid.UUID
 	PrescriptionRequired *bool
 	IsActive             *bool
+	IsFreeScheme         *bool
 	SortBy               string
 	SortOrder            string
 }

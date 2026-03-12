@@ -186,7 +186,7 @@ func (h *MedicineHandlerClean) AddMedicine(c *gin.Context) {
 		}
 
 		// Set image URL (relative path or full URL based on your setup)
-		imageURL = "/" + filePath
+		imageURL = "/" + filepath.ToSlash(filePath)
 	} else if err != http.ErrMissingFile {
 		c.JSON(http.StatusBadRequest, types.ErrorResponse{
 			Error:   "File Upload Error",
@@ -199,6 +199,19 @@ func (h *MedicineHandlerClean) AddMedicine(c *gin.Context) {
 	req.PharmacyID = user.Pharmacy.ID
 
 	isActive := true
+	var isFreeScheme bool
+	if val := c.PostForm("isFreeScheme"); val != "" {
+		if b, err := strconv.ParseBool(val); err == nil {
+			isFreeScheme = b
+		}
+	}
+	if isFreeScheme && !req.PrescriptionRequired {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Validation Error",
+			Message: "Free scheme medicines must require a prescription",
+		})
+		return
+	}
 	// Create medicine entity
 	newMedicine := &entity.Medicine{
 		Name:                 req.Name,
@@ -208,6 +221,7 @@ func (h *MedicineHandlerClean) AddMedicine(c *gin.Context) {
 		Description:          &req.Description,
 		PharmacyID:           req.PharmacyID,
 		PrescriptionRequired: &req.PrescriptionRequired,
+		IsFreeScheme:         &isFreeScheme,
 		IsActive:             &isActive,
 		ImageURL:             &imageURL,
 	}
@@ -264,6 +278,7 @@ func (h *MedicineHandlerClean) ListMedicines(c *gin.Context) {
 	name := c.Query("name")
 	content := c.Query("content")
 	prescriptionRequired := c.Query("prescription_required")
+	isFreeScheme := c.Query("is_free_scheme")
 	isActive := c.Query("is_active")
 	sortBy := c.DefaultQuery("sort_by", "created_at")
 	sortOrder := c.DefaultQuery("sort_order", "desc")
@@ -303,6 +318,13 @@ func (h *MedicineHandlerClean) ListMedicines(c *gin.Context) {
 	if prescriptionRequired != "" {
 		if pr, err := strconv.ParseBool(prescriptionRequired); err == nil {
 			filters.PrescriptionRequired = &pr
+		}
+	}
+
+	// Parse free scheme if provided
+	if isFreeScheme != "" {
+		if fs, err := strconv.ParseBool(isFreeScheme); err == nil {
+			filters.IsFreeScheme = &fs
 		}
 	}
 
@@ -542,6 +564,11 @@ func (h *MedicineHandlerClean) UpdateMedicine(c *gin.Context) {
 				medicine.PrescriptionRequired = &prescriptionRequired
 			}
 		}
+		if isFreeSchemeStr := c.PostForm("isFreeScheme"); isFreeSchemeStr != "" {
+			if isFreeScheme, err := strconv.ParseBool(isFreeSchemeStr); err == nil {
+				medicine.IsFreeScheme = &isFreeScheme
+			}
+		}
 		if isActiveStr := c.PostForm("is_active"); isActiveStr != "" {
 			if isActive, err := strconv.ParseBool(isActiveStr); err == nil {
 				medicine.IsActive = &isActive
@@ -577,7 +604,7 @@ func (h *MedicineHandlerClean) UpdateMedicine(c *gin.Context) {
 			}
 
 			// Set new image URL
-			newImageURL = "/" + filePath
+			newImageURL = "/" + filepath.ToSlash(filePath)
 			medicine.ImageURL = &newImageURL
 
 			// Store old image URL for deletion after successful update
@@ -601,6 +628,29 @@ func (h *MedicineHandlerClean) UpdateMedicine(c *gin.Context) {
 			})
 			return
 		}
+	}
+
+	// Validate Free Scheme logic
+	effectivePrescriptionRequired := false
+	if medicine.PrescriptionRequired != nil {
+		effectivePrescriptionRequired = *medicine.PrescriptionRequired
+	} else if existingMedicine.PrescriptionRequired != nil {
+		effectivePrescriptionRequired = *existingMedicine.PrescriptionRequired
+	}
+
+	effectiveIsFreeScheme := false
+	if medicine.IsFreeScheme != nil {
+		effectiveIsFreeScheme = *medicine.IsFreeScheme
+	} else if existingMedicine.IsFreeScheme != nil {
+		effectiveIsFreeScheme = *existingMedicine.IsFreeScheme
+	}
+
+	if effectiveIsFreeScheme && !effectivePrescriptionRequired {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Validation Error",
+			Message: "Free scheme medicines must require a prescription",
+		})
+		return
 	}
 
 	// Update medicine

@@ -157,7 +157,7 @@ func LoadConfig() *Config {
 		},
 
 		CORS: Cors{
-			AllowedOrigins:   getStringSliceEnv("CORS_ALLOWED_ORIGINS", []string{"http://localhost:3000", "http://localhost:5500", "http://localhost:5173", "http://localhost:8080", "http://127.0.0.1:5500"}),
+			AllowedOrigins:   getStringSliceEnv("CORS_ALLOWED_ORIGINS", []string{"http://localhost:3000", "http://localhost:5500", "http://localhost:5173", "http://localhost:8080", "http://127.0.0.1:5500", " http://172.19.238.72:5173/"}),
 			AllowedMethods:   getStringSliceEnv("CORS_ALLOWED_METHODS", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
 			AllowedHeaders:   getStringSliceEnv("CORS_ALLOWED_HEADERS", []string{"Origin", "Content-Length", "Content-Type", "Authorization"}),
 			AllowCredentials: getBoolEnv("CORS_ALLOW_CREDENTIALS", true),

@@ -17,6 +17,7 @@ import {
   FaHistory,
   FaFileMedical,
   FaClinicMedical,
+  FaFileInvoiceDollar,
 } from "react-icons/fa";
 import { ChevronLeft, Menu } from "lucide-react";
 import React from "react";
@@ -54,6 +55,7 @@ const tabIcons = {
   eligibility: FaFileMedical,
   adminEligibility: FaFileMedical,
   pharmacies: FaClinicMedical,
+  "gov-reports": FaFileInvoiceDollar,
 };
 
 export default function Dashboard() {
@@ -62,6 +64,14 @@ export default function Dashboard() {
   const [user, setUser] = useState(getUserFromStorage());
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userData] = useState(() => {
+    try {
+      const stored = localStorage.getItem("userdata");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const isHome = useMatch("/dashboard");
 
@@ -95,13 +105,20 @@ export default function Dashboard() {
     { key: "orders", label: "Orders", path: "/dashboard/orders", roles: ["pharmacy"] },
     { key: "agents", label: "Delivery Agents", path: "/dashboard/agents", roles: ["pharmacy"] },
     { key: "deliveryHistory", label: "Delivery History", path: "/dashboard/delivery-history", roles: ["pharmacy"] },
+    { key: "gov-reports", label: "Gov Reports", path: "/dashboard/gov-reports", roles: ["pharmacy"] },
     { key: "agentOrders", label: "My Deliveries", path: "/dashboard/agent-orders", roles: ["delivery_agent"] },
     { key: "logout", label: "Logout", path: "/logout", roles: ["normal", "doctor", "pharmacy", "admin", "delivery_agent"] },
   ];
 
   const renderNavLinks = () =>
     tabs
-      .filter((tab) => tab.roles.includes(user.role))
+      .filter((tab) => {
+        if (!tab.roles.includes(user.role)) return false;
+        if (tab.key === "gov-reports") {
+          return userData?.pharmacy?.isFreeMedicineEnabled;
+        }
+        return true;
+      })
       .map((tab) => {
         const Icon = tabIcons[tab.key as keyof typeof tabIcons];
         const isActive = normalizedPath === tab.path;

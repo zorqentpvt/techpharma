@@ -18,6 +18,7 @@ type Product = {
   pharmacyId: string;
   quantity: number;
   prescriptionRequired: boolean;
+  isFreeScheme: boolean;
 };
 
 type OrderSummary = {
@@ -70,6 +71,7 @@ const Cart: React.FC<CartProps> = ({ userId: propUserId }) => {
             pharmacyId: item.medicine.pharmacyId,
             quantity: item.quantity,
             prescriptionRequired: item.medicine.prescriptionRequired || false,
+            isFreeScheme: item.medicine.isFreeScheme || false,
           }));
 
           setOrderSummary({
@@ -209,7 +211,7 @@ const Cart: React.FC<CartProps> = ({ userId: propUserId }) => {
   const productsTotal = products.reduce((sum, p) => sum + p.price * p.quantity, 0);
   const totalDue = productsTotal + taxes + shipping;
   const isEmpty = products.length === 0;
-  const allPrescription = !isEmpty && products.every(p => p.prescriptionRequired);
+  const allFreeSchemeEligible = !isEmpty && products.every(p => p.prescriptionRequired && p.isFreeScheme);
 
   return (
     <div className="flex h-[100dvh] overflow-hidden">
@@ -266,7 +268,7 @@ const Cart: React.FC<CartProps> = ({ userId: propUserId }) => {
                     Buy Now - ${totalDue.toFixed(2)}
                   </button>
                   
-                  {isEligible && allPrescription && (
+                  {isEligible && allFreeSchemeEligible && (
                     <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
                       <p className="text-sm text-green-800 font-medium mb-2">Free Medicine Scheme Eligible</p>
                       

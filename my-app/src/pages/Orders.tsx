@@ -99,6 +99,7 @@ export default function Orders() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] =
     useState<OrderStatus | "all">("all");
+  const [filterType, setFilterType] = useState<"all" | "free" | "paid">("all");
   const [filterDate, setFilterDate] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -238,11 +239,16 @@ export default function Orders() {
     const matchStatus =
       filterStatus === "all" || order.status === filterStatus;
 
+    const matchType =
+      filterType === "all" ||
+      (filterType === "free" && order.isFreeMedicineOrder) ||
+      (filterType === "paid" && !order.isFreeMedicineOrder);
+
     const matchDate =
       !filterDate ||
       new Date(order.orderDate).toISOString().split("T")[0] === filterDate;
 
-    return matchSearch && matchStatus && matchDate;
+    return matchSearch && matchStatus && matchType && matchDate;
   });
 
   /* ---------------- PRINT HANDLER ---------------- */
@@ -367,7 +373,7 @@ export default function Orders() {
         </div>
 
         {/* FILTERS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           {/* Search */}
           <input
             className="w-full border px-4 py-3 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-[#00B9F1] outline-none"
@@ -375,6 +381,17 @@ export default function Orders() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+
+          {/* Type Filter */}
+          <select
+            className="w-full border px-4 py-3 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-[#00B9F1] outline-none bg-white"
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as "all" | "free" | "paid")}
+          >
+            <option value="all">All Types</option>
+            <option value="paid">Paid Orders</option>
+            <option value="free">Free Medicine</option>
+          </select>
 
           {/* Status Filter */}
           <select

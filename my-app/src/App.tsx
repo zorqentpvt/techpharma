@@ -31,6 +31,7 @@ import Eligibility from "./pages/Eligibility";
 import AdminEligibility from "./pages/AdminEligibility";
 import Pharmacies from "./pages/Pharmacies";
 import PharmacyDetails from "./pages/PharmacyDetails";
+import FreeMedicineReport from "./pages/FreeMedicineReport";
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
           <Route path="orders" element={<Orders />} />
           <Route path="agents" element={<DeliveryAgents />} />
           <Route path="delivery-history" element={<DeliveryHistory />} />
+          <Route path="gov-reports" element={<FreeMedicineReport />} />
 
           {/* Delivery Agent routes */}
           <Route path="agent-orders" element={<AgentOrders />} />

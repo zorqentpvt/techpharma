@@ -188,6 +188,10 @@ func SetupCleanRoutes(router *gin.Engine, container *container.Container) {
 			adminRoutes.PUT("/eligibility/:id/reject", patientEligibilityHandler.RejectEligibility)
 
 			adminRoutes.PUT("/pharmacies/:id/free-medicine", userHandler.ToggleFreeMedicineStatus)
+			adminRoutes.GET("/doctor/:id/verify", userHandler.VerifyDoctorIdentity)
+			// wherever you register your admin routes
+			adminRoutes.GET("/doctor/:id/registry-details", userHandler.GetDoctorRegistryDetails)
+			adminRoutes.PUT("/doctor/:id/verify-status", userHandler.UpdateDoctorVerificationStatus)
 
 			{
 				//adminUserRoutes.GET("/roles", userHandler.FetchRoles)

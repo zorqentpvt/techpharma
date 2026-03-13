@@ -627,3 +627,22 @@ type FreeMedicineOrderRequest struct {
 	CartID     uuid.UUID `json:"cartId" binding:"required"`
 	PharmacyID uuid.UUID `json:"pharmacyId" binding:"required"`
 }
+
+type RegistryData struct {
+	Name                string `json:"name"`
+	RegistrationNumber  string `json:"registrationNumber"`
+	StateMedicalCouncil string `json:"stateMedicalCouncil"`
+	YearOfPassing       int    `json:"yearOfPassing"`
+}
+
+type VerificationResult struct {
+	MatchStatus  string       `json:"matchStatus"`
+	RegistryData RegistryData `json:"registryData"`
+	LocalData    RegistryData `json:"localData"`
+	Reason       string       `json:"reason,omitempty"`
+	NMCDoctorID  int          `json:"nmcDoctorId,omitempty"` // ← add this
+}
+
+type UpdateDoctorVerifyStatusRequest struct {
+	IsVerified bool `json:"isVerified"`
+}

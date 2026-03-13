@@ -1,8 +1,16 @@
 package usecase
 
 import (
+	"bytes"
 	"context"
+	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 
 	"time"
 
@@ -34,6 +42,10 @@ type UserUseCase interface {
 	GetPharmacyDetails(ctx context.Context, id uuid.UUID) (*entity.Pharmacy, error)
 	GetDashboardStats(ctx context.Context) (*types.DashboardStatsResponse, error)
 	ToggleFreeMedicineStatus(ctx context.Context, pharmacyID uuid.UUID, enabled bool) error
+	VerifyDoctorIdentity(ctx context.Context, userID uuid.UUID) (*types.VerificationResult, error)
+	// in your usecase interface definition
+	GetNMCDoctorDetails(doctorID int, regno string) (*NMCDoctorDetails, error)
+	UpdateDoctorVerificationStatus(ctx context.Context, userID uuid.UUID, isVerified bool) error
 }
 
 // userUseCase implements the UserUseCase interface
@@ -662,4 +674,301 @@ func (u *userUseCase) GetActivePharmacies(ctx context.Context) ([]*entity.Pharma
 
 func (u *userUseCase) GetPharmacyDetails(ctx context.Context, id uuid.UUID) (*entity.Pharmacy, error) {
 	return u.userRepo.GetPharmacyWithMedicines(ctx, id)
+}
+func (u *userUseCase) VerifyDoctorIdentity(ctx context.Context, userID uuid.UUID) (*types.VerificationResult, error) {
+	user, err := u.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user: %w", err)
+	}
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+	if user.Doctor == nil {
+		return nil, fmt.Errorf("doctor profile not found for user")
+	}
+
+	localData := types.RegistryData{
+		Name:                strings.TrimSpace(user.FirstName + " " + user.LastName),
+		RegistrationNumber:  strings.TrimSpace(user.Doctor.LicenseNumber),
+		StateMedicalCouncil: strings.TrimSpace(user.Doctor.StateMedicalCouncil),
+		YearOfPassing:       user.Doctor.YearOfPassing,
+	}
+
+	registryData, nmcDoctorID, err := u.scrapeNMCRegistry(
+		localData.RegistrationNumber,
+		localData.Name,
+		localData.StateMedicalCouncil,
+		localData.YearOfPassing,
+	)
+	if err != nil {
+		return &types.VerificationResult{
+			MatchStatus:  "PENDING_MANUAL_REVIEW",
+			LocalData:    localData,
+			RegistryData: types.RegistryData{},
+			Reason:       err.Error(),
+		}, nil
+	}
+
+	regMatch := strings.EqualFold(
+		strings.TrimSpace(registryData.RegistrationNumber),
+		strings.TrimSpace(localData.RegistrationNumber),
+	)
+	nameMatch := strings.EqualFold(
+		strings.TrimSpace(registryData.Name),
+		strings.TrimSpace(localData.Name),
+	)
+	councilMatch := strings.EqualFold(
+		strings.TrimSpace(registryData.StateMedicalCouncil),
+		strings.TrimSpace(localData.StateMedicalCouncil),
+	)
+
+	matchStatus := "MATCHED"
+	if !regMatch || !nameMatch || !councilMatch {
+		matchStatus = "MISMATCH"
+	}
+
+	return &types.VerificationResult{
+		MatchStatus:  matchStatus,
+		RegistryData: registryData,
+		LocalData:    localData,
+		NMCDoctorID:  nmcDoctorID,
+	}, nil
+}
+
+type nmcPaginatedResponse struct {
+	RecordsTotal    int             `json:"recordsTotal"`
+	RecordsFiltered int             `json:"recordsFiltered"`
+	Draw            string          `json:"draw"`
+	Data            [][]interface{} `json:"data"`
+}
+
+func (u *userUseCase) scrapeNMCRegistry(regNo, name, council string, year int) (types.RegistryData, int, error) {
+	smcID := getNMCSmcID(council)
+
+	params := url.Values{}
+	params.Set("service", "getPaginatedDoctor")
+	params.Set("draw", "1")
+	for i := 0; i < 7; i++ {
+		idx := strconv.Itoa(i)
+		params.Set("columns["+idx+"][data]", idx)
+		params.Set("columns["+idx+"][name]", "")
+		params.Set("columns["+idx+"][searchable]", "true")
+		params.Set("columns["+idx+"][orderable]", "true")
+		params.Set("columns["+idx+"][search][value]", "")
+		params.Set("columns["+idx+"][search][regex]", "false")
+	}
+	params.Set("order[0][column]", "0")
+	params.Set("order[0][dir]", "asc")
+	params.Set("start", "0")
+	params.Set("length", "500")
+	params.Set("search[value]", "")
+	params.Set("search[regex]", "false")
+	params.Set("name", name)
+	params.Set("registrationNo", regNo)
+	params.Set("smcId", smcID)
+	params.Set("year", strconv.Itoa(year))
+	params.Set("_", strconv.FormatInt(time.Now().UnixMilli(), 10))
+
+	apiURL := "https://www.nmc.org.in/MCIRest/open/getPaginatedData?" + params.Encode()
+
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+	}
+	client := &http.Client{
+		Timeout:   15 * time.Second,
+		Transport: transport,
+	}
+
+	req, err := http.NewRequest(http.MethodGet, apiURL, nil)
+	if err != nil {
+		return types.RegistryData{}, 0, fmt.Errorf("failed to build NMC request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
+	req.Header.Set("X-Requested-With", "XMLHttpRequest")
+	req.Header.Set("Referer", "https://www.nmc.org.in/information-desk/indian-medical-register/")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return types.RegistryData{}, 0, fmt.Errorf("NMC registry unreachable: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return types.RegistryData{}, 0, fmt.Errorf("NMC registry returned status %d", resp.StatusCode)
+	}
+
+	var nmcResp nmcPaginatedResponse
+	if err := json.NewDecoder(resp.Body).Decode(&nmcResp); err != nil {
+		return types.RegistryData{}, 0, fmt.Errorf("failed to decode NMC response: %w", err)
+	}
+
+	if nmcResp.RecordsFiltered == 0 || len(nmcResp.Data) == 0 {
+		return types.RegistryData{}, 0, fmt.Errorf("no doctor found in NMC registry for registration number: %s", regNo)
+	}
+
+	row := nmcResp.Data[0]
+	if len(row) < 6 {
+		return types.RegistryData{}, 0, fmt.Errorf("unexpected NMC response format: only %d columns", len(row))
+	}
+
+	yearOfPassing, _ := strconv.Atoi(fmt.Sprintf("%v", row[1]))
+
+	nmcDoctorID := 0
+	if len(row) >= 7 {
+		nmcDoctorID = extractDoctorID(fmt.Sprintf("%v", row[6]))
+	}
+
+	return types.RegistryData{
+		Name:                strings.TrimSpace(fmt.Sprintf("%v", row[4])),
+		RegistrationNumber:  strings.TrimSpace(fmt.Sprintf("%v", row[2])),
+		StateMedicalCouncil: strings.TrimSpace(fmt.Sprintf("%v", row[3])),
+		YearOfPassing:       yearOfPassing,
+	}, nmcDoctorID, nil
+}
+
+func getNMCSmcID(council string) string {
+	councilMap := map[string]string{
+		"Andhra Pradesh Medical Council":    "1",
+		"Arunachal Pradesh Medical Council": "2",
+		"Assam Medical Council":             "3",
+		"Bihar Medical Council":             "4",
+		"Chhattisgarh Medical Council":      "5",
+		"Delhi Medical Council":             "6",
+		"Goa Medical Council":               "7",
+		"Gujarat Medical Council":           "8",
+		"Haryana Medical Council":           "9",
+		"Himachal Pradesh Medical Council":  "10",
+		"Jammu & Kashmir Medical Council":   "11",
+		"Jharkhand Medical Council":         "12",
+		"Karnataka Medical Council":         "13",
+		"Kerala Medical Council":            "14",
+		"Madhya Pradesh Medical Council":    "15",
+		"Maharashtra Medical Council":       "16",
+		"Manipur Medical Council":           "17",
+		"Meghalaya Medical Council":         "18",
+		"Mizoram Medical Council":           "19",
+		"Nagaland Medical Council":          "20",
+		"Odisha Medical Council":            "21",
+		"Punjab Medical Council":            "22",
+		"Rajasthan Medical Council":         "23",
+		"Sikkim Medical Council":            "24",
+		"Tamil Nadu Medical Council":        "25",
+		"Telangana State Medical Council":   "26",
+		"Tripura Medical Council":           "27",
+		"Uttar Pradesh Medical Council":     "28",
+		"Uttarakhand Medical Council":       "29",
+		"West Bengal Medical Council":       "30",
+		"Travancore Cochin Medical Council": "31",
+		"Vidarbha Medical Council":          "32",
+	}
+
+	normalized := strings.TrimSpace(council)
+	for key, id := range councilMap {
+		if strings.EqualFold(key, normalized) {
+			return id
+		}
+	}
+	return ""
+}
+
+type NMCDoctorDetails struct {
+	DoctorID      int     `json:"doctorId"`
+	FirstName     string  `json:"firstName"`
+	MiddleName    *string `json:"middleName"`
+	LastName      *string `json:"lastName"`
+	ParentName    string  `json:"parentName"`
+	BirthDateStr  string  `json:"birthDateStr"`
+	Degree        string  `json:"doctorDegree"`
+	University    string  `json:"university"`
+	YearOfPassing string  `json:"yearOfPassing"`
+	RegNo         string  `json:"registrationNo"`
+	RegDate       string  `json:"regDate"`
+	SmcName       string  `json:"smcName"`
+	Address       string  `json:"address"`
+	YearInfo      int     `json:"yearInfo"`
+	UprnNo        *string `json:"uprnNo"`
+	RemovedStatus bool    `json:"removedStatus"`
+}
+
+func (u *userUseCase) GetNMCDoctorDetails(doctorID int, regNo string) (*NMCDoctorDetails, error) {
+	const apiURL = "https://www.nmc.org.in/MCIRest/open/getDataFromService?service=getDoctorDetailsByIdImrExt"
+
+	payload := map[string]interface{}{
+		"doctorId":    strconv.Itoa(doctorID),
+		"regdNoValue": regNo,
+	}
+	bodyBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+	}
+	client := &http.Client{
+		Timeout:   15 * time.Second,
+		Transport: transport,
+	}
+
+	req, err := http.NewRequest(http.MethodPost, apiURL, bytes.NewReader(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to build request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
+	req.Header.Set("X-Requested-With", "XMLHttpRequest")
+	req.Header.Set("Referer", "https://www.nmc.org.in/information-desk/indian-medical-register/")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+	req.Header.Set("Origin", "https://www.nmc.org.in")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("NMC registry unreachable: %w", err)
+	}
+	defer resp.Body.Close()
+
+	rawBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("NMC returned status %d", resp.StatusCode)
+	}
+
+	bodyStr := strings.TrimSpace(string(rawBody))
+	if bodyStr == "error" || strings.HasPrefix(bodyStr, "<") {
+		return nil, fmt.Errorf("NMC returned error response for doctorId %d", doctorID)
+	}
+
+	var details NMCDoctorDetails
+	if err := json.Unmarshal(rawBody, &details); err != nil {
+		return nil, fmt.Errorf("failed to decode NMC details: %w", err)
+	}
+
+	return &details, nil
+}
+
+func extractDoctorID(actionHTML string) int {
+	start := strings.Index(actionHTML, "openDoctorDetailsnew('")
+	if start == -1 {
+		return 0
+	}
+	start += len("openDoctorDetailsnew('")
+	end := strings.Index(actionHTML[start:], "'")
+	if end == -1 {
+		return 0
+	}
+	id, _ := strconv.Atoi(actionHTML[start : start+end])
+	return id
+}
+
+func (u *userUseCase) UpdateDoctorVerificationStatus(ctx context.Context, userID uuid.UUID, isVerified bool) error {
+	doctor := &entity.Doctor{
+		UserID:     userID,
+		IsVerified: &isVerified,
+	}
+	_, err := u.userRepo.UpdateDoctor(ctx, doctor)
+	return err
 }

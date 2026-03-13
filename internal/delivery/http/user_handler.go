@@ -178,7 +178,7 @@ func (h *UserHandlerClean) CreateUser(c *gin.Context) {
 	}
 
 	// Determine initial status based on role
-	status := "Inactive"
+	status := "inactive"
 	isActive := false
 	if roleName == "normal" {
 		status = "active"
@@ -1136,6 +1136,33 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 	})
 }
 
+func (h *UserHandlerClean) VerifyDoctorIdentity(c *gin.Context) {
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "Invalid user ID format",
+		})
+		return
+	}
+
+	result, err := h.userUseCase.VerifyDoctorIdentity(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{
+			Error:   "Verification failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Data:    result,
+		Message: "Doctor verification completed",
+	})
+}
+
 // buildProfileResponse constructs the user profile response map.
 // This helper can be used by GetUserProfile and UpdateUserProfile to avoid code duplication.
 func (h *UserHandlerClean) buildProfileResponse(user *entity.User) map[string]interface{} {
@@ -1523,4 +1550,56 @@ func calculateDistance(lat1, lon1, lat2, lon2 float64) float64 {
 	a := math.Sin(dLat/2)*math.Sin(dLat/2) + math.Sin(dLon/2)*math.Sin(dLon/2)*math.Cos(lat1)*math.Cos(lat2)
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 	return math.Round(c*R*100) / 100
+}
+
+// in your admin handler file
+func (h *UserHandlerClean) GetDoctorRegistryDetails(c *gin.Context) {
+	nmcIDStr := c.Query("nmcDoctorId")
+	regNo := c.Query("regNo")
+
+	nmcID, err := strconv.Atoi(nmcIDStr)
+	if err != nil || nmcID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "invalid nmcDoctorId"})
+		return
+	}
+	if regNo == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "regNo is required"})
+		return
+	}
+
+	details, err := h.userUseCase.GetNMCDoctorDetails(nmcID, regNo)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": details})
+}
+
+func (h *UserHandlerClean) UpdateDoctorVerificationStatus(c *gin.Context) {
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "Invalid user ID format",
+		})
+		return
+	}
+
+	var req types.UpdateDoctorVerifyStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, types.ErrorResponse{Error: "Invalid request", Message: err.Error()})
+		return
+	}
+
+	if err := h.userUseCase.UpdateDoctorVerificationStatus(c.Request.Context(), userID, req.IsVerified); err != nil {
+		c.JSON(http.StatusInternalServerError, types.ErrorResponse{Error: "Failed to update verification status", Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{
+		Success: true,
+		Message: "Verification status updated successfully",
+	})
 }

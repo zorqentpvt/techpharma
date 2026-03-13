@@ -32,6 +32,7 @@ type Doctor struct {
 
 	// Audit fields
 	IsActive      *bool      `gorm:"default:false;index" json:"isActive"`
+	IsVerified    *bool      `gorm:"default:false;index" json:"isVerified,omitempty"`
 	DeactivatedAt *time.Time `json:"deactivatedAt,omitempty"`
 	DeactivatedBy *uuid.UUID `gorm:"type:uuid" json:"deactivatedBy,omitempty"`
 }

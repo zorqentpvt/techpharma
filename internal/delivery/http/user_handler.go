@@ -313,12 +313,15 @@ func (h *UserHandlerClean) createDoctor(ctx context.Context, userID uuid.UUID, r
 	isActive := true
 
 	doctor := &entity.Doctor{
-		UserID:           userID,
-		SpecializationID: req.SpecializationID,
-		LicenseNumber:    req.LicenseNumber,
-		Experience:       0, // Default, can be added to form
-		ConsultationFee:  0, // Default, can be added to form
-		IsActive:         &isActive,
+		UserID:              userID,
+		SpecializationID:    req.SpecializationID,
+		LicenseNumber:       req.LicenseNumber,
+		Qualification:       req.Qualification,
+		StateMedicalCouncil: req.StateMedicalCouncil,
+		YearOfPassing:       req.YearOfPassing,
+		Experience:          0, // Default, can be added to form
+		ConsultationFee:     0, // Default, can be added to form
+		IsActive:            &isActive,
 	}
 
 	_, err := h.userUseCase.CreateDoctor(ctx, doctor)
@@ -1030,6 +1033,14 @@ func (h *UserHandlerClean) UpdateUserProfile(c *gin.Context) {
 		}
 		if req.Doctor.IsActive != nil {
 			doctorUpdate.IsActive = req.Doctor.IsActive
+			updateNeeded = true
+		}
+		if req.Doctor.StateMedicalCouncil != nil {
+			doctorUpdate.StateMedicalCouncil = *req.Doctor.StateMedicalCouncil
+			updateNeeded = true
+		}
+		if req.Doctor.YearOfPassing != nil {
+			doctorUpdate.YearOfPassing = *req.Doctor.YearOfPassing
 			updateNeeded = true
 		}
 

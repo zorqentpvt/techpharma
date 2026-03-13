@@ -55,9 +55,11 @@ type CreateUserRequest struct {
 	RoleID      string `form:"role" json:"role,omitempty"`
 
 	// Doctor-specific fields
-	SpecializationID string `form:"specialization" json:"specialization,omitempty"`
-	LicenseNumber    string `form:"licenseNumber" json:"licenseNumber,omitempty"`
-	Qualification    string `form:"qual" json:"qual,omitempty"`
+	SpecializationID    string `form:"specialization" json:"specialization,omitempty"`
+	LicenseNumber       string `form:"licenseNumber" json:"licenseNumber,omitempty"`
+	Qualification       string `form:"qual" json:"qual,omitempty"`
+	StateMedicalCouncil string `form:"stateMedicalCouncil" json:"stateMedicalCouncil,omitempty"`
+	YearOfPassing       int    `form:"yearOfPassing" json:"yearOfPassing,omitempty"`
 
 	// Pharmacy-specific fields
 	PharmacyName    string `form:"pharmacyName" json:"pharmacyName,omitempty"`
@@ -362,12 +364,14 @@ type Pharmacy struct {
 	JanAushadhiID                *string  `json:"janAushadhiId,omitempty"`
 }
 type Doctor struct {
-	IsActive         *bool    `json:"isActive,omitempty"`
-	SpecializationID *string  `json:"specializationId,omitempty"`
-	LicenseNumber    *string  `json:"licenseNumber,omitempty"`
-	Qualification    *string  `json:"qualification,omitempty"`
-	Experience       *int     `json:"experience,omitempty"`
-	ConsultationFee  *float64 `json:"consultationFee,omitempty"`
+	IsActive            *bool    `json:"isActive,omitempty"`
+	SpecializationID    *string  `json:"specializationId,omitempty"`
+	LicenseNumber       *string  `json:"licenseNumber,omitempty"`
+	Qualification       *string  `json:"qualification,omitempty"`
+	Experience          *int     `json:"experience,omitempty"`
+	ConsultationFee     *float64 `json:"consultationFee,omitempty"`
+	StateMedicalCouncil *string  `json:"stateMedicalCouncil,omitempty"`
+	YearOfPassing       *int     `json:"yearOfPassing,omitempty"`
 }
 type MedicineRequest struct {
 	SearchQuery string  `json:"searchQuery"`

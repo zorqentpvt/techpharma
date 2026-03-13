@@ -2,13 +2,20 @@ const BASE_URL = "http://localhost:8080";
 
 export const applyForEligibility = async (data: any) => {
   const token = localStorage.getItem("token");
+  const isFormData = data instanceof FormData;
+  
+  const headers: any = {
+    Authorization: `Bearer ${token}`,
+  };
+
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(`${BASE_URL}/api/user/eligibility/apply`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
+    headers,
+    body: isFormData ? data : JSON.stringify(data),
   });
   return response.json();
 };
@@ -43,9 +50,12 @@ export const createFreeMedicineOrder = async (cartId: string, pharmacyId: string
 };
 
 // Admin Endpoints
-export const getEligibilityRequests = async () => {
+export const getEligibilityRequests = async (status?: string) => {
   const token = localStorage.getItem("token");
-  const response = await fetch(`${BASE_URL}/api/admin/eligibility`, {
+  const url = status 
+    ? `${BASE_URL}/api/admin/eligibility?status=${status}` 
+    : `${BASE_URL}/api/admin/eligibility`;
+  const response = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.json();

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { applyForEligibility, getMyEligibility } from "../api/freeMedicineApi";
+import { Upload, X } from "lucide-react";
 
 export default function Eligibility() {
   const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     schemeType: "cancer_patient",
@@ -39,19 +41,28 @@ export default function Eligibility() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = {
-        ...formData,
-        validFrom: new Date(formData.validFrom).toISOString(),
-        validUntil: new Date(formData.validUntil).toISOString(),
-        diagnosisDate: formData.diagnosisDate
-          ? new Date(formData.diagnosisDate).toISOString()
-          : undefined,
-      };
+      const payload = new FormData();
+      payload.append("schemeType", formData.schemeType);
+      payload.append("documentType", formData.documentType);
+      payload.append("documentNumber", formData.documentNumber);
+      
+      if (formData.medicalCondition) payload.append("medicalCondition", formData.medicalCondition);
+      if (formData.diagnosisDate) payload.append("diagnosisDate", new Date(formData.diagnosisDate).toISOString());
+      if (formData.bplCardNumber) payload.append("bplCardNumber", formData.bplCardNumber);
+      if (formData.bplState) payload.append("bplState", formData.bplState);
+      
+      payload.append("validFrom", new Date(formData.validFrom).toISOString());
+      payload.append("validUntil", new Date(formData.validUntil).toISOString());
 
-      const res = await applyForEligibility(payload);
+      if (selectedFile) {
+        payload.append("document", selectedFile);
+      }
+
+      const res = await applyForEligibility(payload as any);
       if (res.success) {
         alert("Application submitted successfully!");
         setShowForm(false);
+        setSelectedFile(null);
         fetchRecords();
       } else {
         alert("Failed: " + res.message);
@@ -64,6 +75,12 @@ export default function Eligibility() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -117,6 +134,34 @@ export default function Eligibility() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Document Number</label>
                   <input required type="text" name="documentNumber" value={formData.documentNumber} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g. Report ID or Card No." />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Upload Document</label>
+                  <div className="flex items-center gap-2">
+                    <label className="flex flex-1 items-center gap-2 cursor-pointer bg-white border border-gray-300 text-gray-600 px-4 py-3 rounded-lg hover:bg-gray-50 transition border-dashed">
+                      <Upload size={18} />
+                      <span className="text-sm truncate">
+                        {selectedFile ? selectedFile.name : "Choose File (PDF/Image)"}
+                      </span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleFileChange}
+                      />
+                    </label>
+                    {selectedFile && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFile(null)}
+                        className="p-3 text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition"
+                        title="Remove file"
+                      >
+                        <X size={18} />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {["cancer_patient", "kidney_patient"].includes(formData.schemeType) && (

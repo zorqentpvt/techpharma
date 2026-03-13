@@ -23,6 +23,9 @@ type Doctor struct {
 
 	Qualification string `gorm:"type:varchar(100)" json:"qualification"`
 
+	StateMedicalCouncil string `gorm:"type:varchar(200)" json:"stateMedicalCouncil"`
+	YearOfPassing       int    `gorm:"type:int" json:"yearOfPassing"`
+
 	// Availability
 	AvailableFrom *time.Time `json:"availableFrom,omitempty"`
 	AvailableTo   *time.Time `json:"availableTo,omitempty"`

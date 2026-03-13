@@ -3,11 +3,47 @@ import { useNavigate } from "react-router-dom";
 import { signup } from "../api/authapir";
 import { Eye, EyeOff } from "lucide-react";
 
+const MEDICAL_COUNCILS = [
+  "Andhra Pradesh Medical Council",
+  "Arunachal Pradesh Medical Council",
+  "Assam Medical Council",
+  "Bihar Medical Council",
+  "Chhattisgarh Medical Council",
+  "Delhi Medical Council",
+  "Goa Medical Council",
+  "Gujarat Medical Council",
+  "Haryana Medical Council",
+  "Himachal Pradesh Medical Council",
+  "Jammu & Kashmir Medical Council",
+  "Jharkhand State Medical Council",
+  "Karnataka Medical Council",
+  "Travancore-Cochin Medical Council",
+  "Madhya Pradesh Medical Council",
+  "Maharashtra Medical Council",
+  "Manipur Medical Council",
+  "Meghalaya Medical Council",
+  "Mizoram Medical Council",
+  "Nagaland Medical Council",
+  "Odisha Medical Council",
+  "Punjab Medical Council",
+  "Rajasthan Medical Council",
+  "Sikkim Medical Council",
+  "Tamil Nadu Medical Council",
+  "Telangana State Medical Council",
+  "Tripura State Medical Council",
+  "Uttar Pradesh Medical Council",
+  "Uttarakhand Medical Council",
+  "West Bengal Medical Council"
+];
+
 export default function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [fileName, setFileName] = useState("");
   const navigate = useNavigate();
   const [error, setError] = useState("");
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from(new Array(60), (val, index) => currentYear - index);
 
   const [formData, setFormData] = useState({
     firstname: "",
@@ -32,6 +68,8 @@ export default function SignupForm() {
     category: "private_standard",
     governmentRegistrationNumber: "",
     janAushadhiId: "",
+    stateMedicalCouncil: "",
+    yearOfPassing: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -104,6 +142,41 @@ export default function SignupForm() {
                 className="w-full p-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
+            <div>
+              <label className="block mb-1 font-medium">
+                State Medical Council <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="stateMedicalCouncil"
+                value={formData.stateMedicalCouncil}
+                onChange={handleChange}
+                className="w-full p-2 border border-blue-400 rounded-lg bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Council</option>
+                {MEDICAL_COUNCILS.map((council) => (
+                  <option key={council} value={council}>{council}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium">Year of Passing</label>
+              <select
+                name="yearOfPassing"
+                value={formData.yearOfPassing}
+                onChange={handleChange}
+                className="w-full p-2 border border-blue-400 rounded-lg bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Year</option>
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block mb-1 font-medium">Qualification</label>
               <input

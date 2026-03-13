@@ -16,11 +16,12 @@ export default function AdminEligibility() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [filter, setFilter] = useState("all");
 
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const res = await getEligibilityRequests();
+      const res = await getEligibilityRequests(filter === "all" ? undefined : filter);
       // Filter only pending requests for action, or show all if needed
       if (res.success) {
         setRequests(res.data || []);
@@ -34,7 +35,7 @@ export default function AdminEligibility() {
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [filter]);
 
   const handleApprove = async (id: string) => {
     if (!window.confirm("Approve this eligibility request?")) return;
@@ -78,7 +79,24 @@ export default function AdminEligibility() {
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-10">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-[#002E6E] mb-8">Eligibility Approvals</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+          <h1 className="text-3xl font-bold text-[#002E6E]">Eligibility Approvals</h1>
+          <div className="flex bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
+            {["all", "pending", "approved", "rejected"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-2 rounded-md text-sm font-medium capitalize transition-all ${
+                  filter === f
+                    ? "bg-[#002E6E] text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           {requests.length === 0 ? (
@@ -109,8 +127,8 @@ export default function AdminEligibility() {
                       <td className="py-4 px-6">
                         <div className="text-sm">{req.documentType}</div>
                         <div className="text-xs text-gray-500 font-mono">{req.documentNumber}</div>
-                        {req.documentURL && (
-                          <a href={req.documentURL} target="_blank" rel="noreferrer" className="text-blue-600 text-xs hover:underline">View Doc</a>
+                        {req.documentUrl && (
+                          <a href={req.documentUrl.startsWith("http") ? req.documentUrl : `${BASE_URL}/${req.documentUrl}`} target="_blank" rel="noreferrer" className="text-blue-600 text-xs hover:underline">View Doc</a>
                         )}
                       </td>
                       <td className="py-4 px-6">
@@ -158,7 +176,7 @@ export default function AdminEligibility() {
         {/* View Modal */}
         {selectedRequest && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
               <div className="bg-[#002E6E] px-6 py-4 flex justify-between items-center shrink-0">
                 <h2 className="text-xl font-bold text-white">Eligibility Details</h2>
                 <button
@@ -201,18 +219,20 @@ export default function AdminEligibility() {
                     <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Document</h4>
                     <p className="font-medium text-gray-900 capitalize">{selectedRequest.documentType?.replace(/_/g, " ")}</p>
                     <p className="text-sm text-gray-600">No: {selectedRequest.documentNumber}</p>
-                    {selectedRequest.documentURL && (
-                      <a
-                        href={selectedRequest.documentURL.startsWith("http") ? selectedRequest.documentURL : `${BASE_URL}/${selectedRequest.documentURL}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-sm font-medium inline-flex items-center gap-1 mt-1"
-                      >
-                        View Attached Document <Eye size={14} />
-                      </a>
-                    )}
                   </div>
                 </div>
+
+                {selectedRequest.documentUrl ? (
+                  <div className="mt-4 border rounded-xl overflow-hidden bg-gray-100 h-[500px]">
+                    <iframe 
+                      src={selectedRequest.documentUrl.startsWith("http") ? selectedRequest.documentUrl : `${BASE_URL}/${selectedRequest.documentUrl.replace(/^\/+/, "")}`}
+                      className="w-full h-full"
+                      title="Document Preview"
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-4 p-8 text-center bg-gray-50 rounded-xl text-gray-500">No document attached</div>
+                )}
 
                 {/* Status & Actions */}
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">

@@ -35,6 +35,7 @@ func CORSWithDefaults() gin.HandlerFunc {
 		"http://127.0.0.1:3000",
 		"http://127.0.0.1:5173",
 		"http://127.0.0.1:8080",
+		"http://172.19.238.72:5173",
 	}
 
 	corsConfig.AllowHeaders = []string{
